@@ -2589,7 +2589,9 @@
       +".yw-row{display:grid;grid-template-columns:1.3fr .9fr .8fr .8fr auto;gap:7px;align-items:center;margin-bottom:7px}"
       +"@media(max-width:620px){.yw-row{grid-template-columns:1fr 1fr}}";
     document.head.appendChild(s); }
-  renderers.yourweek=function(){ ywStyle(); state.yourWeek=ywEnsure(state.yourWeek); var sec=document.getElementById("sec-yourweek"); var canEdit=isManager()||!!(state.teamInbox&&state.teamInbox.admin); return canEdit?ywOpenEditor(sec):ywRenderAgent(sec); };
+  renderers.yourweek=function(){ ywStyle(); state.yourWeek=ywEnsure(state.yourWeek); var sec=document.getElementById("sec-yourweek");
+    if(!isManager() && TEAM.dir && !renderers.yourweek._busy){ renderers.yourweek._busy=true; var before=!!(state.teamInbox&&state.teamInbox.admin); Promise.resolve(pullFeedback(true)).then(function(){ renderers.yourweek._busy=false; if((!!(state.teamInbox&&state.teamInbox.admin))!==before && current==="yourweek") renderers.yourweek(); }).catch(function(){ renderers.yourweek._busy=false; }); }
+    var canEdit=isManager()||!!(state.teamInbox&&state.teamInbox.admin); return canEdit?ywOpenEditor(sec):ywRenderAgent(sec); };
   function ywOpenEditor(sec){ if(TEAM.dir){ fsRead("yourweek.json").then(function(d){ if(d){ state.yourWeek=ywEnsure(d); save(); } ywRenderManager(sec); }).catch(function(){ ywRenderManager(sec); }); } else { ywRenderManager(sec); } }
 
   function ywRenderAgent(sec){
