@@ -694,7 +694,7 @@
   };}
   function seed(){ return {
     v:3, config:defaultConfig(), meta:{}, teamInbox:{notes:[],stats:[],audits:[],updatedAt:""},
-    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], coachThread:[]
+    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], coachThread:[], timeOwedReq:[]
   };}
   function ensureAtt(arr){ (arr||[]).forEach(function(x){ if(!Array.isArray(x.attachments)) x.attachments=[]; }); return arr||[]; }
   function migrate(s){
@@ -709,8 +709,11 @@
     if(!s.teamInbox||typeof s.teamInbox!=="object") s.teamInbox={notes:[],stats:[],audits:[],recognitions:[],updatedAt:""};
     if(!Array.isArray(s.teamInbox.recognitions)) s.teamInbox.recognitions=[];
     if(!Array.isArray(s.teamInbox.coachMsgs)) s.teamInbox.coachMsgs=[];
+    if(!Array.isArray(s.teamInbox.timeOwed)) s.teamInbox.timeOwed=[];
+    if(!Array.isArray(s.teamInbox.timeOwedAcks)) s.teamInbox.timeOwedAcks=[];
     if(!Array.isArray(s.links)) s.links=[];
     if(!Array.isArray(s.coachThread)) s.coachThread=[];
+    if(!Array.isArray(s.timeOwedReq)) s.timeOwedReq=[];
     if(!Array.isArray(s.recognitionsGiven)) s.recognitionsGiven=[];
     if(!Array.isArray(s.coaching)) s.coaching=[];
     if(!Array.isArray(s.buzz)) s.buzz=[];
@@ -1718,7 +1721,7 @@
     var kpis=state.config.kpis.map(function(k){ return {id:k.id,label:k.label,type:k.type,target:k.target,lower:k.lower,latest:last?(last.vals||{})[k.id]||"":""}; });
     var au=state.audits||[], st=(typeof auStats==="function")?auStats(au):{count:au.length,avg:null,rate:null};
     return { kind:"summary", agentId:myAgentId(), agentName:state.config.name||"(unnamed)", role:state.config.role||"", avatar:state.config.avatar||"",
-      updatedAt:nowISO(), weeksLogged:ws.length, lastWeekOf:last?last.weekOf:"", coachThread:(state.coachThread||[]),
+      updatedAt:nowISO(), weeksLogged:ws.length, lastWeekOf:last?last.weekOf:"", coachThread:(state.coachThread||[]), timeOwedReq:(state.timeOwedReq||[]),
       kpis:kpis, kpiDefs:kpiDefs, auditAvg:st.avg, passRate:st.rate, auditCount:au.length,
       openTasks:(state.tasks||[]).filter(function(t){return !t.done;}).length,
       goalsIP:(state.goals||[]).filter(function(g){return g.status==="ip";}).length,
@@ -1727,7 +1730,9 @@
       audits: au.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).map(function(a){ return {id:a.id,date:a.date,form:a.form,score:a.score,result:a.result,mistakes:(a.mistakes||[]).slice(),notes:a.notes||""}; }),
       goals: (state.goals||[]).map(function(g){ return {title:g.title,status:g.status,due:g.due||""}; }) };
   }
-  function emptyFeedback(id,name){ return {kind:"feedback",agentId:id,agentName:name||"",managerName:state.config.name||state.config.managerName||"Manager",updatedAt:"",notes:[],stats:[],audits:[],recognitions:[],coachMsgs:[]}; }
+  function emptyFeedback(id,name){ return {kind:"feedback",agentId:id,agentName:name||"",managerName:state.config.name||state.config.managerName||"Manager",updatedAt:"",notes:[],stats:[],audits:[],recognitions:[],coachMsgs:[],timeOwed:[],timeOwedAcks:[]}; }
+  function fmtMins(m){ var neg=m<0; m=Math.abs(m); var h=Math.floor(m/60), mm=m%60; var s=(h?h+"h ":"")+(mm||!h?mm+"m":""); return (neg?"−":"")+(s.trim()||"0m"); }
+  function parseMins(v){ v=(v||"").trim(); if(!v) return 0; if(v.indexOf(":")>=0){ var p=v.split(":"); return (parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0); } var n=parseFloat(v); return isNaN(n)?0:Math.round(n); }
 
   /* ---- AGENT actions ---- */
   function publishSummary(silent){
@@ -1776,12 +1781,12 @@
           var f=await fsRead(names[i]); if(!f) continue;
           var mine = ids[fid] || (f.agentId && ids[f.agentId]) || (nm && (f.agentName||"").trim().toLowerCase()===nm);
           if(!mine) continue;
-          if(!combined) combined={kind:"feedback",agentId:myAgentId(),agentName:state.config.name||"",managerName:f.managerName||"Manager",updatedAt:f.updatedAt||"",notes:[],recognitions:[],stats:[],audits:[],coachMsgs:[]};
-          ["notes","recognitions","stats","audits","coachMsgs"].forEach(function(key){ (f[key]||[]).forEach(function(it){ combined[key].push(it); }); });
+          if(!combined) combined={kind:"feedback",agentId:myAgentId(),agentName:state.config.name||"",managerName:f.managerName||"Manager",updatedAt:f.updatedAt||"",notes:[],recognitions:[],stats:[],audits:[],coachMsgs:[],timeOwed:[],timeOwedAcks:[]};
+          ["notes","recognitions","stats","audits","coachMsgs","timeOwed","timeOwedAcks"].forEach(function(key){ (f[key]||[]).forEach(function(it){ combined[key].push(it); }); });
           if(f.managerName) combined.managerName=f.managerName;
           if((f.updatedAt||"")>combined.updatedAt) combined.updatedAt=f.updatedAt||combined.updatedAt;
         }
-        if(combined){ ["notes","recognitions","stats","audits","coachMsgs"].forEach(function(key){ var seen={}, out=[]; combined[key].forEach(function(it){ var id=it&&it.id; if(id&&seen[id]) return; if(id) seen[id]=1; out.push(it); }); combined[key]=out; }); }
+        if(combined){ ["notes","recognitions","stats","audits","coachMsgs","timeOwed","timeOwedAcks"].forEach(function(key){ var seen={}, out=[]; combined[key].forEach(function(it){ var id=it&&it.id; if(id&&seen[id]) return; if(id) seen[id]=1; out.push(it); }); combined[key]=out; }); }
         return combined;
       })();
     }).catch(function(){ return null; });
@@ -1792,7 +1797,8 @@
       var oldRecs=((state.teamInbox&&state.teamInbox.recognitions)||[]).length;
       var merged=mergeManagerData(fb);
       var keepIds=(state.teamInbox&&state.teamInbox.mergedIds)||{stats:[],audits:[]};
-      state.teamInbox={notes:fb.notes||[],recognitions:fb.recognitions||[],coachMsgs:fb.coachMsgs||[],updatedAt:fb.updatedAt||nowISO(),managerName:fb.managerName||"Manager",mergedIds:keepIds};
+      state.teamInbox={notes:fb.notes||[],recognitions:fb.recognitions||[],coachMsgs:fb.coachMsgs||[],timeOwed:fb.timeOwed||[],timeOwedAcks:fb.timeOwedAcks||[],updatedAt:fb.updatedAt||nowISO(),managerName:fb.managerName||"Manager",mergedIds:keepIds};
+      var ackSet={}; (fb.timeOwedAcks||[]).forEach(function(a){ ackSet[a.reqId]=1; }); if(Array.isArray(state.timeOwedReq)) state.timeOwedReq=state.timeOwedReq.filter(function(r){ return !ackSet[r.id]; });
       var newNotes=Math.max(0,(fb.notes||[]).length-oldNotes);
       var newRecs=Math.max(0,(fb.recognitions||[]).length-oldRecs);
       save();
@@ -2124,14 +2130,14 @@
   var RECO_CATS=["Customer hero","Quality star","Team player","Above & beyond","Most improved","Great attitude"];
   renderers.recognition=function(){ var sec=document.getElementById("sec-recognition"); return isManager()?renderRecognitionManager(sec):renderRecognitionAgent(sec); };
   function recoCard(r,forMgr){ return '<div class="reco-card">'+(forMgr?'<button class="rm" data-rid="'+esc(r.id)+'">\u2715</button>':'')+'<div class="reco-badge">\u2b50 '+esc(r.category||"Recognition")+'</div><div class="reco-msg">'+esc(r.message||"")+'</div><div class="reco-from">'+(forMgr?('\u2192 '+esc(r.agentName||r.agentId)):('\u2014 '+esc(r.from||"Your manager")))+' \u00b7 '+esc(fmtDate(r.date))+'</div></div>'; }
-  var _recAutoPulled=false;
+  var _recPulling=false;
   function renderRecognitionAgent(sec){
     var recs=(state.teamInbox&&state.teamInbox.recognitions)||[];
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Your wins</div><h2>Recognition</h2><p class="lede">Shout-outs your manager has sent your way. Nice work.</p></div><div class="actions">'+(TEAM.dir?'<button class="btn primary" id="recRefresh">\u21bb Refresh</button>':'')+'</div></div>'+
       (recs.length?('<div class="reco-grid">'+recs.slice().reverse().map(function(r){return recoCard(r,false);}).join("")+'</div>'):'<div class="empty"><div class="big">No recognition yet</div>'+(TEAM.dir?'Checking the shared folder\u2026 hit Refresh if nothing appears.':'Connect the shared folder in Settings to receive recognition.')+'</div>');
-    var rr=document.getElementById("recRefresh"); if(rr) rr.onclick=function(){ _recAutoPulled=true; pullFeedback(false); };
-    // auto-pull once on entry so a freshly sent recognition shows without a manual refresh
-    if(TEAM.dir && !recs.length && !_recAutoPulled){ _recAutoPulled=true; pullFeedback(true); }
+    var rr=document.getElementById("recRefresh"); if(rr) rr.onclick=function(){ pullFeedback(false); };
+    // re-pull every time the tab opens so sent AND deleted recognitions both sync (guarded against the pull's own re-render)
+    if(TEAM.dir && !_recPulling){ _recPulling=true; Promise.resolve(pullFeedback(true)).then(function(){ _recPulling=false; }).catch(function(){ _recPulling=false; }); }
   }
   function renderRecognitionManager(sec){
     var connected=!!TEAM.dir, hist=(state.recognitionsGiven||[]).slice().reverse();
@@ -2495,7 +2501,8 @@
         +".cbubble .cb-meta{font-size:10.5px;color:var(--ink-faint);margin-bottom:3px}"
         +".cbubble.me{align-self:flex-end;background:rgba(var(--a1-rgb),.16);border:1px solid rgba(var(--a1-rgb),.32)}"
         +".cbubble.them{align-self:flex-start;background:var(--card-2);border:1px solid var(--line)}"
-        +".link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}"
+        +".link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:12px}"
+        +"@media(max-width:560px){.link-grid{grid-template-columns:1fr}}"
         +".link-card{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card);transition:transform .2s var(--reveal-ease),box-shadow .2s,border-color .2s}"
         +".link-card:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:var(--a1)}"
         +".link-main{display:flex;align-items:center;gap:11px;flex:1;min-width:0;text-decoration:none;color:var(--ink)}"
@@ -2668,6 +2675,37 @@
         document.getElementById("enhOnbX").onclick=function(){ state.meta.onbDismiss=true; save(); c.remove(); };
       }
     }
+    enhTimeOwed(sec);
+  }
+  function enhTimeOwed(sec){
+    var to=(state.teamInbox&&state.teamInbox.timeOwed)||[];
+    var acks=(state.teamInbox&&state.teamInbox.timeOwedAcks)||[];
+    if(!to.length && !(state.timeOwedReq||[]).length) return; // hide until there's something
+    var bal=to.reduce(function(s,e){return s+(e.delta||0);},0);
+    var ackBy={}; acks.forEach(function(a){ ackBy[a.reqId]=a.status; });
+    var pending=(state.timeOwedReq||[]).filter(function(r){ return !ackBy[r.id]; });
+    var recent=to.slice().reverse().slice(0,4);
+    var card=document.createElement("div"); card.className="enh-card";
+    card.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div><h3>Time owed</h3>'
+      +'<div style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+(bal<0?'var(--red)':'var(--a2)')+'">'+esc(fmtMins(bal))+'</div>'
+      +'<div style="font-size:12px;color:var(--ink-faint)">logged by your manager'+(pending.length?(' · '+pending.length+' request'+(pending.length===1?"":"s")+' pending'):'')+'</div></div>'
+      +'<button class="btn sm" id="toReqBtn" style="margin-left:auto">Request change</button></div>'
+      +(recent.length?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">'+recent.map(function(e){return '<div style="font-size:12.5px;color:var(--ink-soft)">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+' <span style="color:var(--ink-faint)">'+esc(fmtShort((e.ts||"").slice(0,10)))+'</span></div>';}).join("")+'</div>'):'')
+      +(pending.length?('<div style="margin-top:8px">'+pending.map(function(r){return '<div style="font-size:12px;color:var(--ink-faint)">⏳ requested '+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+(r.note?(' · '+esc(r.note)):'')+'</div>';}).join("")+'</div>'):'');
+    var vh=sec.querySelector(".vhead"); if(vh&&vh.nextSibling) sec.insertBefore(card, vh.nextSibling); else sec.appendChild(card);
+    document.getElementById("toReqBtn").onclick=function(){
+      openModal('<div class="modal-h"><h3>Request time owed change</h3><button class="x" id="mX">✕</button></div>'
+        +'<div class="modal-b"><div class="seg" id="toSign" style="margin-bottom:12px"><button class="on" data-sign="1">Add time</button><button data-sign="-1">Deduct time</button></div>'
+        +'<label class="fld"><span class="lab">Amount (hours:minutes or minutes)</span><input class="in" id="toAmt" placeholder="e.g. 1:30 or 90"></label>'
+        +'<label class="fld"><span class="lab">Reason</span><input class="in" id="toNote" placeholder="e.g. stayed late Friday"></label></div>'
+        +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="toSend">Send request</button></div>');
+      var sign=1; document.getElementById("toSign").addEventListener("click",function(e){ var b=e.target.closest("button[data-sign]"); if(!b) return; sign=parseInt(b.getAttribute("data-sign"),10); [].forEach.call(this.children,function(x){x.classList.toggle("on",x===b);}); });
+      document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
+      document.getElementById("toSend").onclick=function(){ var mins=parseMins(document.getElementById("toAmt").value); if(!mins){ toast("Enter an amount."); return; } var note=document.getElementById("toNote").value.trim();
+        state.timeOwedReq=state.timeOwedReq||[]; state.timeOwedReq.push({id:uid("tr"),ts:nowISO(),delta:sign*mins,note:note}); save();
+        if(TEAM.dir){ Promise.resolve(publishSummary(true)).then(function(){ toast("Request sent to your manager."); }); } else toast("Saved — connect the folder to send.");
+        closeModal(); renderers.dash(); };
+    };
   }
   /* ----- stats: CSV / paste import ----- */
   function enhWrapStats(){
