@@ -563,23 +563,27 @@
   .buzz-body{font-size:14px;line-height:1.6;color:var(--ink-soft);white-space:pre-wrap}
 </style>
 <style id="sidebarStyle">
-@media(min-width:901px){
-  .app{min-height:100vh}
-  .topbar{position:fixed;top:0;left:0;bottom:0;height:100vh;width:214px;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:16px 12px;border-bottom:0;border-right:1px solid var(--line);overflow:hidden;z-index:50}
-  .topbar .brand{flex:0 0 auto;margin:0 0 16px;padding:2px 6px}
-  .topbar nav.menu{flex:1 1 auto;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:3px;overflow-y:auto;overflow-x:hidden;height:auto;width:100%}
-  .topbar nav.menu::-webkit-scrollbar{width:6px}
-  .topbar nav.menu::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
-  .topbar .navi{width:100%;justify-content:flex-start;gap:11px;padding:10px 12px;border-radius:11px;font-size:13.5px;white-space:nowrap}
-  .topbar .navi .lbl{display:inline!important;font-size:13.5px}
-  .topbar .navi .ic{font-size:15px;opacity:.9;width:18px;text-align:center;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center}
-  .topbar .navi.active{background:rgba(var(--a1-rgb),.14);font-weight:600}
-  .topbar .nav-ind{display:none!important}
-  .topbar .topactions{flex:0 0 auto;justify-content:flex-start;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
-  .topbar .moreWrap .moremenu{top:auto;bottom:48px}
-  main.view{margin-left:214px;max-width:1200px}
-  .enh-shine{left:0}
-}
+  .appbar{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:14px;height:58px;padding:0 clamp(14px,3vw,22px);background:rgba(12,8,32,.62);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border-bottom:1px solid var(--line)}
+  body.light .appbar{background:rgba(255,255,255,.9)}
+  .appbar .brand{flex:0 1 auto;min-width:0}
+  .appbar .topactions{flex:0 0 auto;justify-content:flex-end}
+  @media(max-width:900px){ .topbar{position:sticky;top:58px;z-index:55} }
+  @media(min-width:901px){
+    .appbar{position:fixed;top:0;left:0;right:0;height:62px;z-index:60}
+    .topbar{position:fixed;top:62px;left:0;bottom:0;height:auto;width:214px;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:14px 12px;border-bottom:0;border-right:1px solid var(--line);overflow:hidden;z-index:50}
+    .topbar nav.menu{flex:1 1 auto;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:3px;overflow-y:auto;overflow-x:hidden;height:auto;width:100%}
+    .topbar nav.menu::-webkit-scrollbar{width:6px}.topbar nav.menu::-webkit-scrollbar-thumb{background:var(--line);border-radius:6px}
+    .topbar .navi{width:100%;justify-content:flex-start;gap:11px;padding:10px 12px;border-radius:11px;font-size:13.5px;white-space:nowrap}
+    .topbar .navi .lbl{display:inline!important;font-size:13.5px}
+    .topbar .navi .ic{font-size:15px;opacity:.9;width:18px;text-align:center;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center}
+    .topbar .navi.active{background:rgba(var(--a1-rgb),.14);font-weight:600}
+    .topbar .nav-ind{display:none!important}
+    main.view{margin-left:214px;margin-top:62px;max-width:1200px}
+    .enh-shine{left:0}
+  }
+  .navi{position:relative}
+  .nv-dot{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--a2);box-shadow:0 0 8px 1px rgba(var(--a2-rgb),.85);pointer-events:none}
+  @media(min-width:901px){ .nv-dot{top:50%;right:11px;transform:translateY(-50%)} }
 </style>
 </head>
 <body>
@@ -1814,7 +1818,7 @@
     return Promise.resolve();
   }
   function importFeedbackFile(){ pickJSON(function(fb){ if(fb&&fb.kind==="feedback"){ mergeManagerData(fb); state.teamInbox={notes:fb.notes||[],recognitions:fb.recognitions||[],updatedAt:fb.updatedAt||nowISO(),managerName:fb.managerName||"Manager"}; save(); updateFbDot(""); refresh(); toast("Feedback imported."); } else toast("That isn't a feedback file."); }); }
-  function updateFbDot(prevUpdated){ var dot=document.getElementById("fbDot"); if(!dot) return; var u=(state.teamInbox&&state.teamInbox.updatedAt)||""; dot.classList.toggle("on", !!u && u!==prevUpdated && current!=="feedback"); }
+  function updateFbDot(prevUpdated){ var dot=document.getElementById("fbDot"); if(dot) dot.classList.remove("on"); }
 
   /* ---- MANAGER actions ---- */
   var TEAMROSTER=[];
@@ -2485,6 +2489,8 @@
     if(nReq) bits.push("🎯 "+nReq+" coaching request"+(nReq===1?"":"s"));
     if(nTO) bits.push("⏱️ "+nTO+" time-owed request"+(nTO===1?"":"s"));
     if(nMsg) bits.push("💬 "+nMsg+" message"+(nMsg===1?"":"s"));
+    if(nReq||nMsg) navDot("coaching",true);
+    if(nReq||nTO||nMsg) navDot("team",true);
     if(!bits.length) return "";
     var names=Object.keys(who); var from=names.length<=2?(" from "+names.join(" & ")):(" from "+names.length+" agents");
     return "New — "+bits.join("  ·  ")+from;
@@ -2855,7 +2861,7 @@
 
   /* ================= v7 enhancements (additive) ================= */
   function enhInit(){
-    enhCSS();
+    enhCSS(); enhTopbar(); enhNavDots();
     enhA11y();
     enhSnapshots();
     enhHistoryButton();
@@ -2906,7 +2912,7 @@
         +".link-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
         +".link-url{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
         +".link-actions{display:flex;gap:4px;flex:0 0 auto}"
-        +".enh-shine{position:fixed;inset:-45%;z-index:0;pointer-events:none;opacity:.42;mix-blend-mode:screen;filter:blur(70px);background:conic-gradient(from 0deg,rgba(var(--a1-rgb),.10),rgba(var(--a2-rgb),.12),rgba(var(--a1-rgb),.03),rgba(var(--a2-rgb),.11),rgba(var(--a1-rgb),.10));animation:enhShine 15s linear infinite}"
+        +".enh-shine{position:fixed;inset:-45%;z-index:0;pointer-events:none;opacity:.42;mix-blend-mode:screen;filter:blur(70px);background:conic-gradient(from 0deg,rgba(var(--a1-rgb),.10),rgba(var(--a2-rgb),.12),rgba(var(--a1-rgb),.03),rgba(var(--a2-rgb),.11),rgba(var(--a1-rgb),.10));animation:enhShine 4s linear infinite}"
         +"body.light .enh-shine{opacity:.5;mix-blend-mode:normal;filter:blur(90px)}"
         +"@keyframes enhShine{0%{transform:rotate(0deg) scale(1.05)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1.05)}}"
         +"@media(prefers-reduced-motion:reduce){.enh-stagger,.brand .mk,.enh-shine{animation:none!important}.btn.primary:hover::after{animation:none!important}}";
@@ -2961,6 +2967,9 @@
       if(el<1700) requestAnimationFrame(frame); else cv.remove();
     })();
   }
+  function enhTopbar(){ var topbar=document.getElementById("topbar"); if(!topbar||document.getElementById("appbar")) return; var brand=topbar.querySelector(".brand"); var actions=topbar.querySelector(".topactions"); var bar=document.createElement("header"); bar.id="appbar"; bar.className="appbar"; if(brand) bar.appendChild(brand); if(actions) bar.appendChild(actions); var app=document.querySelector(".app"); if(app) app.insertBefore(bar, topbar); }
+  function navDot(section,on){ if(on && typeof current!=="undefined" && current===section) return; var btn=document.querySelector('.navi[data-section="'+section+'"]'); if(!btn) return; var d=btn.querySelector(".nv-dot"); if(on){ if(!d){ d=document.createElement("span"); d.className="nv-dot"; btn.appendChild(d); } } else if(d){ d.remove(); } }
+  function enhNavDots(){ if(typeof go==="function" && !go._enhDots){ var _g=go; go=function(s){ _g.apply(this,arguments); try{ navDot(s,false); }catch(e){} }; go._enhDots=true; } }
   function enhCSS(){
     if(document.getElementById("enhStyle")) return;
     var s=document.createElement("style"); s.id="enhStyle";
