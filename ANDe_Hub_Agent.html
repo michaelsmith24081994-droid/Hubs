@@ -1757,13 +1757,29 @@
       seen.audits.push(a.id); newAudits++; });
     return {stats:newStats,audits:newAudits};
   }
+  function readMyFeedback(){
+    // Exact match first; fall back to scanning so a renamed agent / id drift still finds it.
+    return fsRead("feedback-"+myAgentId()+".json").then(function(fb){
+      if(fb) return fb;
+      return fsList("feedback-").then(function(names){
+        return (async function(){
+          var nm=(state.config.name||"").trim().toLowerCase();
+          for(var i=0;i<names.length;i++){
+            var f=await fsRead(names[i]);
+            if(f && (f.agentId===myAgentId() || (nm && (f.agentName||"").trim().toLowerCase()===nm))) return f;
+          }
+          return null;
+        })();
+      }).catch(function(){ return null; });
+    });
+  }
   function pullFeedback(silent){
-    var name="feedback-"+myAgentId()+".json";
-    function apply(fb){ if(!fb){ if(!silent) toast("No feedback from your manager yet."); return; }
+    function apply(fb){ if(!fb){ if(!silent) toast("No feedback from your manager yet — check you’re on the same folder and your name matches."); return; }
       var oldNotes=((state.teamInbox&&state.teamInbox.notes)||[]).length;
       var oldRecs=((state.teamInbox&&state.teamInbox.recognitions)||[]).length;
       var merged=mergeManagerData(fb);
-      state.teamInbox={notes:fb.notes||[],recognitions:fb.recognitions||[],updatedAt:fb.updatedAt||nowISO(),managerName:fb.managerName||"Manager"};
+      var keepIds=(state.teamInbox&&state.teamInbox.mergedIds)||{stats:[],audits:[]};
+      state.teamInbox={notes:fb.notes||[],recognitions:fb.recognitions||[],updatedAt:fb.updatedAt||nowISO(),managerName:fb.managerName||"Manager",mergedIds:keepIds};
       var newNotes=Math.max(0,(fb.notes||[]).length-oldNotes);
       var newRecs=Math.max(0,(fb.recognitions||[]).length-oldRecs);
       save();
@@ -1774,7 +1790,7 @@
       if(bits.length){ toast("Your manager sent "+bits.join(" \u00b7 ")+"."); var dot=document.getElementById("fbDot"); if(dot&&newNotes&&current!=="feedback") dot.classList.add("on"); }
       else if(!silent && !newRecs) toast("You\u2019re up to date with your manager.");
     }
-    if(TEAM.dir){ return fsRead(name).then(apply).catch(function(){ if(!silent) toast("Couldn't read \u2014 reconnect the folder."); }); }
+    if(TEAM.dir){ return readMyFeedback().then(apply).catch(function(){ if(!silent) toast("Couldn't read \u2014 reconnect the folder."); }); }
     return Promise.resolve();
   }
   function importFeedbackFile(){ pickJSON(function(fb){ if(fb&&fb.kind==="feedback"){ mergeManagerData(fb); state.teamInbox={notes:fb.notes||[],recognitions:fb.recognitions||[],updatedAt:fb.updatedAt||nowISO(),managerName:fb.managerName||"Manager"}; save(); updateFbDot(""); refresh(); toast("Feedback imported."); } else toast("That isn't a feedback file."); }); }
@@ -2080,11 +2096,14 @@
   var RECO_CATS=["Customer hero","Quality star","Team player","Above & beyond","Most improved","Great attitude"];
   renderers.recognition=function(){ var sec=document.getElementById("sec-recognition"); return isManager()?renderRecognitionManager(sec):renderRecognitionAgent(sec); };
   function recoCard(r,forMgr){ return '<div class="reco-card">'+(forMgr?'<button class="rm" data-rid="'+esc(r.id)+'">\u2715</button>':'')+'<div class="reco-badge">\u2b50 '+esc(r.category||"Recognition")+'</div><div class="reco-msg">'+esc(r.message||"")+'</div><div class="reco-from">'+(forMgr?('\u2192 '+esc(r.agentName||r.agentId)):('\u2014 '+esc(r.from||"Your manager")))+' \u00b7 '+esc(fmtDate(r.date))+'</div></div>'; }
+  var _recAutoPulled=false;
   function renderRecognitionAgent(sec){
     var recs=(state.teamInbox&&state.teamInbox.recognitions)||[];
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Your wins</div><h2>Recognition</h2><p class="lede">Shout-outs your manager has sent your way. Nice work.</p></div><div class="actions">'+(TEAM.dir?'<button class="btn primary" id="recRefresh">\u21bb Refresh</button>':'')+'</div></div>'+
-      (recs.length?('<div class="reco-grid">'+recs.slice().reverse().map(function(r){return recoCard(r,false);}).join("")+'</div>'):'<div class="empty"><div class="big">No recognition yet</div>When your manager recognises great work, it\u2019ll show up here.</div>');
-    var rr=document.getElementById("recRefresh"); if(rr) rr.onclick=function(){ pullFeedback(false); };
+      (recs.length?('<div class="reco-grid">'+recs.slice().reverse().map(function(r){return recoCard(r,false);}).join("")+'</div>'):'<div class="empty"><div class="big">No recognition yet</div>'+(TEAM.dir?'Checking the shared folder\u2026 hit Refresh if nothing appears.':'Connect the shared folder in Settings to receive recognition.')+'</div>');
+    var rr=document.getElementById("recRefresh"); if(rr) rr.onclick=function(){ _recAutoPulled=true; pullFeedback(false); };
+    // auto-pull once on entry so a freshly sent recognition shows without a manual refresh
+    if(TEAM.dir && !recs.length && !_recAutoPulled){ _recAutoPulled=true; pullFeedback(true); }
   }
   function renderRecognitionManager(sec){
     var connected=!!TEAM.dir, hist=(state.recognitionsGiven||[]).slice().reverse();
