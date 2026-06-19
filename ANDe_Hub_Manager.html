@@ -580,6 +580,7 @@
       <button class="navi" data-section="kb"><span class="ic">▦</span><span class="lbl">Knowledge</span></button>
       <button class="navi" data-section="meet"><span class="ic">◳</span><span class="lbl">Meetings</span></button>
       <button class="navi" data-section="buzz"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.7L3 21l1.9-5.8A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 11h7M8.5 14h4"/></svg></span><span class="lbl">Buzz Session</span></button>
+      <button class="navi" data-section="links"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></span><span class="lbl">Links</span></button>
       <span class="nav-ind" id="navInd" aria-hidden="true"></span>
     </nav>
     <div class="topactions">
@@ -609,6 +610,7 @@
     <section id="sec-meet" style="display:none"></section>
     <section id="sec-buzz" style="display:none"></section>
     <section id="sec-dev" style="display:none"></section>
+    <section id="sec-links" style="display:none"></section>
     <section id="sec-customise" style="display:none"></section>
   </main>
 </div>
@@ -694,7 +696,7 @@
   };}
   function seed(){ return {
     v:3, config:defaultConfig(), meta:{}, teamInbox:{notes:[],stats:[],audits:[],updatedAt:""},
-    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[]
+    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], coachThread:[]
   };}
   function ensureAtt(arr){ (arr||[]).forEach(function(x){ if(!Array.isArray(x.attachments)) x.attachments=[]; }); return arr||[]; }
   function migrate(s){
@@ -711,6 +713,9 @@
     if(!Array.isArray(s.recognitionsGiven)) s.recognitionsGiven=[];
     if(!Array.isArray(s.coaching)) s.coaching=[];
     if(!Array.isArray(s.buzz)) s.buzz=[];
+    if(!Array.isArray(s.links)) s.links=[];
+    if(!Array.isArray(s.coachThread)) s.coachThread=[];
+    if(s.teamInbox&&!Array.isArray(s.teamInbox.coachMsgs)) s.teamInbox.coachMsgs=[];
     if(!s.meta||typeof s.meta!=="object") s.meta={};
     if(!Array.isArray(s.brandRows)) s.brandRows=base.brandRows;
     ["evidence","kb","tasks","goals","learning"].forEach(function(k){ if(!Array.isArray(s[k])) s[k]=base[k]; else ensureAtt(s[k]); });
@@ -754,7 +759,7 @@
   function wireLightbox(scope){ (scope||document).querySelectorAll("[data-lb]").forEach(function(im){ im.onclick=function(e){ e.stopPropagation(); openLightbox(im.getAttribute("data-lb")); }; }); }
 
   /* ---------- routing ---------- */
-  var SECTIONS=["dash","team","evidence","stats","audits","kb","meet","buzz","dev","coaching","recognition","customise"], renderers={};
+  var SECTIONS=["dash","team","evidence","stats","audits","kb","meet","buzz","dev","coaching","recognition","links","customise"], renderers={};
   var current="dash";
   function go(sec){ current=sec; SECTIONS.forEach(function(id){ document.getElementById("sec-"+id).style.display=(id===sec)?"":"none"; }); [].forEach.call(document.getElementById("menu").children,function(b){ b.classList.toggle("active", b.getAttribute("data-section")===sec); }); if(renderers[sec]) renderers[sec](); try{window.scrollTo({top:0,behavior:"smooth"});}catch(e){window.scrollTo(0,0);} runReveal(); positionNavInd(); var g=document.getElementById("gearBtn"); if(g) g.classList.toggle("on",sec==="customise"); }
   document.getElementById("menu").addEventListener("click",function(e){ var b=e.target.closest(".navi"); if(b) go(b.getAttribute("data-section")); });
@@ -1724,7 +1729,7 @@
       audits: au.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");}).map(function(a){ return {id:a.id,date:a.date,form:a.form,score:a.score,result:a.result,mistakes:(a.mistakes||[]).slice(),notes:a.notes||""}; }),
       goals: (state.goals||[]).map(function(g){ return {title:g.title,status:g.status,due:g.due||""}; }) };
   }
-  function emptyFeedback(id,name){ return {kind:"feedback",agentId:id,agentName:name||"",managerName:state.config.name||state.config.managerName||"Manager",updatedAt:"",notes:[],stats:[],audits:[],recognitions:[]}; }
+  function emptyFeedback(id,name){ return {kind:"feedback",agentId:id,agentName:name||"",managerName:state.config.name||state.config.managerName||"Manager",updatedAt:"",notes:[],stats:[],audits:[],recognitions:[],coachMsgs:[]}; }
 
   /* ---- AGENT actions ---- */
   function publishSummary(silent){
@@ -1795,8 +1800,8 @@
     // Arrays NOT owned are re-read from disk and preserved, so e.g. sending a note never wipes
     // recognitions written from the Recognition tab, and vice-versa.
     opts=(opts&&typeof opts==="object")?opts:{silent:!!opts};
-    var silent=opts.silent, owns=opts.owns||["notes","stats","audits","recognitions"];
-    var ARR=["notes","stats","audits","recognitions"];
+    var silent=opts.silent, owns=opts.owns||["notes","stats","audits","recognitions","coachMsgs"];
+    var ARR=["notes","stats","audits","recognitions","coachMsgs"];
     fb.managerName=state.config.name||state.config.managerName||"Manager";
     var name="feedback-"+fb.agentId+".json";
     function finalize(disk){ disk=disk||{}; ARR.forEach(function(k){ if(owns.indexOf(k)>=0){ fb[k]=fb[k]||[]; } else { fb[k]=disk[k]||fb[k]||[]; } }); fb.updatedAt=nowISO(); }
@@ -1830,6 +1835,11 @@
 
   /* ---- MANAGER: Team overview + agent drill-down ---- */
   var teamSel=null, teamRange="all", teamStatMode="total";
+  var trendWin={mode:"12w", from:"", to:""};
+  function trendCount(){ return {latest:1,"4w":4,"12w":12,quarter:13,year:52,all:9999,custom:9999}[trendWin.mode]||12; }
+  function trendKeep(weekISO){ if(!weekISO) return false; if(trendWin.mode==="custom"){ if(trendWin.from && weekISO<trendWin.from) return false; if(trendWin.to && weekISO>trendWin.to) return false; } return true; }
+  function trendSlice(keys){ return keys.filter(trendKeep).sort().slice(-trendCount()); }
+  function trendWinLabel(){ return {latest:"latest week","4w":"last 4 weeks","12w":"last 12 weeks",quarter:"last quarter",year:"last year",all:"all time",custom:"custom range"}[trendWin.mode]||"recent"; }
   function teamKpiDefs(){ var best=state.config.kpis; TEAMROSTER.forEach(function(a){ if(a.kpiDefs&&a.kpiDefs.length>(best?best.length:0)) best=a.kpiDefs; }); return best||[]; }
   function numOf(k,v){ return (typeof numericOf==="function")?numericOf(k,v):(v===""||v==null?null:(k.type==="dur"?(function(){var p=String(v).split(":");return p.length===2?(+p[0]*60+ +p[1]):parseFloat(v);})():parseFloat(v))); }
   function fmtKpiVal(k,v){ return (typeof fmtKpi==="function" && v!=null)?fmtKpi(k,v):(v==null?"\u2014":String(v)); }
@@ -2089,12 +2099,12 @@
     return null; }
   function inPrev(d){ var b=prevBounds(); if(!b||!d) return false; var dt=new Date(d); return !isNaN(dt)&&dt>=b.s&&dt<b.e; }
   function teamAuditTrend(nWeeks){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(x.score==null||!x.date) return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push(x.score); }); });
-    return Object.keys(byWk).sort().slice(-nWeeks).map(function(k){ var arr=byWk[k]; var avg=Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(k),value:avg,disp:avg+"%"}; }); }
+    return trendSlice(Object.keys(byWk)).map(function(k){ var arr=byWk[k]; var avg=Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(k),value:avg,disp:avg+"%"}; }); }
   function teamKpiTrend(k,nWeeks){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk[w.weekOf]=byWk[w.weekOf]||[]).push(v); }); });
     var isCount=k.type!=="dur";
-    return Object.keys(byWk).sort().slice(-nWeeks).map(function(key){ var arr=byWk[key]; var val=isCount?arr.reduce(function(s,v){return s+v;},0):Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; }); }
+    return trendSlice(Object.keys(byWk)).map(function(key){ var arr=byWk[key]; var val=isCount?arr.reduce(function(s,v){return s+v;},0):Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; }); }
   function teamPassRateTrend(nWeeks){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date||(x.result!=="pass"&&x.result!=="fail")) return; var wk=mondayKey(x.date); var o=byWk[wk]=byWk[wk]||{p:0,t:0}; o.t++; if(x.result==="pass") o.p++; }); });
-    return Object.keys(byWk).sort().slice(-nWeeks).map(function(k){ var o=byWk[k]; var v=Math.round(o.p/o.t*100); return {label:fmtShort(k),value:v,disp:v+"%"}; }); }
+    return trendSlice(Object.keys(byWk)).map(function(k){ var o=byWk[k]; var v=Math.round(o.p/o.t*100); return {label:fmtShort(k),value:v,disp:v+"%"}; }); }
   function trendBars(points){ if(!points.length) return '<div class="empty" style="padding:14px">Not enough history yet \u2014 a few weeks of data will fill this in.</div>';
     var max=Math.max.apply(null,points.map(function(p){return p.value;}))||1;
     return '<div class="bars">'+points.map(function(p){ var h=Math.max(4,Math.round(p.value/max*130)); return '<div class="bcol"><div class="bv">'+esc(p.disp)+'</div><div class="bar" style="height:'+h+'px"></div><div class="bl">'+esc(p.label)+'</div></div>'; }).join("")+'</div>'; }
@@ -2136,14 +2146,17 @@
     cards.push(trendCard("Audit pass rate", teamPassRateTrend(N), {pct:true, kind:"pass"}));
     defs.forEach(function(k){ cards.push(trendCard(k.label+" \u00b7 "+(k.type!=="dur"?"team/wk":"team avg"), teamKpiTrend(k,N), {lower:k.lower, kind:"kpi", kpiId:k.id})); });
     cards=cards.filter(Boolean);
-    var body=cards.length? '<div class="trend-grid">'+cards.join("")+'</div>' : '<div class="empty">Not enough history yet \u2014 a few weeks of data will fill this in.</div>';
-    return '<div class="panel" style="margin-top:6px"><div class="panel-h"><h3>Team trends \u00b7 recent weeks</h3><span class="vhint" style="margin-left:auto">last '+N+' wks \u00b7 \u25b2 better \u25bc worse \u00b7 tap a card for the breakdown</span></div><div class="panel-b">'+body+'</div></div>'; }
+    var body=cards.length? '<div class="trend-grid">'+cards.join("")+'</div>' : '<div class="empty">No data in '+esc(trendWinLabel())+' yet.</div>';
+    var opts=[["latest","Latest"],["4w","4 wks"],["12w","12 wks"],["quarter","Quarter"],["year","Year"],["all","All"],["custom","Custom"]];
+    var seg='<div class="seg sm" id="twSeg" style="flex-wrap:wrap">'+opts.map(function(o){return '<button data-tw="'+o[0]+'"'+(trendWin.mode===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join("")+'</div>';
+    var dateRow=trendWin.mode==="custom"?('<div class="addline" style="margin-top:10px;gap:8px;align-items:center"><span class="vhint">From</span><input class="in" type="date" id="twFrom" value="'+esc(trendWin.from)+'" style="max-width:160px"><span class="vhint">to</span><input class="in" type="date" id="twTo" value="'+esc(trendWin.to)+'" style="max-width:160px"></div>'):'';
+    return '<div class="panel" style="margin-top:6px"><div class="panel-h" style="flex-wrap:wrap;gap:10px"><h3>Team trends \u00b7 '+esc(trendWinLabel())+'</h3>'+seg+'<span class="vhint" style="flex-basis:100%;margin:0">\u25b2 better \u25bc worse \u00b7 tap a card for the per-agent breakdown</span></div><div class="panel-b">'+dateRow+body+'</div></div>'; }
   /* per-agent breakdown behind a trend card's latest-week figure */
   function openTrendBreakdown(kind, kpiId){
     var defs=teamKpiDefs(), title, weekLabel, overallDisp, note="", rows=[];
     if(kind==="audit" || kind==="pass"){
       var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date) return; if(kind==="audit"&&x.score==null) return; if(kind==="pass"&&x.result!=="pass"&&x.result!=="fail") return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push({a:a,x:x}); }); });
-      var keys=Object.keys(byWk).sort(); var wk=keys[keys.length-1]; if(!wk){ toast("No audit data yet."); return; }
+      var keys=trendSlice(Object.keys(byWk)); var wk=keys[keys.length-1]; if(!wk){ toast("No audit data in "+trendWinLabel()+"."); return; }
       weekLabel=fmtShort(wk);
       var per={}; byWk[wk].forEach(function(o){ var id=o.a.agentId; per[id]=per[id]||{name:o.a.agentName||id, scores:[], p:0, f:0}; if(kind==="audit"&&o.x.score!=null) per[id].scores.push(o.x.score); if(kind==="pass"){ if(o.x.result==="pass") per[id].p++; else if(o.x.result==="fail") per[id].f++; } });
       if(kind==="audit"){ title="Team audit score"; var all=[]; Object.keys(per).forEach(function(id){ var s=per[id].scores; if(!s.length) return; var avg=Math.round(s.reduce(function(x,y){return x+y;},0)/s.length); s.forEach(function(v){all.push(v);}); rows.push({name:per[id].name, disp:avg+"%", sub:s.length+" audit"+(s.length===1?"":"s")}); });
@@ -2153,7 +2166,7 @@
     } else {
       var k=defs.filter(function(d){return d.id===kpiId;})[0]; if(!k){ toast("Unknown metric."); return; }
       var byWk2={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk2[w.weekOf]=byWk2[w.weekOf]||[]).push({name:a.agentName||a.agentId, v:v}); }); });
-      var keys2=Object.keys(byWk2).sort(); var wk2=keys2[keys2.length-1]; if(!wk2){ toast("No stats logged yet."); return; }
+      var keys2=trendSlice(Object.keys(byWk2)); var wk2=keys2[keys2.length-1]; if(!wk2){ toast("No stats in "+trendWinLabel()+"."); return; }
       weekLabel=fmtShort(wk2); var isCount=k.type!=="dur"; title=k.label+" \u00b7 "+(isCount?"team total / week":"team average / week");
       var arr=byWk2[wk2]; arr.forEach(function(o){ rows.push({name:o.name, disp:fmtKpiVal(k,o.v), sub:""}); });
       var vals=arr.map(function(o){return o.v;}), sum=vals.reduce(function(s,v){return s+v;},0);
@@ -2207,23 +2220,34 @@
   }
 
   /* ================= COACHING (manager-only) ================= */
-  function teamThemes(){ var map={}; TEAMROSTER.forEach(function(a){ fAudits(a).forEach(function(x){ (x.mistakes||[]).forEach(function(m){ m=String(m).trim(); if(!m) return; map[m]=map[m]||{count:0,agents:{}}; map[m].count++; map[m].agents[a.agentId]=(a.agentName||a.agentId); }); }); });
-    return Object.keys(map).map(function(k){ return {theme:k,count:map[k].count,agents:Object.keys(map[k].agents).map(function(id){return map[k].agents[id];})}; }).sort(function(a,b){return b.count-a.count;}); }
+  function teamThemes(){ var map={}; TEAMROSTER.forEach(function(a){ fAudits(a).forEach(function(x){ (x.mistakes||[]).forEach(function(m){ m=String(m).trim(); if(!m) return; map[m]=map[m]||{count:0,agents:{}}; map[m].count++; var ag=map[m].agents[a.agentId]=map[m].agents[a.agentId]||{id:a.agentId,name:a.agentName||a.agentId,count:0}; ag.count++; }); }); });
+    return Object.keys(map).map(function(k){ var ags=Object.keys(map[k].agents).map(function(id){return map[k].agents[id];}).sort(function(a,b){return b.count-a.count;}); return {theme:k,count:map[k].count,agents:ags}; }).sort(function(a,b){return b.count-a.count;}); }
   renderers.coaching=function(){
     var sec=document.getElementById("sec-coaching"), connected=!!TEAM.dir;
     var themes=connected?teamThemes():[];
     var open=(state.coaching||[]).filter(function(c){return c.status!=="resolved";});
     var done=(state.coaching||[]).filter(function(c){return c.status==="resolved";});
+    var reqs=connected?coachOpenRequests():[];
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Develop the team</div><h2>Coaching</h2><p class="lede">Turn recurring audit themes into tracked coaching actions. Themes shown for '+esc(rangeLabel())+'.</p></div><div class="actions"><button class="btn primary" id="coachNew">+ New action</button></div></div>'+
       (connected?'<div style="margin-bottom:18px">'+rangeSeg()+'</div>':'')+
+      '<div class="panel" id="coachReqPanel" style="margin-bottom:18px;'+(reqs.length?'border-color:rgba(var(--a1-rgb),.4)':'')+'"><div class="panel-h"><h3>Coaching requests'+(reqs.length?' ('+reqs.length+')':'')+'</h3></div><div class="panel-b" id="coachReqBox"></div></div>'+
       '<div class="grid2"><div class="panel"><div class="panel-h"><h3>Mistake themes \u00b7 '+esc(rangeLabel())+'</h3></div><div class="panel-b" id="themeBox"></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>Open actions ('+open.length+')</h3></div><div class="panel-b" id="openBox"></div></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>Resolved ('+done.length+')</h3></div><div class="panel-b" id="doneBox"></div></div>';
     var tb=document.getElementById("themeBox");
     if(!connected) tb.innerHTML='<div class="empty">Connect the shared folder to see team audit themes.</div>';
     else if(!themes.length) tb.innerHTML='<div class="empty">No audit mistakes logged in this period \u2014 nice.</div>';
-    else { var top=themes[0].count; tb.innerHTML=themes.map(function(t){ return '<div class="theme-row"><div class="theme-main"><div class="theme-name">'+esc(t.theme)+'</div><div class="theme-bar"><div class="theme-fill" style="width:'+Math.min(100,Math.round(t.count/top*100))+'%"></div></div><div class="theme-sub">'+t.count+' instance'+(t.count===1?"":"s")+' \u00b7 '+t.agents.length+' agent'+(t.agents.length===1?"":"s")+'</div></div><button class="btn sm" data-theme="'+esc(t.theme)+'">Coach this</button></div>'; }).join("");
-      tb.querySelectorAll("[data-theme]").forEach(function(b){ b.onclick=function(){ openCoachEditor(null,{theme:b.getAttribute("data-theme")}); }; }); }
+    else { var top=themes[0].count; tb.innerHTML=themes.map(function(t){
+        var chips='<div class="theme-agents" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">'+t.agents.map(function(ag){ return '<button class="tg click" data-coach-aid="'+esc(ag.id)+'" data-coach-theme="'+esc(t.theme)+'" title="Start a coaching action for '+esc(ag.name)+'" style="cursor:pointer">'+esc(ag.name)+(ag.count>1?(' \u00d7'+ag.count):'')+'</button>'; }).join("")+'</div>';
+        return '<div class="theme-row"><div class="theme-main" style="flex:1"><div class="theme-name">'+esc(t.theme)+'</div><div class="theme-bar"><div class="theme-fill" style="width:'+Math.min(100,Math.round(t.count/top*100))+'%"></div></div><div class="theme-sub">'+t.count+' instance'+(t.count===1?"":"s")+' \u00b7 '+t.agents.length+' agent'+(t.agents.length===1?"":"s")+'</div>'+chips+'</div><button class="btn sm" data-theme="'+esc(t.theme)+'">Coach this</button></div>'; }).join("");
+      tb.querySelectorAll("[data-theme]").forEach(function(b){ b.onclick=function(){ openCoachEditor(null,{theme:b.getAttribute("data-theme")}); }; });
+      tb.querySelectorAll("[data-coach-aid]").forEach(function(b){ b.onclick=function(){ openCoachEditor(null,{theme:b.getAttribute("data-coach-theme"),agentId:b.getAttribute("data-coach-aid")}); }; }); }
+    var rqb=document.getElementById("coachReqBox");
+    if(!connected) rqb.innerHTML='<div class="empty">Connect the shared folder to receive coaching requests.</div>';
+    else if(!reqs.length) rqb.innerHTML='<div class="empty">No open requests. Agents can request coaching from their hub.</div>';
+    else { rqb.innerHTML=reqs.map(function(r){ return '<div class="coach-row"><div class="coach-main"><div class="coach-top"><span class="cat teal">'+esc(r.a.agentName||r.a.agentId)+'</span><span class="badge ip">requested</span><span class="date">'+esc(fmtAgo(r.ts))+'</span></div><div class="detail">'+esc(r.msg||"Requested coaching.")+'</div></div><div class="coach-actions"><button class="btn sm primary" data-chat="'+esc(r.a.agentId)+'">Open chat</button><button class="btn sm" data-coachfrom="'+esc(r.a.agentId)+'">New action</button></div></div>'; }).join("");
+      rqb.querySelectorAll("[data-chat]").forEach(function(b){ b.onclick=function(){ openCoachChat(b.getAttribute("data-chat")); }; });
+      rqb.querySelectorAll("[data-coachfrom]").forEach(function(b){ b.onclick=function(){ openCoachEditor(null,{agentId:b.getAttribute("data-coachfrom")}); }; }); }
     renderCoachList(document.getElementById("openBox"),open,false);
     renderCoachList(document.getElementById("doneBox"),done,true);
     document.getElementById("coachNew").onclick=function(){ if(!TEAMROSTER.length){ toast("No agents sharing yet."); return; } openCoachEditor(null,{}); };
@@ -2241,6 +2265,32 @@
     box.querySelectorAll("[data-delc]").forEach(function(b){ b.onclick=function(){ state.coaching=state.coaching.filter(function(x){return x.id!==b.getAttribute("data-delc");}); save(); renderers.coaching(); }; });
   }
   function setCoachStatus(id,st){ var c=(state.coaching||[]).filter(function(x){return x.id===id;})[0]; if(!c) return; c.status=st; if(st==="resolved") c.resolvedDate=todayISO(); save(); renderers.coaching(); toast(st==="resolved"?"Marked resolved.":"Re-opened."); }
+  /* coaching chat helpers — request is "open" until the manager replies after it */
+  function coachThreadOf(a, mgrMsgs){ var t=[]; (a.coachThread||[]).forEach(function(m){ t.push({ts:m.ts||m.date||"",from:"agent",text:m.text||"",request:!!m.request}); }); (mgrMsgs||[]).forEach(function(m){ t.push({ts:m.ts||m.date||"",from:"manager",text:m.text||""}); }); t.sort(function(x,y){return String(x.ts).localeCompare(String(y.ts));}); return t; }
+  function lastTs(arr,pred){ var m=""; (arr||[]).forEach(function(x){ if(pred&&!pred(x)) return; var t=x.ts||x.date||""; if(t>m) m=t; }); return m; }
+  function coachOpenRequests(){ var out=[]; TEAMROSTER.forEach(function(a){ var ct=a.coachThread||[]; var reqs=ct.filter(function(m){return m.request;}); if(!reqs.length) return;
+      var lastReq=lastTs(ct,function(m){return m.request;}); var lastAgent=lastTs(ct);
+      // manager reply time lives in the feedback file; if we don't have it yet, treat as open
+      var mgrReply=(a._coachMgrReply||""); if(mgrReply && mgrReply>lastReq) return;
+      var msg=(reqs[reqs.length-1].text)||""; out.push({a:a, ts:lastReq, msg:msg}); });
+    return out.sort(function(x,y){return String(y.ts).localeCompare(String(x.ts));}); }
+  function openCoachChat(aid){ var a=null,i; for(i=0;i<TEAMROSTER.length;i++){ if(TEAMROSTER[i].agentId===aid){ a=TEAMROSTER[i]; break; } } if(!a){ toast("Agent not found."); return; }
+    getFeedback(aid).then(function(fb){ fb.coachMsgs=fb.coachMsgs||[];
+      a._coachMgrReply=lastTs(fb.coachMsgs);
+      function draw(){ var thread=coachThreadOf(a,fb.coachMsgs);
+        var body=thread.length? thread.map(function(m){ var mine=m.from==="manager"; return '<div class="cbubble '+(mine?"me":"them")+'"><div class="cb-meta">'+(mine?"You":esc(a.agentName||"Agent"))+(m.request?' · <b style="color:var(--a1)">coaching request</b>':'')+' · '+esc(m.ts?fmtAgo(m.ts):"")+'</div><div class="cb-text">'+esc(m.text)+'</div></div>'; }).join("") : '<div class="empty">No messages yet. Say hello or follow up on their request.</div>';
+        document.getElementById("ccThread").innerHTML=body; var tw=document.getElementById("ccThread"); tw.scrollTop=tw.scrollHeight; }
+      openModal('<div class="modal-h"><h3>Chat · '+esc(a.agentName||a.agentId)+'</h3><button class="x" id="mX">✕</button></div>'
+        +'<div class="modal-b"><div id="ccThread" class="cchat"></div></div>'
+        +'<div class="modal-f"><input class="in grow" id="ccMsg" placeholder="Message '+esc((a.agentName||"agent").split(" ")[0])+'…" style="flex:1"><button class="btn primary" id="ccSend">Send</button></div>');
+      document.getElementById("mX").onclick=function(){ closeModal; closeModal(); };
+      draw();
+      function send(){ var inp=document.getElementById("ccMsg"); var t=(inp.value||"").trim(); if(!t) return; var m={id:uid("cm"),ts:nowISO(),text:t,from:"manager"}; fb.coachMsgs.push(m); a._coachMgrReply=m.ts; inp.value=""; draw();
+        saveFeedback(fb,{owns:["coachMsgs"],silent:true}).then(function(){ renderers.coaching(); }); }
+      document.getElementById("ccSend").onclick=send;
+      document.getElementById("ccMsg").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); send(); } });
+    }).catch(function(){ toast("Couldn't open chat — reconnect the folder."); });
+  }
   function openCoachEditor(existing,preset){ var editing=!!existing, c=existing||{};
     openModal('<div class="modal-h"><h3>'+(editing?"Edit":"New")+' coaching action</h3><button class="x" id="mX">\u2715</button></div>'+
       '<div class="modal-b">'+
@@ -2482,6 +2532,26 @@
 
   function start(){ applyTheme(); applyAccent(); applyRole(); if(hasLock()) showLock(); buildContours(); teamRestore().then(function(){ if(!isManager()&&state.config.autoPull&&TEAM.dir) pullFeedback(true); updateFbDot(""); }); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||state.config.role||"Live chat agent"; go("dash"); requestAnimationFrame(positionNavInd); setTimeout(positionNavInd,260); try{ enhInit(); }catch(e){} }
 
+  /* ================= LINKS ================= */
+  renderers.links=function(){
+    var sec=document.getElementById("sec-links"); var links=state.links||[];
+    sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Quick access</div><h2>Links</h2><p class="lede">Your go-to portals, tools and pages — one click away. Stored on this device.</p></div><div class="actions"><button class="btn primary" id="linkAdd">+ Add link</button></div></div><div class="link-grid" id="linkGrid"></div>';
+    var g=document.getElementById("linkGrid");
+    if(!links.length) g.innerHTML='<div class="empty"><div class="big">No links yet</div>Add the pages you open all day.</div>';
+    else g.innerHTML=links.map(function(l){ var u=l.url||"#"; var ini=((l.title||l.url||"?").replace(/^https?:\/\//i,"").charAt(0)||"?").toUpperCase(); return '<div class="link-card"><a class="link-main" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer"><span class="link-ico">'+esc(ini)+'</span><span class="link-text"><span class="link-title">'+esc(l.title||l.url)+'</span><span class="link-url">'+esc(l.url||"")+'</span></span></a><div class="link-actions"><button class="btn sm" data-edit="'+esc(l.id)+'">Edit</button><button class="rm" data-del="'+esc(l.id)+'">✕</button></div></div>'; }).join("");
+    document.getElementById("linkAdd").onclick=function(){ openLinkEditor(null); };
+    g.querySelectorAll("[data-edit]").forEach(function(b){ b.onclick=function(){ var l=(state.links||[]).filter(function(x){return x.id===b.getAttribute("data-edit");})[0]; if(l) openLinkEditor(l); }; });
+    g.querySelectorAll("[data-del]").forEach(function(b){ b.onclick=function(){ deleteWithUndo("links",b.getAttribute("data-del"),"Link"); }; });
+  };
+  function openLinkEditor(l){ var editing=!!l; l=l||{};
+    openModal('<div class="modal-h"><h3>'+(editing?"Edit":"Add")+' link</h3><button class="x" id="mX">✕</button></div>'
+      +'<div class="modal-b"><label class="fld"><span class="lab">Title</span><input class="in" id="lkTitle" value="'+esc(l.title||"")+'" placeholder="e.g. Admin portal"></label>'
+      +'<label class="fld"><span class="lab">URL</span><input class="in" id="lkUrl" value="'+esc(l.url||"")+'" placeholder="https://…"></label></div>'
+      +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="lkSave">'+(editing?"Save":"Add link")+'</button></div>');
+    document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
+    document.getElementById("lkSave").onclick=function(){ var t=document.getElementById("lkTitle").value.trim(), u=document.getElementById("lkUrl").value.trim(); if(!u){ toast("Add a URL."); return; } if(!/^https?:\/\//i.test(u)&&!/^\//.test(u)) u="https://"+u; state.links=state.links||[]; if(editing){ l.title=t; l.url=u; } else { state.links.push({id:uid("lk"),title:t,url:u}); } save(); closeModal(); renderers.links(); toast(editing?"Link saved.":"Link added."); };
+  }
+
   /* ================= v7 enhancements (additive) ================= */
   function enhInit(){
     enhCSS();
@@ -2520,9 +2590,27 @@
         +".iconbtn{transition:transform .15s var(--reveal-ease),border-color .15s,color .15s,background .15s}.iconbtn:hover{transform:translateY(-1px)}.iconbtn:active{transform:scale(.92)}"
         +".navi{transition:transform .15s var(--reveal-ease),color .18s}.navi:active{transform:scale(.94)}"
         +".enh-confetti{position:fixed;inset:0;pointer-events:none;z-index:9999}"
-        +"@media(prefers-reduced-motion:reduce){.enh-stagger,.brand .mk{animation:none!important}.btn.primary:hover::after{animation:none!important}}";
+        +".cchat{display:flex;flex-direction:column;gap:8px;max-height:48vh;overflow-y:auto;padding:4px 2px}"
+        +".cbubble{max-width:80%;padding:8px 11px;border-radius:13px;font-size:13.5px;line-height:1.4}"
+        +".cbubble .cb-meta{font-size:10.5px;color:var(--ink-faint);margin-bottom:3px}"
+        +".cbubble.me{align-self:flex-end;background:rgba(var(--a1-rgb),.16);border:1px solid rgba(var(--a1-rgb),.32)}"
+        +".cbubble.them{align-self:flex-start;background:var(--card-2);border:1px solid var(--line)}"
+        +".link-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}"
+        +".link-card{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card);transition:transform .2s var(--reveal-ease),box-shadow .2s,border-color .2s}"
+        +".link-card:hover{transform:translateY(-2px);box-shadow:var(--sh);border-color:var(--a1)}"
+        +".link-main{display:flex;align-items:center;gap:11px;flex:1;min-width:0;text-decoration:none;color:var(--ink)}"
+        +".link-ico{width:38px;height:38px;border-radius:10px;background:var(--grad-teal);color:#fff;display:grid;place-items:center;font-family:var(--disp);font-weight:700;font-size:16px;flex:0 0 auto;box-shadow:0 8px 20px -10px rgba(var(--a1-rgb),.8)}"
+        +".link-text{display:flex;flex-direction:column;min-width:0}"
+        +".link-title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+        +".link-url{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+        +".link-actions{display:flex;gap:4px;flex:0 0 auto}"
+        +".enh-shine{position:fixed;inset:-45%;z-index:0;pointer-events:none;opacity:.42;mix-blend-mode:screen;filter:blur(70px);background:conic-gradient(from 0deg,rgba(var(--a1-rgb),.10),rgba(var(--a2-rgb),.12),rgba(var(--a1-rgb),.03),rgba(var(--a2-rgb),.11),rgba(var(--a1-rgb),.10));animation:enhShine 30s linear infinite}"
+        +"body.light .enh-shine{opacity:.5;mix-blend-mode:normal;filter:blur(90px)}"
+        +"@keyframes enhShine{0%{transform:rotate(0deg) scale(1.05)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1.05)}}"
+        +"@media(prefers-reduced-motion:reduce){.enh-stagger,.brand .mk,.enh-shine{animation:none!important}.btn.primary:hover::after{animation:none!important}}";
       document.head.appendChild(s);
     }
+    if(!document.getElementById("enhShine")){ var sh=document.createElement("div"); sh.id="enhShine"; sh.className="enh-shine"; document.body.insertBefore(sh, document.body.firstChild); }
     if(!document._enhRipple){ document._enhRipple=true;
       document.addEventListener("click",function(e){ if(ENH_REDUCE) return; var b=e.target.closest(".btn"); if(!b) return;
         var r=b.getBoundingClientRect(), d=Math.max(r.width,r.height), sp=document.createElement("span"); sp.className="enh-ripple";
@@ -2532,6 +2620,10 @@
     if(!toast._enh){ var _toast=toast; toast=function(m){ _toast.apply(this,arguments); if(!ENH_REDUCE && /recognition sent|nice work|well done|congrat|🎉/i.test(String(m))) enhConfetti(); }; toast._enh=true; }
     // trend-card breakdown
     if(!document._enhTrendClick){ document._enhTrendClick=true; document.addEventListener("click",function(e){ var c=e.target.closest&&e.target.closest(".tcard[data-trend]"); if(!c) return; if(typeof openTrendBreakdown==="function") openTrendBreakdown(c.getAttribute("data-trend"), c.getAttribute("data-kpi")); }); }
+    // team-trends window selector
+    if(!document._enhTrendWin){ document._enhTrendWin=true;
+      document.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest("[data-tw]"); if(!b||typeof trendWin==="undefined") return; trendWin.mode=b.getAttribute("data-tw"); if(typeof current!=="undefined"&&current==="team"&&!teamSel) renderers.team(); });
+      document.addEventListener("change",function(e){ var t=e.target; if(typeof trendWin==="undefined"||!t||!t.id) return; if(t.id==="twFrom"){ trendWin.from=t.value; trendWin.mode="custom"; } else if(t.id==="twTo"){ trendWin.to=t.value; trendWin.mode="custom"; } else return; if(current==="team"&&!teamSel) renderers.team(); }); }
     if(typeof go==="function" && !go._enhAnim){ var _go=go; go=function(){ _go.apply(this,arguments); setTimeout(function(){ enhAnimateSection(); },30); }; go._enhAnim=true; }
     enhAnimateSection();
   }
@@ -2752,13 +2844,6 @@
     var flags=[];
     var days=a.updatedAt?Math.floor((Date.now()-new Date(a.updatedAt).getTime())/86400000):999;
     if(days>=7) flags.push('<span class="enh-flag stale" title="No fresh share in '+days+' days">stale '+days+'d</span>');
-    var h=enhAgentHealth(a);
-    if(h){
-      var cls=h.score>=85?"ok":h.score>=70?"warn":"bad";
-      var word=h.score>=85?"strong":h.score>=70?"solid":"needs focus";
-      var tip="Health "+h.score+" — pass rate "+(h.rate!=null?h.rate+"%":"—")+" · audit avg "+(h.avg!=null?h.avg+"%":"—")+(h.statsPct!=null?(" · stats on target "+h.onT+"/"+h.cnt):" · no stat targets set");
-      flags.push('<span class="enh-flag '+cls+'" title="'+esc(tip)+'">'+word+' '+h.score+'</span>');
-    }
     try{
       if(typeof inPrev==="function"){ var au=fAudits(a), avg=auAvgOf(au); var pv=[]; (a.audits||[]).forEach(function(x){ if(inPrev(x.date)&&x.score!=null) pv.push(x.score); });
         var pa=pv.length?Math.round(pv.reduce(function(s,v){return s+v;},0)/pv.length):null;
