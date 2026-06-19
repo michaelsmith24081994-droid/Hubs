@@ -2474,7 +2474,35 @@
   function ywSeed(){ return {week:{team:"Daily Update",sub:"",commencing:"",postedBy:""}, shifts:{Mon:[],Tue:[],Wed:[],Thu:[],Fri:[]}, smb:{Mon:"",Tue:"",Wed:"",Thu:"",Fri:""}, reminders:[], links:[], stats:{byName:{},comments:{}}, updatedAt:""}; }
   function ywEnsure(yw){ var d=ywSeed(); yw=(yw&&typeof yw==="object")?yw:d; yw.week=Object.assign({},d.week,yw.week||{}); yw.shifts=yw.shifts||{}; YW_DAYS.forEach(function(x){ if(!Array.isArray(yw.shifts[x])) yw.shifts[x]=[]; }); yw.smb=yw.smb||{}; YW_DAYS.forEach(function(x){ if(typeof yw.smb[x]!=="string") yw.smb[x]=""; }); if(!Array.isArray(yw.reminders)) yw.reminders=[]; if(!Array.isArray(yw.links)) yw.links=[]; if(!yw.stats||typeof yw.stats!=="object") yw.stats={byName:{},comments:{}}; if(!yw.stats.byName) yw.stats.byName={}; if(!yw.stats.comments) yw.stats.comments={}; return yw; }
   function ywBoardData(yw){ return { week:yw.week, shifts:yw.shifts, smb:yw.smb, reminders:(yw.reminders||[]).map(function(r){ return {category:r.category,title:r.title,lines:(r.body||"").split("\n")}; }), links:yw.links, stats:yw.stats||{byName:{},comments:{}} }; }
-  function ywBoardHTML(data){ var t=document.getElementById("ywBoardTpl"); if(!t) return "<p>Board template missing.</p>"; var bs=String.fromCharCode(92); var tpl=t.textContent.split("<"+bs+"/script>").join("</scr"+"ipt>"); var json=JSON.stringify(data).split("<").join(bs+"u003c"); return tpl.replace("__DATA_JSON__",function(){ return json; }); }
+  function ywThemeCSS(){
+    var cs=getComputedStyle(document.documentElement), g=function(n,f){var x=(cs.getPropertyValue(n)||"").trim();return x||f;};
+    var a1=g("--a1","#ff2d8e"),a2=g("--a2","#22e6c1"),a1r=g("--a1-rgb","255,45,142"),a2r=g("--a2-rgb","34,230,193");
+    var bg=g("--bg","#0c0820"),ink=g("--ink","#f3f1ff"),inkS=g("--ink-soft","#b6b0d6"),inkF=g("--ink-faint","#7f789c");
+    var light=document.body.classList.contains("light");
+    var card=light?"#ffffff":"rgba(255,255,255,.05)", card2=light?"#ffffff":"rgba(255,255,255,.08)", line=light?"rgba(20,16,40,.12)":"rgba(255,255,255,.12)", stick=light?"#ffffff":"#181233";
+    var grad="linear-gradient(145deg,"+a1+","+a2+")";
+    var bodyBg=light?bg:("radial-gradient(900px 600px at 84% -12%,rgba("+a1r+",.16),transparent 58%),radial-gradient(760px 600px at 6% 6%,rgba("+a2r+",.12),transparent 56%),"+bg);
+    return ":root{--paper:"+bg+";--card:"+card+";--ink:"+ink+";--ink-soft:"+inkS+";--ink-faint:"+inkF+";--line:"+line+";--line-soft:"+line+";--teal:"+a2+";--teal-deep:"+a2+";--teal-wash:rgba("+a2r+",.16);--amber:#ffb24d;--amber-wash:rgba(255,178,77,.16);--slate:"+inkF+";--slate-wash:rgba("+a2r+",.10)}"
+      +"body{color:"+ink+" !important;background:"+bodyBg+" !important;background-attachment:fixed}"
+      +".card,.panel,.stat,.ts-panel,.ts-card,.ts-chart-wrap,.cover,.days{background:"+card+" !important;border-color:"+line+" !important}"
+      +".panel-head,.card-head,.foot,.hero,.topbar{border-color:"+line+" !important}"
+      +".ts-table th,.ts-table td{border-color:"+line+" !important}"
+      +".ts-table td:first-child,.ts-table th:first-child{background:"+stick+" !important}"
+      +".link{background:"+card+" !important;border-color:"+line+" !important;color:"+ink+" !important}"
+      +".link .lico{background:"+card2+" !important;color:"+inkS+" !important}.link:hover{background:rgba("+a2r+",.14) !important;border-color:"+a2+" !important}"
+      +".pill.time{background:rgba("+a2r+",.16) !important;color:"+ink+" !important;border-color:rgba("+a2r+",.32) !important}.pill.off{background:"+card2+" !important;color:"+inkF+" !important}"
+      +".shift-row:hover,.ts-table tbody tr:hover td,.ts-table tbody tr:hover td:first-child{background:rgba("+a2r+",.08) !important}"
+      +".mark,.ts-cta,.day-pill[aria-current=\"true\"]{background:"+grad+" !important;color:#fff !important}"
+      +".ts-btn{background:"+card+" !important;border-color:"+line+" !important;color:"+ink+" !important}"
+      +".smb{background:rgba("+a2r+",.12) !important;border-color:rgba("+a2r+",.3) !important}.smb .who{color:"+ink+" !important}"
+      +".ts-avg td{background:rgba("+a2r+",.16) !important;border-color:"+a2+" !important;color:"+ink+" !important}.ts-avg td:first-child{background:rgba("+a2r+",.16) !important;color:"+a2+" !important}"
+      +".ts-tot td{background:rgba("+a2r+",.08) !important;color:"+ink+" !important}.ts-tot td:first-child{background:rgba("+a2r+",.08) !important}"
+      +".avatar{background:rgba("+a2r+",.16) !important;color:"+a2+" !important}"
+      +".eyebrow{color:"+a2+" !important}.eyebrow::before{background:"+a2+" !important}"
+      +".cover-read #coverN,.cover-read #coverT{color:"+ink+" !important}.cbar.active{background:"+a2+" !important}.ch-bar{background:"+a2+" !important}"
+      +".dot.t{background:"+a2+"}.reminder+.reminder{border-color:"+line+" !important}";
+  }
+  function ywBoardHTML(data){ var t=document.getElementById("ywBoardTpl"); if(!t) return "<p>Board template missing.</p>"; var bs=String.fromCharCode(92); var tpl=t.textContent.split("<"+bs+"/script>").join("</scr"+"ipt>"); var json=JSON.stringify(data).split("<").join(bs+"u003c"); var out=tpl.replace("__DATA_JSON__",function(){ return json; }); return out.replace("</head>","<style>"+ywThemeCSS()+"</style></head>"); }
   function ywPublish(silent){ if(!TEAM.dir){ if(!silent) toast("Connect the shared folder to publish."); return Promise.resolve(); } var payload=Object.assign({kind:"yourweek",updatedAt:nowISO()}, ywBoardData(state.yourWeek)); return fsWrite("yourweek.json",payload).then(function(){ if(!silent) toast("Published — the team sees it on Refresh."); }).catch(function(){ if(!silent) toast("Couldn’t publish — reconnect the folder."); }); }
   function ywRefreshPreview(){ clearTimeout(ywPrevT); ywPrevT=setTimeout(function(){ var f=document.getElementById("ywPreview"); if(f) f.srcdoc=ywBoardHTML(ywBoardData(state.yourWeek)); },350); }
   function ywTouch(){ state.yourWeek.updatedAt=nowISO(); save(); ywRefreshPreview(); if(TEAM.dir){ clearTimeout(ywPubT); ywPubT=setTimeout(function(){ ywPublish(true); },1000); } }
@@ -2770,10 +2798,13 @@
     }
     enhTimeOwed(sec);
   }
+  var _toPulled=false;
   function enhTimeOwed(sec){
+    // pull the latest from the shared folder once on dashboard load so manager entries show without a manual sync
+    if(TEAM.dir && !_toPulled){ _toPulled=true; Promise.resolve(pullFeedback(true)).then(function(){ if(current==="dash") renderers.dash(); }).catch(function(){}); }
     var to=(state.teamInbox&&state.teamInbox.timeOwed)||[];
     var acks=(state.teamInbox&&state.teamInbox.timeOwedAcks)||[];
-    if(!to.length && !(state.timeOwedReq||[]).length) return; // hide until there's something
+    if(!TEAM.dir && !to.length && !(state.timeOwedReq||[]).length) return; // nothing to show & can't request without a folder
     var bal=to.reduce(function(s,e){return s+(e.delta||0);},0);
     var ackBy={}; acks.forEach(function(a){ ackBy[a.reqId]=a.status; });
     var pending=(state.timeOwedReq||[]).filter(function(r){ return !ackBy[r.id]; });
