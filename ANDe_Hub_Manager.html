@@ -2664,6 +2664,7 @@
       +".cover-read #coverN,.cover-read #coverT{color:"+ink+" !important}.cbar.active{background:"+a2+" !important}.ch-bar{background:"+a2+" !important}"
       +".dot.t{background:"+a2+"}.reminder+.reminder{border-color:"+line+" !important}.links-panel{display:none !important}";
   }
+  function ywAutosize(f){ try{ var d=f.contentDocument||(f.contentWindow&&f.contentWindow.document); if(!d) return; var set=function(){ try{ var hh=Math.max(d.documentElement?d.documentElement.scrollHeight:0, d.body?d.body.scrollHeight:0); if(hh && Math.abs((parseInt(f.style.height,10)||0)-hh)>2) f.style.height=(hh+6)+"px"; }catch(e){} }; set(); setTimeout(set,150); setTimeout(set,500); setTimeout(set,1200); try{ if(window.ResizeObserver && !f._ywRO){ var ro=new ResizeObserver(set); if(d.documentElement) ro.observe(d.documentElement); if(d.body) ro.observe(d.body); f._ywRO=ro; } }catch(e){} try{ d.addEventListener("click",function(){ setTimeout(set,80); setTimeout(set,320); }); }catch(e){} try{ if(f.contentWindow) f.contentWindow.addEventListener("resize",set); }catch(e){} }catch(e){} }
   function ywBoardHTML(data){ var t=document.getElementById("ywBoardTpl"); if(!t) return "<p>Board template missing.</p>"; var bs=String.fromCharCode(92); var tpl=t.textContent.split("<"+bs+"/script>").join("</scr"+"ipt>"); var json=JSON.stringify(data).split("<").join(bs+"u003c"); var out=tpl.replace("__DATA_JSON__",function(){ return json; }); return out.replace("</head>","<style>"+ywThemeCSS()+"</style></head>"); }
   function ywPublish(silent){ if(!TEAM.dir){ if(!silent) toast("Connect the shared folder to publish."); return Promise.resolve(); } var payload=Object.assign({kind:"yourweek",updatedAt:nowISO()}, ywBoardData(state.yourWeek)); return fsWrite("yourweek.json",payload).then(function(){ if(!silent) toast("Published — the team sees it on Refresh."); }).catch(function(){ if(!silent) toast("Couldn’t publish — reconnect the folder."); }); }
   function ywRefreshPreview(){ clearTimeout(ywPrevT); ywPrevT=setTimeout(function(){ var f=document.getElementById("ywPreview"); if(f) f.srcdoc=ywBoardHTML(ywBoardData(state.yourWeek)); },350); }
@@ -2673,7 +2674,7 @@
       +"@media(max-width:1100px){.yw-split{grid-template-columns:1fr}}"
       +".yw-pvhead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin-bottom:8px}"
       +".yw-preview{width:100%;height:72vh;border:0;border-radius:0;background:transparent;position:sticky;top:80px}"
-      +".yw-full{height:84vh;position:static}"
+      +".yw-full{height:auto;min-height:50vh;position:static;width:100%;display:block;overflow:hidden}"
       +".yw-row{display:grid;grid-template-columns:1.3fr .9fr .8fr .8fr auto;gap:7px;align-items:center;margin-bottom:7px}"
       +"@media(max-width:620px){.yw-row{grid-template-columns:1fr 1fr}}";
     document.head.appendChild(s); }
@@ -2684,7 +2685,7 @@
     if(!TEAM.dir){ host.innerHTML='<div class="empty"><div class="big">Not connected</div>Connect the shared folder in Settings to see Your Week.</div>'; return; }
     host.innerHTML='<div class="vhint">Loading the latest board…</div>';
     fsRead("yourweek.json").then(function(d){ if(!d){ host.innerHTML='<div class="empty"><div class="big">Nothing posted yet</div>Your manager hasn’t published this week’s board.</div>'; return; }
-      host.innerHTML='<iframe class="yw-preview yw-full" id="ywPreview" title="Your Week board"></iframe>'; document.getElementById("ywPreview").srcdoc=ywBoardHTML(d);
+      host.innerHTML='<iframe class="yw-preview yw-full" id="ywPreview" title="Your Week board" scrolling="no"></iframe>'; var ywf=document.getElementById("ywPreview"); ywf.onload=function(){ ywAutosize(ywf); }; ywf.srcdoc=ywBoardHTML(d);
     }).catch(function(){ host.innerHTML='<div class="empty">Couldn’t load — reconnect the folder.</div>'; });
   }
   function ywRenderManager(sec){
