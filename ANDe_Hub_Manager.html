@@ -2164,9 +2164,29 @@
     var seg='<div class="seg sm" id="twSeg" style="flex-wrap:wrap">'+opts.map(function(o){return '<button data-tw="'+o[0]+'"'+(trendWin.mode===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join("")+'</div>';
     var dateRow=trendWin.mode==="custom"?('<div class="addline" style="margin-top:10px;gap:8px;align-items:center"><span class="vhint">From</span><input class="in" type="date" id="twFrom" value="'+esc(trendWin.from)+'" style="max-width:160px"><span class="vhint">to</span><input class="in" type="date" id="twTo" value="'+esc(trendWin.to)+'" style="max-width:160px"></div>'):'';
     return '<div class="panel" style="margin-top:6px"><div class="panel-h" style="flex-wrap:wrap;gap:10px"><h3>Team trends \u00b7 '+esc(trendWinLabel())+'</h3>'+seg+'<span class="vhint" style="flex-basis:100%;margin:0">\u25b2 better \u25bc worse \u00b7 tap a card for the per-agent breakdown</span></div><div class="panel-b">'+dateRow+body+'</div></div>'; }
-  /* per-agent breakdown \u2014 aggregated over the SELECTED window, matching the card */
+  function bigTrendChart(points, col){ col=col||"var(--a2)";
+    if(!points||!points.length) return '<div class="empty">No data to chart.</div>';
+    var vals=points.map(function(p){return p.value;}); var mn=Math.min.apply(null,vals), mx=Math.max.apply(null,vals);
+    if(mn===mx){ mn=Math.min(0,mn); if(mn===mx) mx=mn+1; } var rng=mx-mn||1;
+    var n=points.length, W=Math.max(340,n*62), H=190, padX=34, padT=24, padB=34;
+    function ix(i){ return padX+(n===1?(W-2*padX)/2:i/(n-1)*(W-2*padX)); }
+    function iy(v){ return padT+(1-(v-mn)/rng)*(H-padT-padB); }
+    var pts=points.map(function(p,i){return [ix(i),iy(p.value)];});
+    var line=pts.map(function(p,i){return (i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ');
+    var area='M'+pts[0][0].toFixed(1)+' '+(H-padB)+' '+pts.map(function(p){return 'L'+p[0].toFixed(1)+' '+p[1].toFixed(1);}).join(' ')+' L'+pts[n-1][0].toFixed(1)+' '+(H-padB)+' Z';
+    var grid='<line x1="'+padX+'" y1="'+(H-padB)+'" x2="'+(W-padX/2)+'" y2="'+(H-padB)+'" stroke="var(--line)" stroke-width="1"/>';
+    var marks=points.map(function(p,i){ return '<circle cx="'+pts[i][0].toFixed(1)+'" cy="'+pts[i][1].toFixed(1)+'" r="3.4" fill="'+col+'"/>'
+      +'<text x="'+pts[i][0].toFixed(1)+'" y="'+(pts[i][1]-9).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink)">'+esc(p.disp)+'</text>'
+      +'<text x="'+pts[i][0].toFixed(1)+'" y="'+(H-padB+16)+'" text-anchor="middle" font-size="10" fill="var(--ink-faint)">'+esc(p.label)+'</text>'; }).join('');
+    return '<div style="overflow-x:auto;margin:4px 0 16px"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:'+Math.min(W,620)+'px;height:210px;display:block">'
+      +grid+'<path d="'+area+'" fill="'+col+'" opacity="0.13"/>'
+      +'<path d="'+line+'" fill="none" stroke="'+col+'" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>'+marks+'</svg></div>'; }
+  /* per-agent breakdown + expanded chart \u2014 aggregated over the SELECTED window */
   function openTrendBreakdown(kind, kpiId){
     var defs=teamKpiDefs(), title, overallDisp, note="", rows=[], span="";
+    var kk=kind==="kpi"?defs.filter(function(d){return d.id===kpiId;})[0]:null;
+    if(kind==="kpi"&&!kk){ toast("Unknown metric."); return; }
+    var A=kind==="audit"?teamAuditTrend():kind==="pass"?teamPassRateTrend():teamKpiTrend(kk);
     if(kind==="audit" || kind==="pass"){
       var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date) return; if(kind==="audit"&&x.score==null) return; if(kind==="pass"&&x.result!=="pass"&&x.result!=="fail") return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push({a:a,x:x}); }); });
       var keys=trendSlice(Object.keys(byWk)); if(!keys.length){ toast("No audit data in "+trendWinLabel()+"."); return; }
@@ -2190,8 +2210,10 @@
     rows.sort(function(a,b){return (a.name||"").localeCompare(b.name||"");});
     var tbl=rows.length?('<table class="tbl" style="width:100%"><thead><tr><th>Agent</th><th style="text-align:right">Value</th><th>Detail</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td class="num" style="text-align:right;font-variant-numeric:tabular-nums">'+esc(r.disp)+'</td><td style="color:var(--ink-faint)">'+esc(r.sub||"")+'</td></tr>';}).join("")+'</tbody></table>'):'<div class="empty">No agent figures in this window.</div>';
     openModal('<div class="modal-h"><h3>'+esc(title)+'</h3><button class="x" id="mX">\u2715</button></div>'
-      +'<div class="modal-b"><div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px"><span style="font-family:var(--disp);font-size:30px;font-weight:700">'+esc(overallDisp)+'</span><span class="vhint">'+esc(trendWinLabel())+' \u00b7 '+esc(span)+'</span></div>'
-      +'<div class="vhint" style="margin-bottom:14px">'+esc(note)+'</div>'+tbl+'</div>'
+      +'<div class="modal-b"><div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px"><span style="font-family:var(--disp);font-size:30px;font-weight:700">'+esc(A.disp||overallDisp)+'</span><span class="vhint">'+esc(trendWinLabel())+' \u00b7 '+esc(span)+'</span></div>'
+      +bigTrendChart(A.points)
+      +'<div class="vhint" style="margin:0 0 12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:var(--ink-faint)">Per-agent breakdown</div>'
+      +'<div class="vhint" style="margin-bottom:10px">'+esc(note)+'</div>'+tbl+'</div>'
       +'<div class="modal-f"><button class="btn" id="mClose">Close</button></div>');
     var x=document.getElementById("mX"); if(x) x.onclick=closeModal; var cl=document.getElementById("mClose"); if(cl) cl.onclick=closeModal;
   }
