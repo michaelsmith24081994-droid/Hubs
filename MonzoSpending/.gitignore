@@ -1,0 +1,22 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+.DS_Store
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Local secrets — never commit real Monzo credentials.
+# If you split credentials into a separate file, keep it out of git:
+Secrets.swift
+Secrets.xcconfig
