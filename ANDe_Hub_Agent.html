@@ -2885,13 +2885,14 @@
     var bal=to.reduce(function(s,e){return s+(e.delta||0);},0);
     var ackBy={}; acks.forEach(function(a){ ackBy[a.reqId]=a.status; });
     var pending=(state.timeOwedReq||[]).filter(function(r){ return !ackBy[r.id]; });
-    var recent=to.slice().reverse().slice(0,4);
+    var monthAgo=Date.now()-31*86400000;
+    var recent=to.filter(function(e){ var t=e.ts?new Date(e.ts).getTime():0; return t>=monthAgo; }).slice().reverse();
     var card=document.createElement("div"); card.className="enh-card";
     card.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div><h3>Time owed</h3>'
       +'<div style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+(bal<0?'var(--red)':'var(--a2)')+'">'+esc(fmtMins(bal))+'</div>'
       +'<div style="font-size:12px;color:var(--ink-faint)">logged by your manager'+(pending.length?(' · '+pending.length+' request'+(pending.length===1?"":"s")+' pending'):'')+'</div></div>'
       +'<button class="btn sm" id="toReqBtn" style="margin-left:auto">Request change</button></div>'
-      +(recent.length?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">'+recent.map(function(e){return '<div style="font-size:12.5px;color:var(--ink-soft)">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+' <span style="color:var(--ink-faint)">'+esc(fmtShort((e.ts||"").slice(0,10)))+'</span></div>';}).join("")+'</div>'):'')
+      +(recent.length?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px"><div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint)">Last 30 days</div>'+recent.map(function(e){return '<div style="font-size:12.5px;color:var(--ink-soft)">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+' <span style="color:var(--ink-faint)">'+esc(fmtShort((e.ts||"").slice(0,10)))+'</span></div>';}).join("")+'</div>'):'')
       +(pending.length?('<div style="margin-top:8px">'+pending.map(function(r){return '<div style="font-size:12px;color:var(--ink-faint)">⏳ requested '+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+(r.note?(' · '+esc(r.note)):'')+'</div>';}).join("")+'</div>'):'');
     var todayList=sec.querySelector("#todayList"), todayPanel=todayList?todayList.closest(".panel"):null;
     if(todayPanel&&todayPanel.parentNode){ todayPanel.parentNode.insertBefore(card, todayPanel.nextSibling); }
