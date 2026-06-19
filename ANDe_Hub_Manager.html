@@ -2098,13 +2098,26 @@
     if(teamRange==="year") return {s:new Date(n.getFullYear()-1,0,1), e:new Date(n.getFullYear(),0,1)};
     return null; }
   function inPrev(d){ var b=prevBounds(); if(!b||!d) return false; var dt=new Date(d); return !isNaN(dt)&&dt>=b.s&&dt<b.e; }
-  function teamAuditTrend(nWeeks){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(x.score==null||!x.date) return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push(x.score); }); });
-    return trendSlice(Object.keys(byWk)).map(function(k){ var arr=byWk[k]; var avg=Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(k),value:avg,disp:avg+"%"}; }); }
-  function teamKpiTrend(k,nWeeks){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk[w.weekOf]=byWk[w.weekOf]||[]).push(v); }); });
-    var isCount=k.type!=="dur";
-    return trendSlice(Object.keys(byWk)).map(function(key){ var arr=byWk[key]; var val=isCount?arr.reduce(function(s,v){return s+v;},0):Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; }); }
-  function teamPassRateTrend(nWeeks){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date||(x.result!=="pass"&&x.result!=="fail")) return; var wk=mondayKey(x.date); var o=byWk[wk]=byWk[wk]||{p:0,t:0}; o.t++; if(x.result==="pass") o.p++; }); });
-    return trendSlice(Object.keys(byWk)).map(function(k){ var o=byWk[k]; var v=Math.round(o.p/o.t*100); return {label:fmtShort(k),value:v,disp:v+"%"}; }); }
+  function winSpan(keys){ if(!keys.length) return "no data"; var n=keys.length; return n+" wk"+(n===1?"":"s")+(n>1?(" · "+fmtShort(keys[0])+"–"+fmtShort(keys[n-1])):(" · "+fmtShort(keys[0]))); }
+  function teamAuditTrend(){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(x.score==null||!x.date) return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push(x.score); }); });
+    var keys=trendSlice(Object.keys(byWk));
+    var points=keys.map(function(k){ var arr=byWk[k]; var avg=Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(k),value:avg,disp:avg+"%"}; });
+    var all=[]; keys.forEach(function(k){ byWk[k].forEach(function(v){all.push(v);}); });
+    var agg=all.length?Math.round(all.reduce(function(s,v){return s+v;},0)/all.length):null;
+    return {points:points, value:agg, disp:agg!=null?agg+"%":"—", sub:"avg of "+all.length+" audits · "+winSpan(keys), pct:true, kind:"audit"}; }
+  function teamPassRateTrend(){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date||(x.result!=="pass"&&x.result!=="fail")) return; var wk=mondayKey(x.date); var o=byWk[wk]=byWk[wk]||{p:0,t:0}; o.t++; if(x.result==="pass") o.p++; }); });
+    var keys=trendSlice(Object.keys(byWk));
+    var points=keys.map(function(k){ var o=byWk[k]; var v=Math.round(o.p/o.t*100); return {label:fmtShort(k),value:v,disp:v+"%"}; });
+    var tp=0,tt=0; keys.forEach(function(k){ tp+=byWk[k].p; tt+=byWk[k].t; });
+    var agg=tt?Math.round(tp/tt*100):null;
+    return {points:points, value:agg, disp:agg!=null?agg+"%":"—", sub:tp+" of "+tt+" passed · "+winSpan(keys), pct:true, kind:"pass"}; }
+  function teamKpiTrend(k){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk[w.weekOf]=byWk[w.weekOf]||[]).push(v); }); });
+    var isCount=k.type!=="dur", keys=trendSlice(Object.keys(byWk));
+    var points=keys.map(function(key){ var arr=byWk[key]; var val=isCount?arr.reduce(function(s,v){return s+v;},0):Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; });
+    var all=[]; keys.forEach(function(key){ byWk[key].forEach(function(v){all.push(v);}); });
+    var aggVal=null, disp="—", sub="no data · "+winSpan(keys);
+    if(all.length){ if(isCount){ var sum=all.reduce(function(s,v){return s+v;},0); aggVal=sum; disp=String(Math.round(sum)); sub="team total · "+winSpan(keys); } else { var mean=all.reduce(function(s,v){return s+v;},0)/all.length; aggVal=mean; disp=fmtKpiVal(k,Math.round(mean)); sub="team avg · "+winSpan(keys); } }
+    return {points:points, value:aggVal, disp:disp, sub:sub, lower:k.lower, kind:"kpi", kpiId:k.id, isCount:isCount}; }
   function trendBars(points){ if(!points.length) return '<div class="empty" style="padding:14px">Not enough history yet \u2014 a few weeks of data will fill this in.</div>';
     var max=Math.max.apply(null,points.map(function(p){return p.value;}))||1;
     return '<div class="bars">'+points.map(function(p){ var h=Math.max(4,Math.round(p.value/max*130)); return '<div class="bcol"><div class="bv">'+esc(p.disp)+'</div><div class="bar" style="height:'+h+'px"></div><div class="bl">'+esc(p.label)+'</div></div>'; }).join("")+'</div>'; }
@@ -2121,14 +2134,14 @@
       +'<path d="'+line+'" fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'
       +'<circle cx="'+last[0].toFixed(1)+'" cy="'+last[1].toFixed(1)+'" r="2.4" fill="'+col+'"/></svg>'; }
   function trendDelta(cur,prev,lowerBetter,pct){ if(cur==null||prev==null) return ''; var d=cur-prev; if(Math.abs(d)<0.5) return '<span class="trend flat">\u2192 0</span>'; var improving=lowerBetter?d<0:d>0; var v=(d>0?"+":"")+Math.round(d)+(pct?"%":""); return '<span class="trend '+(improving?"up":"down")+'">'+(d>0?"\u25b2":"\u25bc")+' '+v+'</span>'; }
-  function trendCard(title, points, opts){ opts=opts||{}; if(!points || !points.length) return '';
-    var latest=points[points.length-1], prev=points.length>1?points[points.length-2]:null;
-    var delta=trendDelta(latest.value, prev?prev.value:null, !!opts.lower, !!opts.pct);
-    var dataAttr=opts.kind?(' data-trend="'+opts.kind+'"'+(opts.kpiId?(' data-kpi="'+esc(opts.kpiId)+'"'):'')):'';
-    return '<div class="tcard'+(opts.kind?' click':'')+'"'+dataAttr+'><div class="tc-lbl" title="'+esc(title)+'">'+esc(title)+'</div>'
-      +'<div class="tc-row"><span class="tc-val">'+esc(latest.disp)+'</span>'+delta+'</div>'
-      +sparkline(points,{color:opts.color})
-      +'<div class="tc-foot">'+points.length+' wks \u00b7 to '+esc(latest.label)+(opts.kind?' \u00b7 tap to break down':'')+'</div></div>'; }
+  function trendCard(title, A){ if(!A || !A.points || !A.points.length) return '';
+    var pts=A.points, first=pts[0], last=pts[pts.length-1];
+    var delta=pts.length>1? trendDelta(last.value, first.value, !!A.lower, !!A.pct) : '';
+    var dataAttr=A.kind?(' data-trend="'+A.kind+'"'+(A.kpiId?(' data-kpi="'+esc(A.kpiId)+'"'):'')):'';
+    return '<div class="tcard'+(A.kind?' click':'')+'"'+dataAttr+'><div class="tc-lbl" title="'+esc(title)+'">'+esc(title)+'</div>'
+      +'<div class="tc-row"><span class="tc-val">'+esc(A.disp)+'</span>'+delta+'</div>'
+      +sparkline(pts,{})
+      +'<div class="tc-foot">'+esc(A.sub||"")+(A.kind?' \u00b7 tap to break down':'')+'</div></div>'; }
   function teamTrendsHTML(){
     if(!document.getElementById("trendStyle")){ var ts=document.createElement("style"); ts.id="trendStyle";
       ts.textContent=".trend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(188px,1fr));gap:12px}"
@@ -2141,42 +2154,43 @@
         +".tc-val{font-family:var(--disp);font-weight:700;font-size:23px;letter-spacing:-.02em;line-height:1}"
         +".tc-foot{font-size:10.5px;color:var(--ink-faint);margin-top:5px}";
       document.head.appendChild(ts); }
-    var defs=teamKpiDefs(), N=12, cards=[];
-    cards.push(trendCard("Team audit score", teamAuditTrend(N), {pct:true, kind:"audit"}));
-    cards.push(trendCard("Audit pass rate", teamPassRateTrend(N), {pct:true, kind:"pass"}));
-    defs.forEach(function(k){ cards.push(trendCard(k.label+" \u00b7 "+(k.type!=="dur"?"team/wk":"team avg"), teamKpiTrend(k,N), {lower:k.lower, kind:"kpi", kpiId:k.id})); });
+    var defs=teamKpiDefs(), cards=[];
+    cards.push(trendCard("Team audit score", teamAuditTrend()));
+    cards.push(trendCard("Audit pass rate", teamPassRateTrend()));
+    defs.forEach(function(k){ cards.push(trendCard(k.label, teamKpiTrend(k))); });
     cards=cards.filter(Boolean);
     var body=cards.length? '<div class="trend-grid">'+cards.join("")+'</div>' : '<div class="empty">No data in '+esc(trendWinLabel())+' yet.</div>';
     var opts=[["latest","Latest"],["4w","4 wks"],["12w","12 wks"],["quarter","Quarter"],["year","Year"],["all","All"],["custom","Custom"]];
     var seg='<div class="seg sm" id="twSeg" style="flex-wrap:wrap">'+opts.map(function(o){return '<button data-tw="'+o[0]+'"'+(trendWin.mode===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join("")+'</div>';
     var dateRow=trendWin.mode==="custom"?('<div class="addline" style="margin-top:10px;gap:8px;align-items:center"><span class="vhint">From</span><input class="in" type="date" id="twFrom" value="'+esc(trendWin.from)+'" style="max-width:160px"><span class="vhint">to</span><input class="in" type="date" id="twTo" value="'+esc(trendWin.to)+'" style="max-width:160px"></div>'):'';
     return '<div class="panel" style="margin-top:6px"><div class="panel-h" style="flex-wrap:wrap;gap:10px"><h3>Team trends \u00b7 '+esc(trendWinLabel())+'</h3>'+seg+'<span class="vhint" style="flex-basis:100%;margin:0">\u25b2 better \u25bc worse \u00b7 tap a card for the per-agent breakdown</span></div><div class="panel-b">'+dateRow+body+'</div></div>'; }
-  /* per-agent breakdown behind a trend card's latest-week figure */
+  /* per-agent breakdown \u2014 aggregated over the SELECTED window, matching the card */
   function openTrendBreakdown(kind, kpiId){
-    var defs=teamKpiDefs(), title, weekLabel, overallDisp, note="", rows=[];
+    var defs=teamKpiDefs(), title, overallDisp, note="", rows=[], span="";
     if(kind==="audit" || kind==="pass"){
       var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date) return; if(kind==="audit"&&x.score==null) return; if(kind==="pass"&&x.result!=="pass"&&x.result!=="fail") return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push({a:a,x:x}); }); });
-      var keys=trendSlice(Object.keys(byWk)); var wk=keys[keys.length-1]; if(!wk){ toast("No audit data in "+trendWinLabel()+"."); return; }
-      weekLabel=fmtShort(wk);
-      var per={}; byWk[wk].forEach(function(o){ var id=o.a.agentId; per[id]=per[id]||{name:o.a.agentName||id, scores:[], p:0, f:0}; if(kind==="audit"&&o.x.score!=null) per[id].scores.push(o.x.score); if(kind==="pass"){ if(o.x.result==="pass") per[id].p++; else if(o.x.result==="fail") per[id].f++; } });
+      var keys=trendSlice(Object.keys(byWk)); if(!keys.length){ toast("No audit data in "+trendWinLabel()+"."); return; }
+      span=winSpan(keys); var inWin={}; keys.forEach(function(k){ inWin[k]=1; });
+      var per={}; keys.forEach(function(wk){ byWk[wk].forEach(function(o){ var id=o.a.agentId; per[id]=per[id]||{name:o.a.agentName||id, scores:[], p:0, f:0}; if(kind==="audit"&&o.x.score!=null) per[id].scores.push(o.x.score); if(kind==="pass"){ if(o.x.result==="pass") per[id].p++; else if(o.x.result==="fail") per[id].f++; } }); });
       if(kind==="audit"){ title="Team audit score"; var all=[]; Object.keys(per).forEach(function(id){ var s=per[id].scores; if(!s.length) return; var avg=Math.round(s.reduce(function(x,y){return x+y;},0)/s.length); s.forEach(function(v){all.push(v);}); rows.push({name:per[id].name, disp:avg+"%", sub:s.length+" audit"+(s.length===1?"":"s")}); });
-        overallDisp=all.length?Math.round(all.reduce(function(x,y){return x+y;},0)/all.length)+"%":"\u2014"; note="Overall = mean of every audit score logged that week ("+all.length+" audits)."; }
+        overallDisp=all.length?Math.round(all.reduce(function(x,y){return x+y;},0)/all.length)+"%":"\u2014"; note="Overall = mean of every audit score in the window ("+all.length+" audits). Each agent's value is their own average over the window."; }
       else { title="Audit pass rate"; var tp=0,tf=0; Object.keys(per).forEach(function(id){ var o=per[id], t=o.p+o.f; if(!t) return; tp+=o.p; tf+=o.f; rows.push({name:o.name, disp:Math.round(o.p/t*100)+"%", sub:o.p+" pass \u00b7 "+o.f+" fail"}); });
-        overallDisp=(tp+tf)?Math.round(tp/(tp+tf)*100)+"%":"\u2014"; note="Overall = total passes \u00f7 (passes + fails) that week ("+tp+" / "+(tp+tf)+")."; }
+        overallDisp=(tp+tf)?Math.round(tp/(tp+tf)*100)+"%":"\u2014"; note="Overall = total passes \u00f7 (passes + fails) over the window ("+tp+" / "+(tp+tf)+")."; }
     } else {
       var k=defs.filter(function(d){return d.id===kpiId;})[0]; if(!k){ toast("Unknown metric."); return; }
-      var byWk2={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk2[w.weekOf]=byWk2[w.weekOf]||[]).push({name:a.agentName||a.agentId, v:v}); }); });
-      var keys2=trendSlice(Object.keys(byWk2)); var wk2=keys2[keys2.length-1]; if(!wk2){ toast("No stats in "+trendWinLabel()+"."); return; }
-      weekLabel=fmtShort(wk2); var isCount=k.type!=="dur"; title=k.label+" \u00b7 "+(isCount?"team total / week":"team average / week");
-      var arr=byWk2[wk2]; arr.forEach(function(o){ rows.push({name:o.name, disp:fmtKpiVal(k,o.v), sub:""}); });
-      var vals=arr.map(function(o){return o.v;}), sum=vals.reduce(function(s,v){return s+v;},0);
-      overallDisp=isCount?String(Math.round(sum)):fmtKpiVal(k,Math.round(sum/vals.length));
-      note=isCount?("Overall = sum of every agent's figure that week ("+arr.length+" agents)."):("Overall = mean of every agent's weekly figure ("+arr.length+" agents).");
+      var byWk2={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk2[w.weekOf]=byWk2[w.weekOf]||[]).push({id:a.agentId,name:a.agentName||a.agentId, v:v}); }); });
+      var keys2=trendSlice(Object.keys(byWk2)); if(!keys2.length){ toast("No stats in "+trendWinLabel()+"."); return; }
+      span=winSpan(keys2); var isCount=k.type!=="dur"; title=k.label+" \u00b7 "+(isCount?"team total":"team average");
+      var per2={}, all2=[]; keys2.forEach(function(key){ byWk2[key].forEach(function(o){ per2[o.id]=per2[o.id]||{name:o.name, vals:[]}; per2[o.id].vals.push(o.v); all2.push(o.v); }); });
+      Object.keys(per2).forEach(function(id){ var vs=per2[id].vals, sum=vs.reduce(function(s,v){return s+v;},0); var disp=isCount?String(Math.round(sum)):fmtKpiVal(k,Math.round(sum/vs.length)); rows.push({name:per2[id].name, disp:disp, sub:vs.length+" wk"+(vs.length===1?"":"s")+(isCount?(" \u00b7 avg "+Math.round(sum/vs.length*10)/10+"/wk"):"")}); });
+      var sumAll=all2.reduce(function(s,v){return s+v;},0);
+      overallDisp=all2.length?(isCount?String(Math.round(sumAll)):fmtKpiVal(k,Math.round(sumAll/all2.length))):"\u2014";
+      note=isCount?("Overall = sum of every agent's figures across the window. Each agent's value is their own total."):("Overall = mean of every agent's weekly figures across the window.");
     }
     rows.sort(function(a,b){return (a.name||"").localeCompare(b.name||"");});
-    var tbl=rows.length?('<table class="tbl" style="width:100%"><thead><tr><th>Agent</th><th style="text-align:right">Value</th><th>Detail</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td class="num" style="text-align:right;font-variant-numeric:tabular-nums">'+esc(r.disp)+'</td><td style="color:var(--ink-faint)">'+esc(r.sub||"")+'</td></tr>';}).join("")+'</tbody></table>'):'<div class="empty">No agent figures for this week.</div>';
+    var tbl=rows.length?('<table class="tbl" style="width:100%"><thead><tr><th>Agent</th><th style="text-align:right">Value</th><th>Detail</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td class="num" style="text-align:right;font-variant-numeric:tabular-nums">'+esc(r.disp)+'</td><td style="color:var(--ink-faint)">'+esc(r.sub||"")+'</td></tr>';}).join("")+'</tbody></table>'):'<div class="empty">No agent figures in this window.</div>';
     openModal('<div class="modal-h"><h3>'+esc(title)+'</h3><button class="x" id="mX">\u2715</button></div>'
-      +'<div class="modal-b"><div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px"><span style="font-family:var(--disp);font-size:30px;font-weight:700">'+esc(overallDisp)+'</span><span class="vhint">week of '+esc(weekLabel)+' \u00b7 latest with data</span></div>'
+      +'<div class="modal-b"><div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px"><span style="font-family:var(--disp);font-size:30px;font-weight:700">'+esc(overallDisp)+'</span><span class="vhint">'+esc(trendWinLabel())+' \u00b7 '+esc(span)+'</span></div>'
       +'<div class="vhint" style="margin-bottom:14px">'+esc(note)+'</div>'+tbl+'</div>'
       +'<div class="modal-f"><button class="btn" id="mClose">Close</button></div>');
     var x=document.getElementById("mX"); if(x) x.onclick=closeModal; var cl=document.getElementById("mClose"); if(cl) cl.onclick=closeModal;
