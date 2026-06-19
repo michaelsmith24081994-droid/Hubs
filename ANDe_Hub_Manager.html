@@ -2114,27 +2114,60 @@
   function trendCard(title, points, opts){ opts=opts||{}; if(!points || !points.length) return '';
     var latest=points[points.length-1], prev=points.length>1?points[points.length-2]:null;
     var delta=trendDelta(latest.value, prev?prev.value:null, !!opts.lower, !!opts.pct);
-    return '<div class="tcard"><div class="tc-lbl" title="'+esc(title)+'">'+esc(title)+'</div>'
+    var dataAttr=opts.kind?(' data-trend="'+opts.kind+'"'+(opts.kpiId?(' data-kpi="'+esc(opts.kpiId)+'"'):'')):'';
+    return '<div class="tcard'+(opts.kind?' click':'')+'"'+dataAttr+'><div class="tc-lbl" title="'+esc(title)+'">'+esc(title)+'</div>'
       +'<div class="tc-row"><span class="tc-val">'+esc(latest.disp)+'</span>'+delta+'</div>'
       +sparkline(points,{color:opts.color})
-      +'<div class="tc-foot">'+points.length+' wks \u00b7 to '+esc(latest.label)+'</div></div>'; }
+      +'<div class="tc-foot">'+points.length+' wks \u00b7 to '+esc(latest.label)+(opts.kind?' \u00b7 tap to break down':'')+'</div></div>'; }
   function teamTrendsHTML(){
     if(!document.getElementById("trendStyle")){ var ts=document.createElement("style"); ts.id="trendStyle";
       ts.textContent=".trend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(188px,1fr));gap:12px}"
         +".tcard{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--card);transition:transform .2s var(--reveal-ease),box-shadow .2s}"
+        +".tcard.click{cursor:pointer}"
         +".tcard:hover{transform:translateY(-2px);box-shadow:var(--sh)}"
+        +".tcard.click:hover{border-color:var(--a1)}"
         +".tc-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
         +".tc-row{display:flex;align-items:baseline;gap:8px;margin:5px 0 7px}"
         +".tc-val{font-family:var(--disp);font-weight:700;font-size:23px;letter-spacing:-.02em;line-height:1}"
         +".tc-foot{font-size:10.5px;color:var(--ink-faint);margin-top:5px}";
       document.head.appendChild(ts); }
     var defs=teamKpiDefs(), N=12, cards=[];
-    cards.push(trendCard("Team audit average", teamAuditTrend(N), {pct:true}));
-    cards.push(trendCard("Audit pass rate", teamPassRateTrend(N), {pct:true}));
-    defs.forEach(function(k){ cards.push(trendCard(k.label+" \u00b7 "+(k.type!=="dur"?"team/wk":"team avg"), teamKpiTrend(k,N), {lower:k.lower})); });
+    cards.push(trendCard("Team audit score", teamAuditTrend(N), {pct:true, kind:"audit"}));
+    cards.push(trendCard("Audit pass rate", teamPassRateTrend(N), {pct:true, kind:"pass"}));
+    defs.forEach(function(k){ cards.push(trendCard(k.label+" \u00b7 "+(k.type!=="dur"?"team/wk":"team avg"), teamKpiTrend(k,N), {lower:k.lower, kind:"kpi", kpiId:k.id})); });
     cards=cards.filter(Boolean);
     var body=cards.length? '<div class="trend-grid">'+cards.join("")+'</div>' : '<div class="empty">Not enough history yet \u2014 a few weeks of data will fill this in.</div>';
-    return '<div class="panel" style="margin-top:6px"><div class="panel-h"><h3>Team trends \u00b7 recent weeks</h3><span class="vhint" style="margin-left:auto">last '+N+' wks \u00b7 \u25b2 better \u25bc worse</span></div><div class="panel-b">'+body+'</div></div>'; }
+    return '<div class="panel" style="margin-top:6px"><div class="panel-h"><h3>Team trends \u00b7 recent weeks</h3><span class="vhint" style="margin-left:auto">last '+N+' wks \u00b7 \u25b2 better \u25bc worse \u00b7 tap a card for the breakdown</span></div><div class="panel-b">'+body+'</div></div>'; }
+  /* per-agent breakdown behind a trend card's latest-week figure */
+  function openTrendBreakdown(kind, kpiId){
+    var defs=teamKpiDefs(), title, weekLabel, overallDisp, note="", rows=[];
+    if(kind==="audit" || kind==="pass"){
+      var byWk={}; TEAMROSTER.forEach(function(a){ (a.audits||[]).forEach(function(x){ if(!x.date) return; if(kind==="audit"&&x.score==null) return; if(kind==="pass"&&x.result!=="pass"&&x.result!=="fail") return; var wk=mondayKey(x.date); (byWk[wk]=byWk[wk]||[]).push({a:a,x:x}); }); });
+      var keys=Object.keys(byWk).sort(); var wk=keys[keys.length-1]; if(!wk){ toast("No audit data yet."); return; }
+      weekLabel=fmtShort(wk);
+      var per={}; byWk[wk].forEach(function(o){ var id=o.a.agentId; per[id]=per[id]||{name:o.a.agentName||id, scores:[], p:0, f:0}; if(kind==="audit"&&o.x.score!=null) per[id].scores.push(o.x.score); if(kind==="pass"){ if(o.x.result==="pass") per[id].p++; else if(o.x.result==="fail") per[id].f++; } });
+      if(kind==="audit"){ title="Team audit score"; var all=[]; Object.keys(per).forEach(function(id){ var s=per[id].scores; if(!s.length) return; var avg=Math.round(s.reduce(function(x,y){return x+y;},0)/s.length); s.forEach(function(v){all.push(v);}); rows.push({name:per[id].name, disp:avg+"%", sub:s.length+" audit"+(s.length===1?"":"s")}); });
+        overallDisp=all.length?Math.round(all.reduce(function(x,y){return x+y;},0)/all.length)+"%":"\u2014"; note="Overall = mean of every audit score logged that week ("+all.length+" audits)."; }
+      else { title="Audit pass rate"; var tp=0,tf=0; Object.keys(per).forEach(function(id){ var o=per[id], t=o.p+o.f; if(!t) return; tp+=o.p; tf+=o.f; rows.push({name:o.name, disp:Math.round(o.p/t*100)+"%", sub:o.p+" pass \u00b7 "+o.f+" fail"}); });
+        overallDisp=(tp+tf)?Math.round(tp/(tp+tf)*100)+"%":"\u2014"; note="Overall = total passes \u00f7 (passes + fails) that week ("+tp+" / "+(tp+tf)+")."; }
+    } else {
+      var k=defs.filter(function(d){return d.id===kpiId;})[0]; if(!k){ toast("Unknown metric."); return; }
+      var byWk2={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk2[w.weekOf]=byWk2[w.weekOf]||[]).push({name:a.agentName||a.agentId, v:v}); }); });
+      var keys2=Object.keys(byWk2).sort(); var wk2=keys2[keys2.length-1]; if(!wk2){ toast("No stats logged yet."); return; }
+      weekLabel=fmtShort(wk2); var isCount=k.type!=="dur"; title=k.label+" \u00b7 "+(isCount?"team total / week":"team average / week");
+      var arr=byWk2[wk2]; arr.forEach(function(o){ rows.push({name:o.name, disp:fmtKpiVal(k,o.v), sub:""}); });
+      var vals=arr.map(function(o){return o.v;}), sum=vals.reduce(function(s,v){return s+v;},0);
+      overallDisp=isCount?String(Math.round(sum)):fmtKpiVal(k,Math.round(sum/vals.length));
+      note=isCount?("Overall = sum of every agent's figure that week ("+arr.length+" agents)."):("Overall = mean of every agent's weekly figure ("+arr.length+" agents).");
+    }
+    rows.sort(function(a,b){return (a.name||"").localeCompare(b.name||"");});
+    var tbl=rows.length?('<table class="tbl" style="width:100%"><thead><tr><th>Agent</th><th style="text-align:right">Value</th><th>Detail</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td class="num" style="text-align:right;font-variant-numeric:tabular-nums">'+esc(r.disp)+'</td><td style="color:var(--ink-faint)">'+esc(r.sub||"")+'</td></tr>';}).join("")+'</tbody></table>'):'<div class="empty">No agent figures for this week.</div>';
+    openModal('<div class="modal-h"><h3>'+esc(title)+'</h3><button class="x" id="mX">\u2715</button></div>'
+      +'<div class="modal-b"><div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px"><span style="font-family:var(--disp);font-size:30px;font-weight:700">'+esc(overallDisp)+'</span><span class="vhint">week of '+esc(weekLabel)+' \u00b7 latest with data</span></div>'
+      +'<div class="vhint" style="margin-bottom:14px">'+esc(note)+'</div>'+tbl+'</div>'
+      +'<div class="modal-f"><button class="btn" id="mClose">Close</button></div>');
+    var x=document.getElementById("mX"); if(x) x.onclick=closeModal; var cl=document.getElementById("mClose"); if(cl) cl.onclick=closeModal;
+  }
 
   /* ================= RECOGNITION ================= */
   var RECO_CATS=["Customer hero","Quality star","Team player","Above & beyond","Most improved","Great attitude"];
@@ -2497,6 +2530,8 @@
         b.appendChild(sp); setTimeout(function(){ sp.remove(); },560); });
     }
     if(!toast._enh){ var _toast=toast; toast=function(m){ _toast.apply(this,arguments); if(!ENH_REDUCE && /recognition sent|nice work|well done|congrat|🎉/i.test(String(m))) enhConfetti(); }; toast._enh=true; }
+    // trend-card breakdown
+    if(!document._enhTrendClick){ document._enhTrendClick=true; document.addEventListener("click",function(e){ var c=e.target.closest&&e.target.closest(".tcard[data-trend]"); if(!c) return; if(typeof openTrendBreakdown==="function") openTrendBreakdown(c.getAttribute("data-trend"), c.getAttribute("data-kpi")); }); }
     if(typeof go==="function" && !go._enhAnim){ var _go=go; go=function(){ _go.apply(this,arguments); setTimeout(function(){ enhAnimateSection(); },30); }; go._enhAnim=true; }
     enhAnimateSection();
   }
