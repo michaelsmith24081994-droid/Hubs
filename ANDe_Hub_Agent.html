@@ -1758,20 +1758,28 @@
     return {stats:newStats,audits:newAudits};
   }
   function readMyFeedback(){
-    // Exact match first; fall back to scanning so a renamed agent / id drift still finds it.
-    return fsRead("feedback-"+myAgentId()+".json").then(function(fb){
-      if(fb) return fb;
-      return fsList("feedback-").then(function(names){
-        return (async function(){
-          var nm=(state.config.name||"").trim().toLowerCase();
-          for(var i=0;i<names.length;i++){
-            var f=await fsRead(names[i]);
-            if(f && (f.agentId===myAgentId() || (nm && (f.agentName||"").trim().toLowerCase()===nm))) return f;
-          }
-          return null;
-        })();
-      }).catch(function(){ return null; });
-    });
+    // Scan + MERGE every feedback file that belongs to me. The agent id can drift
+    // (it derives from the name slug), so a rename can leave several feedback-*.json
+    // files — reading just one would miss recognitions written to another.
+    var ids={}; [state.config.agentId, slug(state.config.name), myAgentId(), "me"].forEach(function(x){ if(x) ids[x]=1; });
+    var nm=(state.config.name||"").trim().toLowerCase();
+    return fsList("feedback-").then(function(names){
+      return (async function(){
+        var combined=null;
+        for(var i=0;i<names.length;i++){
+          var fid=names[i].replace(/^feedback-/,"").replace(/\.json$/,"");
+          var f=await fsRead(names[i]); if(!f) continue;
+          var mine = ids[fid] || (f.agentId && ids[f.agentId]) || (nm && (f.agentName||"").trim().toLowerCase()===nm);
+          if(!mine) continue;
+          if(!combined) combined={kind:"feedback",agentId:myAgentId(),agentName:state.config.name||"",managerName:f.managerName||"Manager",updatedAt:f.updatedAt||"",notes:[],recognitions:[],stats:[],audits:[]};
+          ["notes","recognitions","stats","audits"].forEach(function(key){ (f[key]||[]).forEach(function(it){ combined[key].push(it); }); });
+          if(f.managerName) combined.managerName=f.managerName;
+          if((f.updatedAt||"")>combined.updatedAt) combined.updatedAt=f.updatedAt||combined.updatedAt;
+        }
+        if(combined){ ["notes","recognitions","stats","audits"].forEach(function(key){ var seen={}, out=[]; combined[key].forEach(function(it){ var id=it&&it.id; if(id&&seen[id]) return; if(id) seen[id]=1; out.push(it); }); combined[key]=out; }); }
+        return combined;
+      })();
+    }).catch(function(){ return null; });
   }
   function pullFeedback(silent){
     function apply(fb){ if(!fb){ if(!silent) toast("No feedback from your manager yet — check you’re on the same folder and your name matches."); return; }
