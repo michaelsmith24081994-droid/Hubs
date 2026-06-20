@@ -1720,8 +1720,8 @@
       var sel=panel.querySelector("#rstSel"); if(sel) sel.innerHTML='<option value="">'+(team.length?"Choose an agent…":"No assigned agents")+'</option>'+team.map(function(a){return '<option value="'+esc(a.agentId)+'">'+esc(a.agentName||a.agentId)+'</option>';}).join(""); });
     function loadPending(){ var box=panel.querySelector("#rstPending"); if(!box) return; if(!TEAM.dir){ box.innerHTML='<div class="vhint">Connect the folder to see requests.</div>'; return; }
       fsList("resetreq-").then(function(names){ return Promise.all(names.map(function(n){return fsRead(n);})); }).then(function(arr){ var reqs=arr.filter(function(r){return r&&!r.handled&&r.agentId;});
-        box.innerHTML=reqs.length?('<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin-bottom:6px">Reset requests</div>'+reqs.map(function(r){return '<div class="listrow"><span style="flex:1">'+esc(r.agentName||r.agentId)+' · '+esc(fmtAgo(r.ts))+'</span><button class="btn sm primary" data-rstid="'+esc(r.agentId)+'">Reset</button></div>';}).join("")):'<div class="vhint">No pending reset requests.</div>';
-        box.querySelectorAll("[data-rstid]").forEach(function(b){ b.onclick=function(){ doReset(b.getAttribute("data-rstid")); }; });
+        box.innerHTML=reqs.length?('<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin-bottom:6px">Reset requests</div>'+reqs.map(function(r){return '<div class="listrow"><span style="flex:1">'+esc(r.agentName||r.agentId)+' · '+esc(fmtAgo(r.ts))+'</span><button class="btn sm primary" data-rstid="'+esc(r.agentId)+'">Reset</button><button class="rm" title="Dismiss request" data-rstdel="'+esc(r.agentId)+'">✕</button></div>';}).join("")):'<div class="vhint">No pending reset requests.</div>';
+        box.querySelectorAll("[data-rstid]").forEach(function(b){ b.onclick=function(){ doReset(b.getAttribute("data-rstid")); }; }); box.querySelectorAll("[data-rstdel]").forEach(function(b){ b.onclick=function(){ fsDelete("resetreq-"+b.getAttribute("data-rstdel")+".json").then(loadPending); }; });
       }).catch(function(){ box.innerHTML='<div class="vhint">Couldn’t read requests.</div>'; }); }
     function doReset(aid){ openModal('<div class="modal-h"><h3>Reset password</h3><button class="x" id="mX">✕</button></div>'+'<div class="modal-b"><label class="fld"><span class="lab">Temporary password (optional)</span><input class="in" id="rstTmp" placeholder="Leave blank to just clear the lock"></label><div class="vhint">If set, the agent unlocks with this then changes it. If blank, their lock is cleared and they set a new one.</div></div>'+'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="rstGo">Issue reset</button></div>');
       document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
@@ -1776,6 +1776,7 @@
     return TEAM.dir.getFileHandle(name).then(function(fh){ return fh.getFile(); }).then(function(f){ return f.text(); }).then(function(t){ return JSON.parse(t); })
       .catch(function(){ return null; });
   }); }
+  function fsDelete(name){ return teamPerm().then(function(ok){ if(!ok) throw new Error("no-permission"); return (TEAM.dir.removeEntry?TEAM.dir.removeEntry(name):Promise.resolve()).catch(function(){}); }); }
   function fsList(prefix){ return teamPerm().then(function(ok){ if(!ok) throw new Error("no-permission"); var out=[];
     return (async function(){ for await (var e of TEAM.dir.values()){ if(e.kind==="file" && e.name.indexOf(prefix)===0 && /\.json$/.test(e.name)) out.push(e.name); } return out; })();
   }); }
