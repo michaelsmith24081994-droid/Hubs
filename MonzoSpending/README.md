@@ -35,6 +35,35 @@ MonzoSpending/
 > The Xcode project uses file-system-synchronized groups (Xcode 16+), so new
 > files added under `MonzoSpending/` are picked up automatically.
 
+## Two ways to open this project
+
+The exact same Swift code is provided in two wrappers — pick whichever matches
+your device:
+
+| You have… | Open this | Tool |
+| --- | --- | --- |
+| **iPhone or iPad** | `MonzoSpending.swiftpm` (repo root) | Swift Playgrounds (free, App Store) |
+| **Mac** | `MonzoSpending/MonzoSpending.xcodeproj` | Xcode 16+ |
+
+## Build entirely on iPhone (Swift Playgrounds)
+
+1. Install **Swift Playgrounds** from the App Store (free).
+2. Get `MonzoSpending.swiftpm` onto the device. Easiest options:
+   - Install the **Working Copy** app, clone this repo / branch, then tap
+     `MonzoSpending.swiftpm` → **Open in Swift Playgrounds**; or
+   - Download the folder into the **Files** app and open it from there.
+3. In Swift Playgrounds, open `Config/OAuthConfig.swift` and paste in your
+   Monzo `clientID` and `clientSecret` (see step 1 below).
+4. Press **▶ Run** to launch it in the live preview, or use **App Settings →
+   Build to install** to put it on your home screen.
+
+Notes for on-device builds:
+- A **free Apple ID** works, but the installed app expires after ~7 days — just
+  rebuild to renew it.
+- Everything this app needs works on-device: the OAuth web login
+  (`ASWebAuthenticationSession`), the Keychain, and networking to Monzo.
+- An iPad gives a roomier editor, but an iPhone can build and run it too.
+
 ## Setup
 
 ### 1. Create a Monzo OAuth client
