@@ -712,7 +712,7 @@
     auditForms:["New business","MTA","Renewal","Cancellation","Complaint","Payment"],
     brands:["KFI","TYA","TMI","ASN","LMI","KIN"],
     theme:"dark", accent:"#ff2d8e", accent2:"#22e6c1", name:"", avatar:"",
-    teamRole:"agent", agentId:"", teamFolder:"", autoPull:true, managerName:"", lockHash:"", lockSalt:"",
+    teamRole:"agent", agentId:"", teamFolder:"", autoPull:true, managerName:"", managerId:"", lockHash:"", lockSalt:"",
     kpis:[
       {id:"chats",label:"Chats",type:"int",target:null,lower:false},
       {id:"emails",label:"Emails",type:"int",target:null,lower:false},
@@ -724,7 +724,7 @@
   };}
   function seed(){ return {
     v:3, config:defaultConfig(), meta:{}, teamInbox:{notes:[],stats:[],audits:[],updatedAt:""},
-    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], contacts:[], coachThread:[], timeOwedReq:[], toHandled:{}, admins:{}, yourWeek:ywSeed()
+    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], contacts:[], coachThread:[], timeOwedReq:[], toHandled:{}, admins:{}, assignedAgents:[], yourWeek:ywSeed()
   };}
   function ensureAtt(arr){ (arr||[]).forEach(function(x){ if(!Array.isArray(x.attachments)) x.attachments=[]; }); return arr||[]; }
   function migrate(s){
@@ -747,6 +747,7 @@
     if(!Array.isArray(s.timeOwedReq)) s.timeOwedReq=[];
     if(!s.toHandled||typeof s.toHandled!=="object") s.toHandled={};
     if(!s.admins||typeof s.admins!=="object") s.admins={};
+    if(!Array.isArray(s.assignedAgents)) s.assignedAgents=[];
     s.yourWeek=ywEnsure(s.yourWeek);
     if(s.teamInbox&&!Array.isArray(s.teamInbox.coachMsgs)) s.teamInbox.coachMsgs=[];
     if(s.teamInbox&&!Array.isArray(s.teamInbox.timeOwed)) s.teamInbox.timeOwed=[];
@@ -1533,7 +1534,7 @@
     var sec=document.getElementById("sec-customise");
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Make it yours</div><h2>Customise</h2><p class="lede">Change the parts that vary by you — no code needed. Edits apply instantly and save automatically.</p></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>You</h3></div><div class="panel-b"><div class="row2"><label class="fld"><span class="lab">Your role (shown under the logo)</span><input class="in" id="cRole" value="'+esc(state.config.role)+'"></label><label class="fld"><span class="lab">Theme</span><select class="in" id="cTheme"><option value="dark"'+(state.config.theme!=="light"?" selected":"")+'>Dark</option><option value="light"'+(state.config.theme==="light"?" selected":"")+'>Light</option></select></label></div></div></div>'+
-      '<div class="panel"><div class="panel-h"><h3>Team sync — manager &amp; agent</h3></div><div class="panel-b">'+'<div class="row2"><label class="fld"><span class="lab">Hub edition</span><div><span class="ed-badge '+(isManager()?"manager":"agent")+'">'+(isManager()?"◈ Manager hub":"✉ Agent hub")+'</span></div></label>'+'<label class="fld agent-only"><span class="lab">Your agent ID (used in filenames)</span><input class="in" id="cAgentId" value="'+esc(state.config.agentId||"")+'" placeholder="'+esc(myAgentId())+'"></label></div>'+'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><span class="sync-pill '+(TEAM.dir?"ok":"off")+'" id="syncPill"><span class="dotc"></span>'+(TEAM.dir?("Connected: "+esc(state.config.teamFolder||"shared folder")):(TEAM.supported?"Not connected":"Folder connect unavailable in this browser"))+'</span>'+(TEAM.supported?'<button class="btn primary sm" id="syncConnect">'+(TEAM.dir?"Reconnect folder":"Connect shared folder")+'</button>':'')+'</div>'+'<label class="chk agent-only" style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:14px"><input type="checkbox" id="cAutoPull"'+(state.config.autoPull?" checked":"")+'> Auto-check for manager feedback when I open the hub</label>'+'<div style="display:flex;gap:9px;flex-wrap:wrap">'+'<button class="btn sm agent-only" id="syncPub">↑ Share my summary</button>'+'<button class="btn sm agent-only" id="syncPull">↻ Check for feedback</button>'+'<button class="btn sm mgr-only" id="syncTeam">◈ Open team</button>'+'</div>'+'<div class="vhint" style="margin-top:12px">'+(isManager()?"Connect the shared OneDrive/network folder, then open Team. Agents appear once they’ve shared their summary.":"Set your name on the dashboard, connect the same shared folder your manager uses, then share your summary so they can see you.")+'</div>'+'</div></div>'+'<div class="panel"><div class="panel-h"><h3>Password lock</h3></div><div class="panel-b">'+(hasLock()?'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><span class="sync-pill ok"><span class="dotc"></span>Password set</span><button class="btn sm" id="pwChange">Change</button><button class="btn sm" id="pwRemove">Remove</button></div>':'<div style="margin-bottom:10px"><button class="btn primary sm" id="pwSet">Set a password</button></div>')+'<div class="vhint">Asks for a password each time this hub is opened. It’s an access lock for shared or unattended screens — not encryption; treat the shared folder’s own permissions as the real protection, and keep a Backup, as a forgotten password can’t be recovered.</div>'+'</div></div>'+'<div class="panel"><div class="panel-h"><h3>Accent colour</h3></div><div class="panel-b"><div class="swatchrow" id="swatchRow"></div><div class="vhint">Pick a preset duo or set your own two colours \u2014 it re-lights the whole hub instantly and is saved for next time.</div></div></div>'+
+      '<div class="panel"><div class="panel-h"><h3>Team sync — manager &amp; agent</h3></div><div class="panel-b">'+'<div class="row2"><label class="fld"><span class="lab">Hub edition</span><div><span class="ed-badge '+(isManager()?"manager":"agent")+'">'+(isManager()?"◈ Manager hub":"✉ Agent hub")+'</span></div></label>'+'<label class="fld agent-only"><span class="lab">Your agent ID (used in filenames)</span><input class="in" id="cAgentId" value="'+esc(state.config.agentId||"")+'" placeholder="'+esc(myAgentId())+'"></label></div>'+'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:12px"><span class="sync-pill '+(TEAM.dir?"ok":"off")+'" id="syncPill"><span class="dotc"></span>'+(TEAM.dir?("Connected: "+esc(state.config.teamFolder||"shared folder")):(TEAM.supported?"Not connected":"Folder connect unavailable in this browser"))+'</span>'+(TEAM.supported?'<button class="btn primary sm" id="syncConnect">'+(TEAM.dir?"Reconnect folder":"Connect shared folder")+'</button>':'')+'</div>'+'<label class="chk agent-only" style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:14px"><input type="checkbox" id="cAutoPull"'+(state.config.autoPull?" checked":"")+'> Auto-check for manager feedback when I open the hub</label>'+'<div style="display:flex;gap:9px;flex-wrap:wrap">'+'<button class="btn sm agent-only" id="syncPub">↑ Re-share summary</button>'+'<button class="btn sm agent-only" id="syncPull">↻ Check for feedback</button>'+'<button class="btn sm mgr-only" id="syncTeam">◈ Open team</button>'+'</div>'+'<div class="vhint" style="margin-top:12px">'+(isManager()?"Connect the shared OneDrive/network folder, then open Team. Agents appear once they’ve shared their summary.":"Set your name on the dashboard, connect the same shared folder your manager uses, then share your summary so they can see you.")+'</div>'+'</div></div>'+'<div class="panel"><div class="panel-h"><h3>Password lock</h3></div><div class="panel-b">'+(hasLock()?'<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><span class="sync-pill ok"><span class="dotc"></span>Password set</span><button class="btn sm" id="pwChange">Change</button><button class="btn sm" id="pwRemove">Remove</button></div>':'<div style="margin-bottom:10px"><button class="btn primary sm" id="pwSet">Set a password</button></div>')+'<div class="vhint">Asks for a password each time this hub is opened. It’s an access lock for shared or unattended screens — not encryption; treat the shared folder’s own permissions as the real protection, and keep a Backup, as a forgotten password can’t be recovered.</div>'+'</div></div>'+'<div class="panel"><div class="panel-h"><h3>Accent colour</h3></div><div class="panel-b"><div class="swatchrow" id="swatchRow"></div><div class="vhint">Pick a preset duo or set your own two colours \u2014 it re-lights the whole hub instantly and is saved for next time.</div></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>Weekly stats — KPIs &amp; targets</h3></div><div class="panel-b"><div id="kpiRows"></div><button class="addbtn" id="kpiAdd">+ Add a KPI</button><div style="font-size:12.5px;color:var(--ink-faint);margin-top:10px">Type: count (whole number) or duration (mm:ss). Pick "higher better" (more is good — chats, emails) or "lower better" (less is good — response time, AWOL) for each metric. Targets show red when missed.</div></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>Evidence categories</h3></div><div class="panel-b"><div id="evcRows"></div><button class="addbtn" id="evcAdd">+ Add category</button></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>Knowledge base categories</h3></div><div class="panel-b"><div id="kbcRows"></div><button class="addbtn" id="kbcAdd">+ Add category</button></div></div>'+
@@ -1731,7 +1732,7 @@
     if(!TEAM.supported){ toast("This browser can't connect a folder \u2014 use Export/Import instead."); return Promise.resolve(false); }
     return window.showDirectoryPicker({mode:"readwrite"}).then(function(h){
       TEAM.dir=h; state.config.teamFolder=h.name||"shared folder"; save();
-      return idbSetKey("teamDir",h).then(function(){ toast("Connected to "+state.config.teamFolder+"."); return true; });
+      return idbSetKey("teamDir",h).then(function(){ if(isManager()) publishManagerPresence(); toast("Connected to "+state.config.teamFolder+"."); return true; });
     }).catch(function(){ return false; });
   }
   function teamPerm(){ if(!TEAM.dir) return Promise.resolve(false);
@@ -1827,7 +1828,7 @@
   function loadTeam(){
     if(!TEAM.dir) return Promise.resolve([]);
     return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); })
-      .then(function(arr){ TEAMROSTER=arr.filter(Boolean).sort(function(a,b){ return (a.agentName||"").localeCompare(b.agentName||""); }); return TEAMROSTER; });
+      .then(function(arr){ var all=arr.filter(Boolean); var mine=myAgentId(); var asn=state.assignedAgents||[]; var fl=all.filter(function(s){ return (s.managerId&&s.managerId===mine) || asn.indexOf(s.agentId)>=0; }); TEAMROSTER=fl.sort(function(a,b){ return (a.agentName||"").localeCompare(b.agentName||""); }); return TEAMROSTER; });
   }
   function getFeedback(id){ return TEAM.dir? fsRead("feedback-"+id+".json").then(function(f){ return f||emptyFeedback(id); }) : Promise.resolve(emptyFeedback(id)); }
   function saveFeedback(fb,opts){
@@ -1918,7 +1919,7 @@
     var agg=document.getElementById("teamAgg"); if(agg) agg.addEventListener("click",function(e){ var b=e.target.closest("button[data-sm]"); if(!b) return; teamStatMode=b.getAttribute("data-sm"); renderers.team(); });
     var grid=document.getElementById("teamGrid");
     if(!connected){ grid.innerHTML=""; document.getElementById("teamAgg").innerHTML=""; return; }
-    if(!TEAMROSTER.length){ grid.innerHTML='<div class="empty"><div class="big">No agents yet</div>Ask each agent to set their name, connect the same folder, and hit \u201cShare my summary\u201d.</div>'; loadTeam().then(function(r){ if(r.length) renderers.team(); }); return; }
+    if(!TEAMROSTER.length){ grid.innerHTML='<div class="empty"><div class="big">No agents assigned yet</div>In Customise \u2192 \u201cAssign an agent\u201d, claim agents who have shared their hub \u2014 or they can pick you as their manager.</div>'; loadTeam().then(function(r){ if(r.length) renderers.team(); }); return; }
     document.getElementById("teamAgg").innerHTML=teamOverviewHTML();
     grid.innerHTML=TEAMROSTER.map(function(a){
       var init=(a.agentName||"?").split(/\s+/).map(function(w){return w[0];}).join("").slice(0,2).toUpperCase();
@@ -2869,7 +2870,7 @@
 
   /* ================= v7 enhancements (additive) ================= */
   function enhInit(){
-    enhCSS(); enhTopbar(); enhNavDots();
+    enhCSS(); enhTopbar(); enhNavDots(); enhWrapCustomise();
     enhA11y();
     enhSnapshots();
     enhHistoryButton();
@@ -2985,6 +2986,53 @@
   function enhTopbar(){ var topbar=document.getElementById("topbar"); if(!topbar||document.getElementById("appbar")) return; var brand=topbar.querySelector(".brand"); var actions=topbar.querySelector(".topactions"); var bar=document.createElement("header"); bar.id="appbar"; bar.className="appbar"; if(brand) bar.appendChild(brand); if(actions) bar.appendChild(actions); var app=document.querySelector(".app"); if(app) app.insertBefore(bar, topbar); }
   function navDot(section,on){ if(on && typeof current!=="undefined" && current===section) return; var btn=document.querySelector('.navi[data-section="'+section+'"]'); if(!btn) return; var d=btn.querySelector(".nv-dot"); if(on){ if(!d){ d=document.createElement("span"); d.className="nv-dot"; btn.appendChild(d); } } else if(d){ d.remove(); } }
   function enhNavDots(){ if(typeof go==="function" && !go._enhDots){ var _g=go; go=function(s){ _g.apply(this,arguments); try{ navDot(s,false); }catch(e){} }; go._enhDots=true; } }
+  /* ================= ASSIGNMENT (agent<->manager) ================= */
+  function listManagers(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("manager-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
+  function listAgents(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
+  function publishManagerPresence(){ if(!TEAM.dir || !isManager()) return Promise.resolve(); var p={kind:"manager", id:myAgentId(), name:state.config.name||"Manager", role:state.config.role||"Manager", updatedAt:nowISO()}; return fsWrite("manager-"+myAgentId()+".json", p).catch(function(){}); }
+  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhAssign(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
+  function enhAssign(sec){ if(!sec) return; var old=sec.querySelector("#asnPanel"); if(old) old.remove();
+    var panel=document.createElement("div"); panel.className="panel"; panel.id="asnPanel"; panel.style.marginBottom="18px";
+    if(isManager()){
+      publishManagerPresence();
+      panel.innerHTML='<div class="panel-h"><h3>Assign an agent</h3></div><div class="panel-b">'
+        +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end"><label class="fld" style="flex:1;min-width:200px;margin:0"><span class="lab">Available agents</span><select class="in" id="asnAgentSel"><option value="">Loading…</option></select></label><button class="btn primary sm" id="asnAgentBtn">Assign an agent</button></div>'
+        +'<div class="vhint" style="margin-top:8px">Claim agents who have shared their hub — your Team shows only the agents you’ve assigned (or who picked you).</div>'
+        +'<div id="asnAssigned" style="margin-top:12px"></div></div>';
+    } else {
+      panel.innerHTML='<div class="panel-h"><h3>Assign to manager</h3></div><div class="panel-b">'
+        +'<div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end"><label class="fld" style="flex:1;min-width:200px;margin:0"><span class="lab">Your manager</span><select class="in" id="asnMgrSel"><option value="">Loading…</option></select></label><button class="btn primary sm" id="asnMgrBtn">Assign to manager</button></div>'
+        +'<div class="vhint" style="margin-top:8px">'+(state.config.managerName?("Currently assigned to <b>"+esc(state.config.managerName)+"</b>. "):"")+'Pick your manager so they can see your stats and send feedback — this shares your summary with them.</div></div>';
+    }
+    var pill=sec.querySelector("#syncPill"); var tsPanel=pill?pill.closest(".panel"):null;
+    if(tsPanel&&tsPanel.parentNode){ tsPanel.parentNode.insertBefore(panel, tsPanel.nextSibling); } else { sec.appendChild(panel); }
+    if(isManager()){
+      var sel=panel.querySelector("#asnAgentSel");
+      listAgents().then(function(list){
+        var assigned=state.assignedAgents||[];
+        var avail=list.filter(function(a){ return a.agentId!==myAgentId() && assigned.indexOf(a.agentId)<0; });
+        sel.innerHTML='<option value="">'+(avail.length?"Choose an agent…":"No unassigned agents found")+'</option>'+avail.map(function(a){ return '<option value="'+esc(a.agentId)+'">'+esc(a.agentName||a.agentId)+((a.managerId&&a.managerId!==myAgentId())?" (assigned elsewhere)":"")+'</option>'; }).join("");
+        var byId={}; list.forEach(function(a){ byId[a.agentId]=a; });
+        var ab=panel.querySelector("#asnAssigned");
+        ab.innerHTML=assigned.length?('<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin-bottom:6px">Your team ('+assigned.length+')</div>'+assigned.map(function(id){ var a=byId[id]; return '<div class="listrow"><span style="flex:1">'+esc((a&&a.agentName)||id)+'</span><button class="btn sm" data-unassign="'+esc(id)+'">Remove</button></div>'; }).join("")):'';
+        ab.querySelectorAll("[data-unassign]").forEach(function(b){ b.onclick=function(){ var id=b.getAttribute("data-unassign"); state.assignedAgents=(state.assignedAgents||[]).filter(function(x){return x!==id;}); save(); if(typeof loadTeam==="function") loadTeam().then(function(){ if(current==="team") renderers.team(); }); enhAssign(sec); toast("Removed from your team."); }; });
+      });
+      panel.querySelector("#asnAgentBtn").onclick=function(){ if(!TEAM.dir){ toast("Connect the shared folder first."); return; } var v=sel.value; if(!v){ toast("Choose an agent."); return; } var name=sel.options[sel.selectedIndex].text;
+        state.assignedAgents=state.assignedAgents||[]; if(state.assignedAgents.indexOf(v)<0) state.assignedAgents.push(v); save();
+        getFeedback(v).then(function(fb){ fb.managerName=state.config.name||"Manager"; fb.managerId=myAgentId(); return saveFeedback(fb,{owns:[],silent:true}); }).then(function(){ if(typeof loadTeam==="function") loadTeam().then(function(){ if(current==="team") renderers.team(); }); enhAssign(sec); toast("Assigned "+name+" to your team."); });
+      };
+    } else {
+      var msel=panel.querySelector("#asnMgrSel");
+      listManagers().then(function(list){
+        msel.innerHTML='<option value="">'+(list.length?"Choose your manager…":"No managers found yet")+'</option>'+list.map(function(m){ return '<option value="'+esc(m.id)+'"'+(state.config.managerId===m.id?" selected":"")+'>'+esc(m.name||m.id)+'</option>'; }).join("");
+      });
+      panel.querySelector("#asnMgrBtn").onclick=function(){ if(!TEAM.dir){ toast("Connect the shared folder first."); return; } if(!state.config.name){ toast("Set your name on the dashboard first."); return; } var v=msel.value; if(!v){ toast("Choose a manager."); return; } var name=msel.options[msel.selectedIndex].text;
+        state.config.managerId=v; state.config.managerName=name; save();
+        Promise.resolve(publishSummary(false)).then(function(){ enhAssign(sec); toast("Assigned to "+name+"."); });
+      };
+    }
+  }
+
   function enhCSS(){
     if(document.getElementById("enhStyle")) return;
     var s=document.createElement("style"); s.id="enhStyle";
@@ -3182,7 +3230,7 @@
   function enhWrapTeam(){
     if(renderers.team && !renderers.team._enh){
       var orig=renderers.team;
-      renderers.team=function(){ orig.apply(this,arguments); enhTeamCards(); enh11Button(); };
+      renderers.team=function(){ orig.apply(this,arguments); enhTeamCards(); enh11Button(); try{ publishManagerPresence(); }catch(e){} };
       renderers.team._enh=true;
     }
   }
