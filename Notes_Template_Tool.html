@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0c0820">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Customer Service Notes Template</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --a1:#ff2d8e; --a1-rgb:255,45,142; --a1-deep:#b4226a;
+    --a2:#22e6c1; --a2-rgb:34,230,193; --a2-deep:#159e93;
+    --bg:#0c0820;
+    --bg2:rgba(255,255,255,.035);
+    --card:rgba(255,255,255,.05);
+    --card-2:rgba(255,255,255,.08);
+    --ink:#f3f1ff; --ink-soft:#b6b0d6; --ink-faint:#7f789c;
+    --line:rgba(255,255,255,.1); --line-soft:rgba(255,255,255,.06);
+    --disp:'Space Grotesk',"Segoe UI",system-ui,-apple-system,sans-serif;
+    --body:'Inter',system-ui,-apple-system,sans-serif;
+    --grad:linear-gradient(135deg,var(--a1),var(--a2));
+    --amber:#ffb24d; --amber-wash:rgba(255,178,77,.14);
+    --red:#ff5d7a;
+    --sh-sm:0 1px 2px rgba(0,0,0,.4);
+    --sh:0 6px 18px rgba(0,0,0,.35),0 20px 50px -24px rgba(0,0,0,.85);
+    --ease:cubic-bezier(.22,.7,.2,1);
+  }
+  body{
+    font-family:var(--body);color:var(--ink);background:var(--bg);margin:0;padding:28px 20px;line-height:1.5;min-height:100vh;overflow-x:hidden;
+    background-image:
+      radial-gradient(900px 600px at 84% -12%,rgba(var(--a1-rgb),.30),transparent 58%),
+      radial-gradient(760px 600px at 6% 6%,rgba(var(--a2-rgb),.18),transparent 56%),
+      radial-gradient(700px 700px at 50% 120%,rgba(var(--a1-rgb),.12),transparent 60%);
+    background-attachment:fixed;
+  }
+  .ambient{position:fixed;inset:-12%;z-index:0;pointer-events:none;opacity:.4;mix-blend-mode:screen;animation:drift 40s ease-in-out infinite alternate}
+  .ambient svg{width:100%;height:100%}
+  .ambient .ln{fill:none;stroke:rgba(var(--a2-rgb),.5);stroke-width:1}
+  @keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(-2.5%,-1.5%,0)}}
+  .container{position:relative;z-index:1;max-width:920px;margin:0 auto;background:var(--card);border-radius:24px;padding:0;box-shadow:var(--sh);border:1px solid var(--line);overflow:hidden;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:secEnter .5s var(--ease) both}
+  @keyframes secEnter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+  .brand-bar{position:relative;background:linear-gradient(135deg,rgba(var(--a1-rgb),.22),rgba(var(--a2-rgb),.14));padding:20px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+  .brand-bar img.brand-logo{height:40px;width:auto;background:#fff;padding:6px 10px;border-radius:10px;box-shadow:var(--sh-sm)}
+  .brand-bar .brand-tag{color:var(--ink);font-size:11px;letter-spacing:1px;opacity:.8;text-transform:uppercase;font-weight:600;font-family:var(--disp)}
+  .container-inner{padding:26px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+  h1{font-family:var(--disp);font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0 0 5px;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .subtitle{font-size:13px;color:var(--ink-soft);margin:0}
+  .mode-toggle{display:flex;gap:6px;background:var(--bg2);padding:5px;border-radius:14px;border:1px solid var(--line-soft)}
+  .mode-btn{background:transparent;border:0;padding:8px 16px;font-size:13px;cursor:pointer;color:var(--ink-soft);border-radius:10px;font-family:var(--body);font-weight:600;transition:.18s var(--ease)}
+  .mode-btn:hover{color:var(--ink)}
+  .mode-btn.active{background:var(--grad);color:#0c0820;box-shadow:0 6px 18px -6px rgba(var(--a1-rgb),.7)}
+  .tab-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px;border-bottom:1px solid var(--line);padding-bottom:10px;align-items:center}
+  .tab-btn{background:var(--card);border:1px solid var(--line-soft);padding:8px 14px;font-size:13px;cursor:pointer;color:var(--ink-soft);border-radius:11px;font-weight:600;font-family:var(--body);position:relative;transition:.16s var(--ease)}
+  .tab-btn:hover{color:var(--ink);border-color:var(--line);transform:translateY(-1px)}
+  .tab-btn.active{background:var(--grad);border-color:transparent;color:#0c0820;box-shadow:0 8px 20px -8px rgba(var(--a1-rgb),.7)}
+  .tab-btn .edit-handle{margin-left:6px;opacity:.5;font-size:11px}
+  .tab-btn.editing-mode{padding-right:8px}
+  .add-tab-btn{background:transparent;border:1px dashed var(--line);padding:7px 12px;font-size:12px;cursor:pointer;color:var(--ink-soft);border-radius:11px;font-family:var(--body);font-weight:600;margin-left:auto;transition:.15s}
+  .add-tab-btn:hover{background:var(--card-2);color:var(--ink)}
+  .sub-tab-bar{display:flex;gap:6px;margin-bottom:18px;align-items:center}
+  .sub-tab-btn{background:var(--card);border:1px solid var(--line-soft);padding:7px 14px;font-size:12px;cursor:pointer;color:var(--ink-soft);border-radius:999px;font-family:var(--body);font-weight:600;transition:.15s var(--ease)}
+  .sub-tab-btn:hover{color:var(--ink);border-color:var(--line)}
+  .sub-tab-btn.active{background:rgba(var(--a2-rgb),.16);border-color:rgba(var(--a2-rgb),.5);color:var(--a2)}
+  .panel{display:none}
+  .panel.active{display:block;animation:secEnter .4s var(--ease) both}
+  .field{margin-bottom:14px;position:relative}
+  .field label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;font-weight:500}
+  .field input[type=text],.field input[type=number],.field input[type=date],.field input[type=datetime-local],.field select,.field textarea{width:100%;padding:11px 13px;font-size:14px;font-family:var(--body);border:1px solid var(--line);border-radius:12px;background:var(--bg2);color:var(--ink);transition:.16s var(--ease)}
+  .field select{cursor:pointer}
+  .field select option{background:#16112e;color:var(--ink)}
+  .field input::placeholder{color:var(--ink-faint)}
+  .field input:hover,.field select:hover,.field textarea:hover{border-color:var(--line)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--a1);box-shadow:0 0 0 3px rgba(var(--a1-rgb),.18)}
+  .field textarea{min-height:70px;resize:vertical}
+  .toggle-group{display:flex;gap:6px;flex-wrap:wrap}
+  .toggle-btn{flex:1;min-width:60px;background:var(--bg2);border:1px solid var(--line);padding:10px 12px;font-size:13px;cursor:pointer;color:var(--ink-soft);border-radius:11px;font-family:var(--body);font-weight:600;transition:.16s var(--ease)}
+  .toggle-btn:hover{color:var(--ink);border-color:var(--line)}
+  .toggle-btn.active{background:rgba(var(--a2-rgb),.16);border-color:rgba(var(--a2-rgb),.5);color:var(--a2)}
+  .checkbox-row{display:flex;align-items:center;gap:10px;font-size:14px;padding:8px 0;color:var(--ink)}
+  .checkbox-row input{width:18px;height:18px;margin:0;accent-color:var(--a1);cursor:pointer}
+  .row-2-uneven{display:grid;grid-template-columns:140px 1fr;gap:12px}
+  .output-box{margin-top:24px;padding:18px 20px;background:linear-gradient(160deg,rgba(var(--a1-rgb),.06),rgba(var(--a2-rgb),.04)),var(--bg2);border-radius:16px;font-family:ui-monospace,"SF Mono",Menlo,Monaco,Consolas,monospace;font-size:13px;white-space:pre-wrap;line-height:1.65;min-height:90px;color:var(--ink);border:1px solid var(--line);border-left:3px solid var(--a1);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:.2s}
+  .action-bar{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
+  .action-bar button,.builder-actions button{background:var(--card);border:1px solid var(--line);padding:11px 18px;font-size:13.5px;cursor:pointer;color:var(--ink);border-radius:12px;font-family:var(--body);font-weight:600;transition:.16s var(--ease)}
+  .action-bar button:hover:not(:disabled),.builder-actions button:hover:not(:disabled){background:var(--card-2);transform:translateY(-1px)}
+  .action-bar button:active:not(:disabled){transform:scale(0.98)}
+  .action-bar button.primary,.builder-actions button.primary{background:var(--grad);color:#0c0820;border-color:transparent;box-shadow:0 8px 22px -8px rgba(var(--a1-rgb),.7)}
+  .action-bar button.primary:hover:not(:disabled),.builder-actions button.primary:hover:not(:disabled){filter:brightness(1.06)}
+  .action-bar button:disabled{opacity:.4;cursor:not-allowed}
+  .action-bar button.danger{color:var(--red)}
+  .contact-check{margin-top:16px;padding:14px 16px;background:var(--amber-wash);border:1px solid rgba(255,178,77,.35);border-left:3px solid var(--amber);border-radius:14px;display:flex;align-items:flex-start;gap:11px;transition:.22s var(--ease)}
+  .contact-check.confirmed{background:rgba(var(--a2-rgb),.12);border-color:rgba(var(--a2-rgb),.45);border-left-color:var(--a2)}
+  .contact-check input[type=checkbox]{width:18px;height:18px;margin:1px 0 0;cursor:pointer;accent-color:var(--a2);flex-shrink:0}
+  .contact-check label{font-size:13px;color:var(--amber);cursor:pointer;line-height:1.45;flex:1}
+  .contact-check.confirmed label{color:var(--a2)}
+  .contact-check strong{font-weight:700}
+  .hidden{display:none}
+  .section-header{font-family:var(--disp);font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-faint);margin:20px 0 10px;font-weight:600}
+  .copied-flash{background:rgba(var(--a2-rgb),.2)!important;color:var(--a2)!important;border-color:rgba(var(--a2-rgb),.5)!important}
+  .builder-panel{background:var(--bg2);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:18px;backdrop-filter:blur(8px)}
+  .builder-section{margin-bottom:22px}
+  .builder-section:last-child{margin-bottom:0}
+  .builder-section h3{font-family:var(--disp);font-size:14px;font-weight:600;margin:0 0 12px;color:var(--ink)}
+  .builder-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .builder-row label{font-size:12px;color:var(--ink-soft);min-width:80px}
+  .builder-row input,.builder-row select{flex:1;padding:9px 12px;font-size:13px;font-family:var(--body);border:1px solid var(--line);border-radius:10px;background:var(--bg2);color:var(--ink)}
+  .field-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:9px;transition:.15s var(--ease)}
+  .field-card:hover{border-color:var(--line);background:var(--card-2)}
+  .field-card-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+  .field-card-title{font-size:13px;font-weight:600;flex:1;color:var(--ink)}
+  .field-card-actions{display:flex;gap:4px}
+  .icon-btn{background:var(--bg2);border:1px solid var(--line);padding:5px 9px;font-size:11px;cursor:pointer;color:var(--ink-soft);border-radius:8px;font-family:var(--body);font-weight:600;transition:.13s}
+  .icon-btn:hover{background:var(--card-2);color:var(--ink)}
+  .icon-btn.danger:hover{background:rgba(var(--a1-rgb),.16);color:var(--a1);border-color:rgba(var(--a1-rgb),.4)}
+  .field-card-details{font-size:12px;color:var(--ink-soft);display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+  .builder-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .builder-empty{text-align:center;padding:26px;color:var(--ink-faint);font-size:13px;font-style:italic}
+  .options-input{display:flex;gap:6px;margin-bottom:6px}
+  .options-input input{flex:1}
+  .option-row{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+  .option-row input{flex:1;padding:8px 11px;font-size:12px;font-family:var(--body);border:1px solid var(--line);border-radius:9px;background:var(--bg2);color:var(--ink)}
+  .modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(4,3,12,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .modal{background:var(--card-2);backdrop-filter:blur(22px);border:1px solid var(--line);border-radius:22px;padding:26px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 50px 120px -30px rgba(0,0,0,.9);animation:pop .24s var(--ease)}
+  .modal h2{font-family:var(--disp);font-size:18px;font-weight:600;margin:0 0 16px;color:var(--ink)}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:22px}
+  .help-text{font-size:11px;color:var(--ink-faint);margin-top:5px}
+  .danger-zone{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+  .pill{display:inline-block;background:rgba(var(--a2-rgb),.16);color:var(--a2);padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600}
+  .pill.gray{background:var(--bg2);color:var(--ink-soft)}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2);background-clip:content-box}
+  @media(prefers-reduced-motion:reduce){.ambient,.container,.panel.active,.modal{animation:none!important}*{transition:none!important}}
+  @media (max-width:600px){
+    .container-inner{padding:18px}
+    .row-2-uneven{grid-template-columns:1fr;gap:8px}
+    .header{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"><svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><g class="contours"></g></svg></div>
+<div class="container">
+  <div class="brand-bar">
+    <img class="brand-logo" src="data:image/jpeg;base64,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1bXUz5hTdpUTUdA58ch7V7dkl371trRvv04nW9L8uV+uzczFJBWwU1DBWwUj4ZaGWTt+0jD3HtW7EbvXaG82gSHA730zFJidio20baKmqKRtGwRxCnrJogW8xdp/K8c+3Ek829knfeVz1WPWmpvLLvLBL7rYWHbKiRjHlh2wujDgx5G+hcCQuXRPlVbWv29X+fchFjzC/wBwtbnMqaYzSQ2xxfJQSQmB9VOIzytcf31gHMWvGmkt73ddZKnyW9wzVVNVOppTS0Nxk7YRFvaPp5WNYSN6HqvHMB492u5SKfGLFNSMpX0AEcdPFTM5JHtc2ONwfGA4EEFrmgtdvYPUFcE+G47PQQ0MtFK6GHtQP4VKHPEruaUSO5uaQPcAXB5IcQN7XbogqNdL3vN9TB43k97uOWS0JayeljrDBMxlFIBBH7lbKJDNvk2ZCGcmtkO2Pgnc7XXoqGkonVDqWFsRqZe2m0T6z+Vrd/5NaOnkuwot3NFKEor2ncIiLhaEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAf/9k=" alt="AND-E Insurance">
+    <span class="brand-tag">Customer Service Notes Template</span>
+  </div>
+  <div class="container-inner">
+  <div class="header">
+    <div>
+      <h1>Customer Service Notes</h1>
+      <p class="subtitle">Fill in fields to generate notes, or switch to Builder mode to customise.</p>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="mode-use">Use</button>
+      <button class="mode-btn active" id="mode-build">Builder</button>
+    </div>
+  </div>
+
+  <div id="use-mode" class="hidden">
+    <div class="tab-bar" id="tab-bar"><button class="tab-btn active" title="RENEWAL">RN</button><button class="tab-btn" title="CANCELLATION (IMMEDIATE)">Canx I</button><button class="tab-btn" title="CANCELLATION (FUTURE-DATE)">Canx F</button><button class="tab-btn" title="CHANGE OF VEHICLE">COV</button><button class="tab-btn" title="CHANGE OF ADDRESS">COA</button><button class="tab-btn" title="ADDITION DRIVER">ND</button><button class="tab-btn" title="MID-TERM ADJUSTMENT">MTA</button><button class="tab-btn" title="SUSPENSION">SPN</button><button class="tab-btn" title="NOTIFICATION OF PH DEATH">DTH</button><button class="tab-btn" title="THIRD-PARTY AUTHORISATION">TPA</button><button class="tab-btn" title="Portal Issue">Portal Issue</button></div>
+    <div id="panels"><div class="panel active" id="panel-rn"><div class="sub-tab-bar"><button type="button" class="sub-tab-btn" data-sub="accept" data-tabid="rn">Accept</button><button type="button" class="sub-tab-btn active" data-sub="reject" data-tabid="rn">Reject</button></div><div class="sub-panel"><div class="field" data-field-id="reason"><label>Rejection Reason</label><select id="rn_reject__reason"><option value="">Select…</option><option value="Cheaper Elsewhere">Cheaper Elsewhere</option><option value="Selling Vehicle">Selling Vehicle</option><option value="Other">Other</option></select></div><div class="field hidden" data-other-for="rn_reject__reason" id="rn_reject__reason__other_wrap"><label>Other (please specify)</label><input type="text" id="rn_reject__reason__other"></div><div class="field" data-field-id="price"><label>Annual Price (£)</label><input type="number" step="0.01" id="rn_reject__price"></div><div class="field" data-field-id="excess"><label>Excess (£)</label><input type="number" step="0.01" id="rn_reject__excess"></div><div class="field" data-field-id="mileage_w7yw"><label>Mileage</label><input type="number" step="1" id="rn_reject__mileage_w7yw"></div><div class="field" data-field-id="comp_price"><label>Competitor Price (£)</label><input type="number" step="0.01" id="rn_reject__comp_price"></div><div class="field" data-field-id="voucher_1ld5"><label>Vouchers Accepted</label><select id="rn_reject__voucher_1ld5"><option value="">Select…</option><option value="Yes">Yes</option><option value="No">No</option><option value="Not Available">Not Available</option></select></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="rn_reject__outcome"><option value="">Select…</option><option value="REJECTED">REJECTED</option><option value="QUOTED">QUOTED</option></select></div></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="rn_reject__additional"></textarea></div></div><div class="panel" id="panel-cxi"><div class="field" data-field-id="btype"><label>Balance Type</label><div class="toggle-group" data-toggle="cxi__btype"><button type="button" class="toggle-btn" data-val="Outstanding Balance">Outstanding Balance</button><button type="button" class="toggle-btn" data-val="Refund">Refund</button></div><input type="hidden" id="cxi__btype"></div><div class="field" data-field-id="amt"><label>Amount (£)</label><input type="number" step="0.01" id="cxi__amt"></div><div class="field" data-field-id="settled"><div class="checkbox-row"><input type="checkbox" id="cxi__settled"><label for="cxi__settled">Settled</label></div></div><div class="field" data-field-id="reason"><label>Cancellation Reason</label><select id="cxi__reason"><option value="">Select…</option><option value="Cheaper Elsewhere">Cheaper Elsewhere</option><option value="Selling Vehicle">Selling Vehicle</option><option value="Other">Other</option></select></div><div class="field hidden" data-other-for="cxi__reason" id="cxi__reason__other_wrap"><label>Other (please specify)</label><input type="text" id="cxi__reason__other"></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="cxi__outcome"><option value="">Select…</option><option value="PROCESSED">PROCESSED</option><option value="QUOTED">QUOTED</option><option value="2-STAGE">2-STAGE</option></select></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="cxi__additional"></textarea></div></div><div class="panel" id="panel-cxf"><div class="field" data-field-id="wef"><label>Cancellation Date/Time (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="cxf__wef"></div><div class="field" data-field-id="btype"><label>Balance Type</label><div class="toggle-group" data-toggle="cxf__btype"><button type="button" class="toggle-btn" data-val="Outstanding Balance">Outstanding Balance</button><button type="button" class="toggle-btn" data-val="Refund">Refund</button></div><input type="hidden" id="cxf__btype"></div><div class="field" data-field-id="amt"><label>Amount (£)</label><input type="number" step="0.01" id="cxf__amt"></div><div class="field" data-field-id="settled"><div class="checkbox-row"><input type="checkbox" id="cxf__settled"><label for="cxf__settled">Settled</label></div></div><div class="field" data-field-id="reason"><label>Cancellation Reason</label><select id="cxf__reason"><option value="">Select…</option><option value="Cheaper Elsewhere">Cheaper Elsewhere</option><option value="Selling Vehicle">Selling Vehicle</option><option value="Other">Other</option></select></div><div class="field hidden" data-other-for="cxf__reason" id="cxf__reason__other_wrap"><label>Other (please specify)</label><input type="text" id="cxf__reason__other"></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="cxf__outcome"><option value="">Select…</option><option value="PROCESSED">PROCESSED</option><option value="QUOTED">QUOTED</option><option value="2-STAGE">2-STAGE</option></select></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="cxf__additional"></textarea></div></div><div class="panel" id="panel-cov"><div class="field" data-field-id="wef"><label>WEF From Confirmed (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="cov__wef"></div><div class="field" data-field-id="reg"><label>Registration</label><input type="text" id="cov__reg"></div><div class="field" data-field-id="makemodel"><label>Make and Model</label><input type="text" id="cov__makemodel"></div><div class="field" data-field-id="security"><label>Security Devices</label><select id="cov__security"><option value="">Select…</option><option value="Alarm">Alarm</option><option value="Immobiliser">Immobiliser</option><option value="Both">Both</option><option value="None">None</option></select></div><div class="field" data-field-id="tracker"><label>Security Tracker</label><div class="toggle-group" data-toggle="cov__tracker"><button type="button" class="toggle-btn" data-val="Yes">Yes</button><button type="button" class="toggle-btn" data-val="No">No</button></div><input type="hidden" id="cov__tracker"></div><div class="field" data-field-id="value"><label>Vehicle Value (£)</label><input type="number" step="0.01" id="cov__value"></div><div class="field" data-field-id="cou"><label>Class of Use</label><select id="cov__cou"><option value="">Select…</option><option value="SDC+P">SDC+P</option><option value="SDC+P including Business">SDC+P including Business</option><option value="SDC+P including Business and Commercial">SDC+P including Business and Commercial</option></select></div><div class="field" data-field-id="payment"><label>Payment</label><div class="toggle-group" data-toggle="cov__payment"><button type="button" class="toggle-btn" data-val="Annual">Annual</button><button type="button" class="toggle-btn" data-val="Instalments">Instalments</button></div><input type="hidden" id="cov__payment"></div><div class="field" data-field-id="aprp"><label>AP / RP</label><div class="row-2-uneven"><div class="toggle-group" data-toggle="cov__aprp"><button type="button" class="toggle-btn" data-val="AP">AP</button><button type="button" class="toggle-btn" data-val="RP">RP</button></div><input type="number" step="0.01" id="cov__aprp__amt" placeholder="Amount"></div><input type="hidden" id="cov__aprp"></div><div class="field" data-field-id="instalment_amount_t0c5"><label>Instalment amount (£)</label><input type="number" step="0.01" id="cov__instalment_amount_t0c5"></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="cov__outcome"><option value="">Select…</option><option value="MTA PROCESSED">MTA PROCESSED</option><option value="MTA QUOTED">MTA QUOTED</option><option value="MTA DECLINED">MTA DECLINED</option><option value="MTA REFUSED">MTA REFUSED</option></select></div><div class="field" data-field-id="mta_refusal_email_sent_ldl6"><label>MTA Refusal Email Sent</label><div class="toggle-group" data-toggle="cov__mta_refusal_email_sent_ldl6"><button type="button" class="toggle-btn" data-val="Yes">Yes</button><button type="button" class="toggle-btn" data-val="No">No</button></div><input type="hidden" id="cov__mta_refusal_email_sent_ldl6"></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="cov__additional"></textarea></div></div><div class="panel" id="panel-coa"><div class="field" data-field-id="wef"><label>WEF From Confirmed (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="coa__wef"></div><div class="field" data-field-id="postcode"><label>Postcode</label><input type="text" id="coa__postcode"></div><div class="field" data-field-id="address"><label>First Line of Address</label><input type="text" id="coa__address"></div><div class="field" data-field-id="homeowner"><label>Homeowner</label><select id="coa__homeowner"><option value="">Select…</option><option value="Yes">Yes</option><option value="No">No</option></select></div><div class="field" data-field-id="daypark"><label>Daytime Parking</label><select id="coa__daypark"><option value="">Select…</option><option value="Driveway">Driveway</option><option value="Public Road at Home">Public Road at Home</option><option value="Public Road away from Home">Public Road away from Home</option><option value="Secured Carpark">Secured Carpark</option><option value="Unsecured Carpark">Unsecured Carpark</option><option value="Other">Other</option></select></div><div class="field" data-field-id="nightpark"><label>Night Parking</label><select id="coa__nightpark"><option value="">Select…</option><option value="Driveway">Driveway</option><option value="Public Road at Home">Public Road at Home</option><option value="Public Road away from Home">Public Road away from Home</option><option value="Secured Carpark">Secured Carpark</option><option value="Unsecured Carpark">Unsecured Carpark</option><option value="Other">Other</option></select></div><div class="field" data-field-id="payment"><label>Payment</label><div class="toggle-group" data-toggle="coa__payment"><button type="button" class="toggle-btn" data-val="Annual">Annual</button><button type="button" class="toggle-btn" data-val="Instalments">Instalments</button></div><input type="hidden" id="coa__payment"></div><div class="field" data-field-id="aprp"><label>AP / RP</label><div class="row-2-uneven"><div class="toggle-group" data-toggle="coa__aprp"><button type="button" class="toggle-btn" data-val="AP">AP</button><button type="button" class="toggle-btn" data-val="RP">RP</button></div><input type="number" step="0.01" id="coa__aprp__amt" placeholder="Amount"></div><input type="hidden" id="coa__aprp"></div><div class="field" data-field-id="instalment_amount_3wg9"><label>Instalment Amount (£)</label><input type="number" step="0.01" id="coa__instalment_amount_3wg9"></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="coa__outcome"><option value="">Select…</option><option value="MTA PROCESSED">MTA PROCESSED</option><option value="MTA QUOTED">MTA QUOTED</option><option value="MTA DECLINED">MTA DECLINED</option><option value="MTA REFUSED">MTA REFUSED</option></select></div><div class="field" data-field-id="mta_refused_email_sent_nbdz"><label>MTA Refused Email Sent</label><div class="toggle-group" data-toggle="coa__mta_refused_email_sent_nbdz"><button type="button" class="toggle-btn" data-val="Yes">Yes</button><button type="button" class="toggle-btn" data-val="No">No</button></div><input type="hidden" id="coa__mta_refused_email_sent_nbdz"></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="coa__additional"></textarea></div></div><div class="panel" id="panel-nd"><div class="field" data-field-id="wef"><label>WEF From Confirmed (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="nd__wef"></div><div class="field" data-field-id="name"><label>Name</label><input type="text" id="nd__name"></div><div class="field" data-field-id="dob"><label>Date of Birth (DD/MM/YYYY)</label><input type="date" id="nd__dob"></div><div class="field" data-field-id="occ"><label>Occupation</label><input type="text" id="nd__occ"></div><div class="field" data-field-id="home"><label>Homeowner</label><div class="toggle-group" data-toggle="nd__home"><button type="button" class="toggle-btn" data-val="Yes">Yes</button><button type="button" class="toggle-btn" data-val="No">No</button></div><input type="hidden" id="nd__home"></div><div class="field" data-field-id="rel"><label>Relationship to PH</label><select id="nd__rel"><option value="">Select…</option><option value="Spouse">Spouse</option><option value="Partner">Partner</option><option value="Parent">Parent</option><option value="Child">Child</option><option value="Sibling">Sibling</option><option value="Friend">Friend</option><option value="Other">Other</option></select></div><div class="field" data-field-id="lic"><label>License Type</label><select id="nd__lic"><option value="">Select…</option><option value="Full UK">Full UK</option><option value="Provisional UK">Provisional UK</option><option value="Full EU">Full EU</option><option value="Full International">Full International</option><option value="Other">Other</option></select></div><div class="field" data-field-id="payment"><label>Payment</label><div class="toggle-group" data-toggle="nd__payment"><button type="button" class="toggle-btn" data-val="Annual">Annual</button><button type="button" class="toggle-btn" data-val="Instalments">Instalments</button></div><input type="hidden" id="nd__payment"></div><div class="field" data-field-id="aprp"><label>AP / RP</label><div class="row-2-uneven"><div class="toggle-group" data-toggle="nd__aprp"><button type="button" class="toggle-btn" data-val="AP">AP</button><button type="button" class="toggle-btn" data-val="RP">RP</button></div><input type="number" step="0.01" id="nd__aprp__amt" placeholder="Amount"></div><input type="hidden" id="nd__aprp"></div><div class="field" data-field-id="instalments_amount_4jn9"><label>Instalments Amount (£)</label><input type="number" step="0.01" id="nd__instalments_amount_4jn9"></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="nd__outcome"><option value="">Select…</option><option value="MTA PROCESSED">MTA PROCESSED</option><option value="MTA QUOTED">MTA QUOTED</option><option value="MTA DECLINED">MTA DECLINED</option></select></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="nd__additional"></textarea></div></div><div class="panel" id="panel-mta"><div class="field" data-field-id="wef"><label>WEF From Confirmed (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="mta__wef"></div><div class="field" data-field-id="change"><label>Change made</label><select id="mta__change"><option value="">Select…</option><option value="Private Registration">Private Registration</option><option value="Remove Driver">Remove Driver</option><option value="Remove Add-on">Remove Add-on</option><option value="Add Extra">Add Extra</option><option value="Other">Other</option></select></div><div class="field hidden" data-other-for="mta__change" id="mta__change__other_wrap"><label>Other (please specify)</label><input type="text" id="mta__change__other"></div><div class="field" data-field-id="new_registration_ayjb"><label>New Registration</label><input type="text" id="mta__new_registration_ayjb"></div><div class="field" data-field-id="driver_blky"><label>Driver</label><input type="text" id="mta__driver_blky"></div><div class="field" data-field-id="optional_extra_f1a0"><label>Optional Extra</label><input type="text" id="mta__optional_extra_f1a0"></div><div class="field" data-field-id="add_on_gd0t"><label>Add-on</label><input type="text" id="mta__add_on_gd0t"></div><div class="field" data-field-id="payment"><label>Payment</label><div class="toggle-group" data-toggle="mta__payment"><button type="button" class="toggle-btn" data-val="Annual">Annual</button><button type="button" class="toggle-btn" data-val="Instalments">Instalments</button></div><input type="hidden" id="mta__payment"></div><div class="field" data-field-id="aprp"><label>AP / RP</label><div class="row-2-uneven"><div class="toggle-group" data-toggle="mta__aprp"><button type="button" class="toggle-btn" data-val="AP">AP</button><button type="button" class="toggle-btn" data-val="RP">RP</button></div><input type="number" step="0.01" id="mta__aprp__amt" placeholder="Amount"></div><input type="hidden" id="mta__aprp"></div><div class="field" data-field-id="instalment_amount_69td"><label>Instalment Amount (£)</label><input type="number" step="0.01" id="mta__instalment_amount_69td"></div><div class="field" data-field-id="outcome"><label>Outcome</label><select id="mta__outcome"><option value="">Select…</option><option value="MTA PROCESSED">MTA PROCESSED</option><option value="MTA QUOTED">MTA QUOTED</option><option value="MTA DECLINED">MTA DECLINED</option><option value="MTA REFUSED">MTA REFUSED</option></select></div><div class="field" data-field-id="mta_refusal_email_sent_o541"><label>MTA Refusal Email Sent</label><div class="toggle-group" data-toggle="mta__mta_refusal_email_sent_o541"><button type="button" class="toggle-btn" data-val="Yes">Yes</button><button type="button" class="toggle-btn" data-val="No">No</button></div><input type="hidden" id="mta__mta_refusal_email_sent_o541"></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="mta__additional"></textarea></div></div><div class="panel" id="panel-spn"><div class="field" data-field-id="wef"><label>WEF From Confirmed (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="spn__wef"></div><div class="field" data-field-id="reason"><label>Reason for Suspension</label><textarea id="spn__reason"></textarea></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="spn__additional"></textarea></div></div><div class="panel" id="panel-dth"><div class="field" data-field-id="caller"><label>Caller’s Name</label><input type="text" id="dth__caller"></div><div class="field" data-field-id="rel"><label>Caller’s Relationship to PH</label><input type="text" id="dth__rel"></div><div class="field" data-field-id="pending"><label>Diary set for 7 days, pending date (auto-calculated: today + 7 days)</label><input type="text" id="dth__pending" value="03/06/2026" readonly="" style="background:var(--bg2);color:var(--ink-faint)"></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="dth__additional"></textarea></div></div><div class="panel" id="panel-tpa"><div class="field" data-field-id="type"><label>Type of Auth</label><select id="tpa__type"><option value="">Select…</option><option value="Continuous">Continuous</option><option value="Temporary">Temporary</option></select></div><div class="field" data-field-id="title"><label>Title</label><select id="tpa__title"><option value="">Select…</option><option value="Mr">Mr</option><option value="Mrs">Mrs</option><option value="Miss">Miss</option><option value="Ms">Ms</option><option value="Mx">Mx</option><option value="Dr">Dr</option></select></div><div class="field" data-field-id="name"><label>Name</label><input type="text" id="tpa__name"></div><div class="field" data-field-id="dob"><label>Date of Birth (DD/MM/YYYY)</label><input type="date" id="tpa__dob"></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="tpa__additional"></textarea></div></div><div class="panel" id="panel-portal_issue_mpgy2sl4"><div class="field" data-field-id="date_raised_35e8"><label>Date Raised (DD/MM/YYYY)</label><input type="date" id="portal_issue_mpgy2sl4__date_raised_35e8"></div><div class="field" data-field-id="portal_issue_52d8"><label>Portal Issue</label><select id="portal_issue_mpgy2sl4__portal_issue_52d8"><option value="">Select…</option><option value="Unable to Login">Unable to Login</option><option value="New Documents not Generated">New Documents not Generated</option><option value="Other">Other</option></select></div><div class="field hidden" data-other-for="portal_issue_mpgy2sl4__portal_issue_52d8" id="portal_issue_mpgy2sl4__portal_issue_52d8__other_wrap"><label>Other (please specify)</label><input type="text" id="portal_issue_mpgy2sl4__portal_issue_52d8__other"></div><div class="field" data-field-id="jira_ticket_5hqg"><label>JIRA Ticket</label><input type="text" id="portal_issue_mpgy2sl4__jira_ticket_5hqg"></div><div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="portal_issue_mpgy2sl4__additional"></textarea></div></div></div>
+    <div class="output-box" id="output">Live Chat Conversation
+
+RENEWAL - REJECTED</div>
+    <div class="contact-check" id="contact-check">
+      <input type="checkbox" id="contact-confirm">
+      <label for="contact-confirm"><strong>Confirm:</strong> I have checked and verified the customer's contact details on file before generating this note.</label>
+    </div>
+    <div class="action-bar">
+      <button id="copy-btn" class="primary" disabled title="Tick the verification box above to enable">Copy note</button>
+      <button id="clear-btn">Clear fields</button>
+    </div>
+  </div>
+
+  <div id="build-mode" class="">
+    <div class="builder-panel">
+      <div class="builder-section">
+        <h3>Tabs</h3>
+        <div id="tab-list"><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">RN</span> RENEWAL
+          <span class="pill">2 sub-tabs</span>
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="rn">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="rn" disabled="" style="opacity:0.3">↑</button>
+          <button class="icon-btn" data-action="down" data-id="rn">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="rn">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>Accept (5), Reject (7)</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">Canx I</span> CANCELLATION (IMMEDIATE)
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="cxi">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="cxi">↑</button>
+          <button class="icon-btn" data-action="down" data-id="cxi">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="cxi">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>5 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">Canx F</span> CANCELLATION (FUTURE-DATE)
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="cxf">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="cxf">↑</button>
+          <button class="icon-btn" data-action="down" data-id="cxf">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="cxf">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>6 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">COV</span> CHANGE OF VEHICLE
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="cov">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="cov">↑</button>
+          <button class="icon-btn" data-action="down" data-id="cov">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="cov">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>12 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">COA</span> CHANGE OF ADDRESS
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="coa">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="coa">↑</button>
+          <button class="icon-btn" data-action="down" data-id="coa">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="coa">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>11 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">ND</span> ADDITION DRIVER
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="nd">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="nd">↑</button>
+          <button class="icon-btn" data-action="down" data-id="nd">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="nd">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>11 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">MTA</span> MID-TERM ADJUSTMENT
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="mta">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="mta">↑</button>
+          <button class="icon-btn" data-action="down" data-id="mta">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="mta">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>11 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">SPN</span> SUSPENSION
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="spn">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="spn">↑</button>
+          <button class="icon-btn" data-action="down" data-id="spn">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="spn">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>2 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">DTH</span> NOTIFICATION OF PH DEATH
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="dth">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="dth">↑</button>
+          <button class="icon-btn" data-action="down" data-id="dth">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="dth">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>3 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">TPA</span> THIRD-PARTY AUTHORISATION
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="tpa">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="tpa">↑</button>
+          <button class="icon-btn" data-action="down" data-id="tpa">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="tpa">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>4 fields</span>
+      </div>
+    </div><div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">Portal Issue</span> Portal Issue
+          
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="portal_issue_mpgy2sl4">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="portal_issue_mpgy2sl4">↑</button>
+          <button class="icon-btn" data-action="down" data-id="portal_issue_mpgy2sl4" disabled="" style="opacity:0.3">↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="portal_issue_mpgy2sl4">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>3 fields</span>
+      </div>
+    </div></div>
+        <button class="icon-btn" id="add-tab-btn" style="margin-top:8px">+ Add tab</button>
+      </div>
+    </div>
+    <div class="builder-panel" id="tab-editor-panel"><div class="builder-empty">Click "Edit" on a tab to modify its fields, or add a new tab below.</div></div>
+    <div class="builder-actions">
+      <button id="export-html-btn" class="primary">Export as HTML</button>
+      <button id="export-json-btn">Export config (JSON)</button>
+      <button id="import-json-btn">Import config (JSON)</button>
+      <button id="reset-btn" class="danger">Reset to default</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none">
+  </div>
+</div>
+</div>
+
+<div id="modal-host"></div>
+
+<script>
+/* ============================================================
+   DEFAULT CONFIG (the original 10 tabs)
+   ============================================================ */
+const DEFAULT_CONFIG = {
+  "noteHeader": "Live Chat Conversation",
+  "tabs": [
+    {
+      "id": "rn",
+      "label": "RN",
+      "title": "RENEWAL",
+      "subTabs": [
+        {
+          "id": "accept",
+          "label": "Accept",
+          "titleSuffix": " - ACCEPTED",
+          "fields": [
+            {
+              "id": "price",
+              "label": "Annual Price",
+              "type": "currency"
+            },
+            {
+              "id": "excess",
+              "label": "Excess",
+              "type": "currency"
+            },
+            {
+              "id": "mileage_v7oe",
+              "label": "Mileage",
+              "type": "number"
+            },
+            {
+              "id": "vouchers",
+              "label": "Vouchers Accepted",
+              "type": "dropdown",
+              "options": [
+                "Yes",
+                "No",
+                "Not Available"
+              ]
+            },
+            {
+              "id": "outcome",
+              "label": "Outcome",
+              "type": "dropdown",
+              "options": [
+                "ACCEPTED",
+                "QUOTED"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "reject",
+          "label": "Reject",
+          "titleSuffix": " - REJECTED",
+          "fields": [
+            {
+              "id": "reason",
+              "label": "Rejection Reason",
+              "type": "dropdown",
+              "options": [
+                "Cheaper Elsewhere",
+                "Selling Vehicle",
+                "Other"
+              ],
+              "otherText": true
+            },
+            {
+              "id": "price",
+              "label": "Annual Price",
+              "type": "currency"
+            },
+            {
+              "id": "excess",
+              "label": "Excess",
+              "type": "currency"
+            },
+            {
+              "id": "mileage_w7yw",
+              "label": "Mileage",
+              "type": "number"
+            },
+            {
+              "id": "comp_price",
+              "label": "Competitor Price",
+              "type": "currency"
+            },
+            {
+              "id": "voucher_1ld5",
+              "label": "Vouchers Accepted",
+              "type": "dropdown",
+              "options": [
+                "Yes",
+                "No",
+                "Not Available"
+              ]
+            },
+            {
+              "id": "outcome",
+              "label": "Outcome",
+              "type": "dropdown",
+              "options": [
+                "REJECTED",
+                "QUOTED"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cxi",
+      "label": "Canx I",
+      "title": "CANCELLATION (IMMEDIATE)",
+      "fields": [
+        {
+          "id": "btype",
+          "label": "Balance Type",
+          "type": "toggle",
+          "options": [
+            "Outstanding Balance",
+            "Refund"
+          ],
+          "omitLabelInOutput": true,
+          "valueAsLabel": true
+        },
+        {
+          "id": "amt",
+          "label": "Amount",
+          "type": "currency",
+          "bindToLabel": "btype"
+        },
+        {
+          "id": "settled",
+          "label": "Settled",
+          "type": "checkbox",
+          "omitWhenFalse": true,
+          "showWhen": {
+            "field": "btype",
+            "value": "Outstanding Balance"
+          }
+        },
+        {
+          "id": "reason",
+          "label": "Cancellation Reason",
+          "type": "dropdown",
+          "options": [
+            "Cheaper Elsewhere",
+            "Selling Vehicle",
+            "Other"
+          ],
+          "otherText": true
+        },
+        {
+          "id": "outcome",
+          "label": "Outcome",
+          "type": "dropdown",
+          "options": [
+            "PROCESSED",
+            "QUOTED",
+            "2-STAGE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cxf",
+      "label": "Canx F",
+      "title": "CANCELLATION (FUTURE-DATE)",
+      "fields": [
+        {
+          "id": "wef",
+          "label": "Cancellation Date/Time",
+          "type": "datetime"
+        },
+        {
+          "id": "btype",
+          "label": "Balance Type",
+          "type": "toggle",
+          "options": [
+            "Outstanding Balance",
+            "Refund"
+          ],
+          "omitLabelInOutput": true,
+          "valueAsLabel": true
+        },
+        {
+          "id": "amt",
+          "label": "Amount",
+          "type": "currency",
+          "bindToLabel": "btype"
+        },
+        {
+          "id": "settled",
+          "label": "Settled",
+          "type": "checkbox",
+          "omitWhenFalse": true,
+          "showWhen": {
+            "field": "btype",
+            "value": "Outstanding Balance"
+          }
+        },
+        {
+          "id": "reason",
+          "label": "Cancellation Reason",
+          "type": "dropdown",
+          "options": [
+            "Cheaper Elsewhere",
+            "Selling Vehicle",
+            "Other"
+          ],
+          "otherText": true
+        },
+        {
+          "id": "outcome",
+          "label": "Outcome",
+          "type": "dropdown",
+          "options": [
+            "PROCESSED",
+            "QUOTED",
+            "2-STAGE"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cov",
+      "label": "COV",
+      "title": "CHANGE OF VEHICLE",
+      "fields": [
+        {
+          "id": "wef",
+          "label": "WEF From Confirmed",
+          "type": "datetime"
+        },
+        {
+          "id": "reg",
+          "label": "Registration",
+          "type": "text",
+          "uppercase": true
+        },
+        {
+          "id": "makemodel",
+          "label": "Make and Model",
+          "type": "text"
+        },
+        {
+          "id": "security",
+          "label": "Security Devices",
+          "type": "dropdown",
+          "options": [
+            "Alarm",
+            "Immobiliser",
+            "Both",
+            "None"
+          ]
+        },
+        {
+          "id": "tracker",
+          "label": "Security Tracker",
+          "type": "toggle",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "id": "value",
+          "label": "Vehicle Value",
+          "type": "currency"
+        },
+        {
+          "id": "cou",
+          "label": "Class of Use",
+          "type": "dropdown",
+          "options": [
+            "SDC+P",
+            "SDC+P including Business",
+            "SDC+P including Business and Commercial"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "Payment",
+          "type": "toggle",
+          "options": [
+            "Annual",
+            "Instalments"
+          ]
+        },
+        {
+          "id": "aprp",
+          "label": "AP / RP",
+          "type": "toggleWithAmount",
+          "options": [
+            "AP",
+            "RP"
+          ]
+        },
+        {
+          "id": "instalment_amount_t0c5",
+          "label": "Instalment amount",
+          "type": "currency",
+          "showWhen": {
+            "field": "payment",
+            "value": "Instalments"
+          }
+        },
+        {
+          "id": "outcome",
+          "label": "Outcome",
+          "type": "dropdown",
+          "options": [
+            "MTA PROCESSED",
+            "MTA QUOTED",
+            "MTA DECLINED",
+            "MTA REFUSED"
+          ]
+        },
+        {
+          "id": "mta_refusal_email_sent_ldl6",
+          "label": "MTA Refusal Email Sent",
+          "type": "toggle",
+          "options": [
+            "Yes",
+            "No"
+          ],
+          "showWhen": {
+            "field": "outcome",
+            "value": "MTA REFUSED"
+          }
+        }
+      ]
+    },
+    {
+      "id": "coa",
+      "label": "COA",
+      "title": "CHANGE OF ADDRESS",
+      "fields": [
+        {
+          "id": "wef",
+          "label": "WEF From Confirmed",
+          "type": "datetime"
+        },
+        {
+          "id": "postcode",
+          "label": "Postcode",
+          "type": "text",
+          "postcode": true
+        },
+        {
+          "id": "address",
+          "label": "First Line of Address",
+          "type": "text"
+        },
+        {
+          "id": "homeowner",
+          "label": "Homeowner",
+          "type": "dropdown",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "id": "daypark",
+          "label": "Daytime Parking",
+          "type": "dropdown",
+          "options": [
+            "Driveway",
+            "Public Road at Home",
+            "Public Road away from Home",
+            "Secured Carpark",
+            "Unsecured Carpark",
+            "Other"
+          ]
+        },
+        {
+          "id": "nightpark",
+          "label": "Night Parking",
+          "type": "dropdown",
+          "options": [
+            "Driveway",
+            "Public Road at Home",
+            "Public Road away from Home",
+            "Secured Carpark",
+            "Unsecured Carpark",
+            "Other"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "Payment",
+          "type": "toggle",
+          "options": [
+            "Annual",
+            "Instalments"
+          ]
+        },
+        {
+          "id": "aprp",
+          "label": "AP / RP",
+          "type": "toggleWithAmount",
+          "options": [
+            "AP",
+            "RP"
+          ]
+        },
+        {
+          "id": "instalment_amount_3wg9",
+          "label": "Instalment Amount",
+          "type": "currency",
+          "showWhen": {
+            "field": "payment",
+            "value": "Instalments"
+          }
+        },
+        {
+          "id": "outcome",
+          "label": "Outcome",
+          "type": "dropdown",
+          "options": [
+            "MTA PROCESSED",
+            "MTA QUOTED",
+            "MTA DECLINED",
+            "MTA REFUSED"
+          ]
+        },
+        {
+          "id": "mta_refused_email_sent_nbdz",
+          "label": "MTA Refused Email Sent",
+          "type": "toggle",
+          "options": [
+            "Yes",
+            "No"
+          ],
+          "showWhen": {
+            "field": "outcome",
+            "value": "MTA REFUSED"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nd",
+      "label": "ND",
+      "title": "ADDITION DRIVER",
+      "fields": [
+        {
+          "id": "wef",
+          "label": "WEF From Confirmed",
+          "type": "datetime"
+        },
+        {
+          "id": "name",
+          "label": "Name",
+          "type": "text"
+        },
+        {
+          "id": "dob",
+          "label": "Date of Birth",
+          "type": "date"
+        },
+        {
+          "id": "occ",
+          "label": "Occupation",
+          "type": "text"
+        },
+        {
+          "id": "home",
+          "label": "Homeowner",
+          "type": "toggle",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "id": "rel",
+          "label": "Relationship to PH",
+          "type": "dropdown",
+          "options": [
+            "Spouse",
+            "Partner",
+            "Parent",
+            "Child",
+            "Sibling",
+            "Friend",
+            "Other"
+          ]
+        },
+        {
+          "id": "lic",
+          "label": "License Type",
+          "type": "dropdown",
+          "options": [
+            "Full UK",
+            "Provisional UK",
+            "Full EU",
+            "Full International",
+            "Other"
+          ]
+        },
+        {
+          "id": "payment",
+          "label": "Payment",
+          "type": "toggle",
+          "options": [
+            "Annual",
+            "Instalments"
+          ]
+        },
+        {
+          "id": "aprp",
+          "label": "AP / RP",
+          "type": "toggleWithAmount",
+          "options": [
+            "AP",
+            "RP"
+          ]
+        },
+        {
+          "id": "instalments_amount_4jn9",
+          "label": "Instalments Amount",
+          "type": "currency",
+          "showWhen": {
+            "field": "payment",
+            "value": "Instalments"
+          }
+        },
+        {
+          "id": "outcome",
+          "label": "Outcome",
+          "type": "dropdown",
+          "options": [
+            "MTA PROCESSED",
+            "MTA QUOTED",
+            "MTA DECLINED"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mta",
+      "label": "MTA",
+      "title": "MID-TERM ADJUSTMENT",
+      "fields": [
+        {
+          "id": "wef",
+          "label": "WEF From Confirmed",
+          "type": "datetime"
+        },
+        {
+          "id": "change",
+          "label": "Change made",
+          "type": "dropdown",
+          "options": [
+            "Private Registration",
+            "Remove Driver",
+            "Remove Add-on",
+            "Add Extra",
+            "Other"
+          ],
+          "otherText": true
+        },
+        {
+          "id": "new_registration_ayjb",
+          "label": "New Registration",
+          "type": "text",
+          "uppercase": true,
+          "showWhen": {
+            "field": "change",
+            "value": "Private Registration"
+          }
+        },
+        {
+          "id": "driver_blky",
+          "label": "Driver",
+          "type": "text",
+          "showWhen": {
+            "field": "change",
+            "value": "Remove Driver"
+          }
+        },
+        {
+          "id": "optional_extra_f1a0",
+          "label": "Optional Extra",
+          "type": "text",
+          "showWhen": {
+            "field": "change",
+            "value": "Add Extra"
+          }
+        },
+        {
+          "id": "add_on_gd0t",
+          "label": "Add-on",
+          "type": "text",
+          "showWhen": {
+            "field": "change",
+            "value": "Remove Add-on"
+          }
+        },
+        {
+          "id": "payment",
+          "label": "Payment",
+          "type": "toggle",
+          "options": [
+            "Annual",
+            "Instalments"
+          ]
+        },
+        {
+          "id": "aprp",
+          "label": "AP / RP",
+          "type": "toggleWithAmount",
+          "options": [
+            "AP",
+            "RP"
+          ]
+        },
+        {
+          "id": "instalment_amount_69td",
+          "label": "Instalment Amount",
+          "type": "currency",
+          "showWhen": {
+            "field": "payment",
+            "value": "Instalments"
+          }
+        },
+        {
+          "id": "outcome",
+          "label": "Outcome",
+          "type": "dropdown",
+          "options": [
+            "MTA PROCESSED",
+            "MTA QUOTED",
+            "MTA DECLINED",
+            "MTA REFUSED"
+          ]
+        },
+        {
+          "id": "mta_refusal_email_sent_o541",
+          "label": "MTA Refusal Email Sent",
+          "type": "toggle",
+          "options": [
+            "Yes",
+            "No"
+          ],
+          "showWhen": {
+            "field": "outcome",
+            "value": "MTA REFUSED"
+          }
+        }
+      ]
+    },
+    {
+      "id": "spn",
+      "label": "SPN",
+      "title": "SUSPENSION",
+      "fields": [
+        {
+          "id": "wef",
+          "label": "WEF From Confirmed",
+          "type": "datetime"
+        },
+        {
+          "id": "reason",
+          "label": "Reason for Suspension",
+          "type": "multiline"
+        }
+      ]
+    },
+    {
+      "id": "dth",
+      "label": "DTH",
+      "title": "NOTIFICATION OF PH DEATH",
+      "fields": [
+        {
+          "id": "caller",
+          "label": "Caller’s Name",
+          "type": "text"
+        },
+        {
+          "id": "rel",
+          "label": "Caller’s Relationship to PH",
+          "type": "text"
+        },
+        {
+          "id": "pending",
+          "label": "Diary set for 7 days, pending date",
+          "type": "autoDate",
+          "daysFromNow": 7,
+          "readonly": true
+        }
+      ]
+    },
+    {
+      "id": "tpa",
+      "label": "TPA",
+      "title": "THIRD-PARTY AUTHORISATION",
+      "fields": [
+        {
+          "id": "type",
+          "label": "Type of Auth",
+          "type": "dropdown",
+          "options": [
+            "Continuous",
+            "Temporary"
+          ]
+        },
+        {
+          "id": "title",
+          "label": "Title",
+          "type": "dropdown",
+          "options": [
+            "Mr",
+            "Mrs",
+            "Miss",
+            "Ms",
+            "Mx",
+            "Dr"
+          ]
+        },
+        {
+          "id": "name",
+          "label": "Name",
+          "type": "text"
+        },
+        {
+          "id": "dob",
+          "label": "Date of Birth",
+          "type": "date"
+        }
+      ]
+    },
+    {
+      "id": "portal_issue_mpgy2sl4",
+      "label": "Portal Issue",
+      "title": "Portal Issue",
+      "fields": [
+        {
+          "id": "date_raised_35e8",
+          "label": "Date Raised",
+          "type": "date"
+        },
+        {
+          "id": "portal_issue_52d8",
+          "label": "Portal Issue",
+          "type": "dropdown",
+          "options": [
+            "Unable to Login",
+            "New Documents not Generated",
+            "Other"
+          ],
+          "otherText": true
+        },
+        {
+          "id": "jira_ticket_5hqg",
+          "label": "JIRA Ticket",
+          "type": "text",
+          "uppercase": true
+        }
+      ]
+    }
+  ]
+};
+const FIELD_TYPES = [
+  {value:'text',label:'Text'},
+  {value:'multiline',label:'Multi-line text'},
+  {value:'number',label:'Number'},
+  {value:'currency',label:'Currency (£)'},
+  {value:'date',label:'Date'},
+  {value:'datetime',label:'Date/Time'},
+  {value:'dropdown',label:'Dropdown'},
+  {value:'toggle',label:'Toggle group'},
+  {value:'toggleWithAmount',label:'Toggle + amount (e.g. AP/RP)'},
+  {value:'checkbox',label:'Checkbox'},
+  {value:'autoDate',label:'Auto-calculated date (today + N days)'}
+];
+
+const STORAGE_KEY = 'cs_notes_config_v1';
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let config = loadConfig();
+let activeTabId = config.tabs[0]?.id || null;
+let activeSubTabId = null;
+let editingTabId = null;
+
+function loadConfig(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(raw)return JSON.parse(raw);
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+}
+function saveConfig(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(config))}catch(e){}
+}
+
+/* ============================================================
+   FORMATTERS
+   ============================================================ */
+const fmtMoney=v=>{const n=parseFloat(v);if(isNaN(n))return '';return '£'+n.toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2})};
+const fmtDateTime=v=>{if(!v)return '';const d=new Date(v);if(isNaN(d))return '';const pad=n=>String(n).padStart(2,'0');return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const fmtDate=v=>{if(!v)return '';const [y,m,d]=v.split('-');return `${d}/${m}/${y}`};
+const fmtPostcode=v=>{if(!v)return '';const c=v.toUpperCase().replace(/\s+/g,'');if(c.length<=3)return c;return c.slice(0,-3)+' '+c.slice(-3)};
+const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);const pad=x=>String(x).padStart(2,'0');return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`};
+
+/* ============================================================
+   RENDER USE MODE
+   ============================================================ */
+function renderUseMode(){
+  const tabBar=document.getElementById('tab-bar');
+  const panels=document.getElementById('panels');
+  tabBar.innerHTML='';
+  panels.innerHTML='';
+
+  config.tabs.forEach((t,i)=>{
+    const b=document.createElement('button');
+    b.className='tab-btn'+(t.id===activeTabId?' active':'');
+    b.textContent=t.label;
+    b.title=t.title;
+    b.onclick=()=>{activeTabId=t.id;activeSubTabId=null;if(typeof contactCheckbox!=='undefined'&&contactCheckbox){contactCheckbox.checked=false;updateContactCheckState()}renderUseMode()};
+    tabBar.appendChild(b);
+    const p=document.createElement('div');
+    p.className='panel'+(t.id===activeTabId?' active':'');
+    p.id='panel-'+t.id;
+    p.innerHTML=renderTabContent(t);
+    panels.appendChild(p);
+  });
+
+  if(config.tabs.length===0){
+    panels.innerHTML='<div class="builder-empty">No tabs yet. Switch to Builder mode to add some.</div>';
+  }
+
+  wireUpFieldListeners();
+  applyConditionals();
+  generateNote();
+}
+
+function renderTabContent(tab){
+  if(tab.subTabs && tab.subTabs.length){
+    if(!activeSubTabId || !tab.subTabs.find(s=>s.id===activeSubTabId))activeSubTabId=tab.subTabs[0].id;
+    let html='<div class="sub-tab-bar">';
+    tab.subTabs.forEach(st=>{
+      html+=`<button type="button" class="sub-tab-btn${st.id===activeSubTabId?' active':''}" data-sub="${st.id}" data-tabid="${tab.id}">${escapeHtml(st.label)}</button>`;
+    });
+    html+='</div>';
+    const activeSub=tab.subTabs.find(s=>s.id===activeSubTabId);
+    html+='<div class="sub-panel">'+renderFields(tab.id+'_'+activeSub.id,activeSub.fields)+'</div>';
+    html+=renderAdditional(tab.id+'_'+activeSub.id);
+    return html;
+  }
+  return renderFields(tab.id,tab.fields||[])+renderAdditional(tab.id);
+}
+
+function renderAdditional(prefix){
+  return `<div class="section-header">Additional Notes</div><div class="field"><label>Free-text notes (optional)</label><textarea id="${prefix}__additional"></textarea></div>`;
+}
+
+function renderFields(prefix,fields){
+  return fields.map(f=>renderField(prefix,f)).join('');
+}
+
+function renderField(prefix,f){
+  const id=prefix+'__'+f.id;
+  switch(f.type){
+    case 'text':
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)}</label><input type="text" id="${id}"/></div>`;
+    case 'multiline':
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)}</label><textarea id="${id}"></textarea></div>`;
+    case 'number':
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)}</label><input type="number" step="1" id="${id}"/></div>`;
+    case 'currency':
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)} (£)</label><input type="number" step="0.01" id="${id}"/></div>`;
+    case 'date':
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)} (DD/MM/YYYY)</label><input type="date" id="${id}"/></div>`;
+    case 'datetime':
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)} (DD/MM/YYYY, HH:MM)</label><input type="datetime-local" id="${id}"/></div>`;
+    case 'dropdown':{
+      const opts=(f.options||[]).map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+      let html=`<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)}</label><select id="${id}"><option value="">Select…</option>${opts}</select></div>`;
+      if(f.otherText){
+        html+=`<div class="field hidden" data-other-for="${id}" id="${id}__other_wrap"><label>Other (please specify)</label><input type="text" id="${id}__other"/></div>`;
+      }
+      return html;
+    }
+    case 'toggle':{
+      const btns=(f.options||[]).map(o=>`<button type="button" class="toggle-btn" data-val="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join('');
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)}</label><div class="toggle-group" data-toggle="${id}">${btns}</div><input type="hidden" id="${id}"/></div>`;
+    }
+    case 'toggleWithAmount':{
+      const btns=(f.options||[]).map(o=>`<button type="button" class="toggle-btn" data-val="${escapeHtml(o)}">${escapeHtml(o)}</button>`).join('');
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)}</label><div class="row-2-uneven"><div class="toggle-group" data-toggle="${id}">${btns}</div><input type="number" step="0.01" id="${id}__amt" placeholder="Amount"/></div><input type="hidden" id="${id}"/></div>`;
+    }
+    case 'checkbox':
+      return `<div class="field" data-field-id="${f.id}"><div class="checkbox-row"><input type="checkbox" id="${id}"/><label for="${id}">${escapeHtml(f.label)}</label></div></div>`;
+    case 'autoDate':{
+      const days=f.daysFromNow||0;
+      return `<div class="field" data-field-id="${f.id}"><label>${escapeHtml(f.label)} (auto-calculated: today + ${days} days)</label><input type="text" id="${id}" value="${addDays(days)}" readonly style="background:var(--bg2);color:var(--ink-faint)"/></div>`;
+    }
+  }
+  return '';
+}
+
+function wireUpFieldListeners(){
+  // Toggle buttons
+  document.querySelectorAll('.toggle-group').forEach(grp=>{
+    const targetId=grp.dataset.toggle;
+    grp.querySelectorAll('.toggle-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        grp.querySelectorAll('.toggle-btn').forEach(b=>b.classList.toggle('active',b===btn));
+        const hidden=document.getElementById(targetId);
+        if(hidden)hidden.value=btn.dataset.val;
+        applyConditionals();
+        generateNote();
+      };
+    });
+  });
+  // Sub-tab buttons
+  document.querySelectorAll('.sub-tab-btn').forEach(b=>{
+    b.onclick=()=>{
+      activeSubTabId=b.dataset.sub;
+      renderUseMode();
+    };
+  });
+  // Generic listeners
+  document.querySelectorAll('#panels input, #panels select, #panels textarea').forEach(el=>{
+    el.addEventListener('input',()=>{applyConditionals();generateNote()});
+    el.addEventListener('change',()=>{applyConditionals();generateNote()});
+  });
+}
+
+function applyConditionals(){
+  // showWhen logic
+  const tab=config.tabs.find(t=>t.id===activeTabId);
+  if(!tab)return;
+  const fieldsToCheck=tab.subTabs?(tab.subTabs.find(s=>s.id===activeSubTabId)?.fields||[]):(tab.fields||[]);
+  const prefix=tab.subTabs?(tab.id+'_'+activeSubTabId):tab.id;
+  fieldsToCheck.forEach(f=>{
+    if(f.showWhen){
+      const watchedEl=document.getElementById(prefix+'__'+f.showWhen.field);
+      const currentVal=watchedEl?watchedEl.value:'';
+      const myEl=document.querySelector(`[data-field-id="${f.id}"]`);
+      if(myEl){
+        const shouldShow=currentVal===f.showWhen.value;
+        myEl.classList.toggle('hidden',!shouldShow);
+        if(!shouldShow){
+          const input=myEl.querySelector('input, select, textarea');
+          if(input){
+            if(input.type==='checkbox')input.checked=false;
+            else input.value='';
+          }
+        }
+      }
+    }
+    // Other text reveal
+    if(f.type==='dropdown'&&f.otherText){
+      const sel=document.getElementById(prefix+'__'+f.id);
+      const wrap=document.getElementById(prefix+'__'+f.id+'__other_wrap');
+      if(sel&&wrap)wrap.classList.toggle('hidden',sel.value!=='Other');
+    }
+  });
+}
+
+/* ============================================================
+   GENERATE NOTE
+   ============================================================ */
+function generateNote(){
+  const tab=config.tabs.find(t=>t.id===activeTabId);
+  if(!tab){
+    document.getElementById('output').textContent='';
+    return;
+  }
+  let body=tab.title;
+  let fields,prefix;
+  if(tab.subTabs){
+    const sub=tab.subTabs.find(s=>s.id===activeSubTabId);
+    if(!sub){document.getElementById('output').textContent=config.noteHeader+'\n\n'+body;return}
+    body+=sub.titleSuffix||'';
+    fields=sub.fields;
+    prefix=tab.id+'_'+sub.id;
+  }else{
+    fields=tab.fields||[];
+    prefix=tab.id;
+  }
+  body+='\n';
+  fields.forEach(f=>{
+    body+=renderFieldOutput(prefix,f,fields);
+  });
+  // Additional notes
+  const addEl=document.getElementById(prefix+'__additional');
+  if(addEl&&addEl.value.trim()){
+    body+='\nAdditional Notes:\n'+addEl.value.trim()+'\n';
+  }
+  document.getElementById('output').textContent=config.noteHeader+'\n\n'+body.trim();
+}
+
+function renderFieldOutput(prefix,f,allFields){
+  const id=prefix+'__'+f.id;
+  const el=document.getElementById(id);
+  // Check showWhen
+  if(f.showWhen){
+    const watchedEl=document.getElementById(prefix+'__'+f.showWhen.field);
+    if(!watchedEl||watchedEl.value!==f.showWhen.value)return '';
+  }
+  switch(f.type){
+    case 'text':{
+      let v=el?.value?.trim()||'';
+      if(!v)return '';
+      if(f.uppercase)v=v.toUpperCase();
+      if(f.postcode)v=fmtPostcode(v);
+      return `${f.label}: ${v}\n`;
+    }
+    case 'multiline':{
+      const v=el?.value?.trim()||'';
+      return v?`${f.label}: ${v}\n`:'';
+    }
+    case 'number':{
+      const v=el?.value?.trim()||'';
+      return v?`${f.label}: ${v}\n`:'';
+    }
+    case 'currency':{
+      const v=el?.value?.trim()||'';
+      if(!v)return '';
+      // bindToLabel: use another field's value as the label
+      if(f.bindToLabel){
+        const labelEl=document.getElementById(prefix+'__'+f.bindToLabel);
+        const labelVal=labelEl?.value;
+        if(labelVal)return `${labelVal}: ${fmtMoney(v)}\n`;
+      }
+      return `${f.label}: ${fmtMoney(v)}\n`;
+    }
+    case 'date':{
+      const v=el?.value||'';
+      return v?`${f.label}: ${fmtDate(v)}\n`:'';
+    }
+    case 'datetime':{
+      const v=el?.value||'';
+      return v?`${f.label}: ${fmtDateTime(v)}\n`:'';
+    }
+    case 'dropdown':{
+      let v=el?.value||'';
+      if(!v)return '';
+      if(v==='Other'&&f.otherText){
+        const other=document.getElementById(id+'__other');
+        if(other&&other.value.trim())v='Other - '+other.value.trim();
+      }
+      return `${f.label}: ${v}\n`;
+    }
+    case 'toggle':{
+      const v=el?.value||'';
+      if(!v)return '';
+      if(f.omitLabelInOutput)return '';// e.g. balance type uses currency line
+      return `${f.label}: ${v}\n`;
+    }
+    case 'toggleWithAmount':{
+      const which=el?.value||'';
+      const amtEl=document.getElementById(id+'__amt');
+      const amt=amtEl?.value||'';
+      if(!which||!amt)return '';
+      return `${which}: ${fmtMoney(amt)}\n`;
+    }
+    case 'checkbox':{
+      const checked=el?.checked;
+      if(!checked&&f.omitWhenFalse)return '';
+      return `${f.label}: ${checked?'Yes':'No'}\n`;
+    }
+    case 'autoDate':{
+      const v=el?.value||'';
+      return v?`${f.label}: ${v}\n`:'';
+    }
+  }
+  return '';
+}
+
+/* ============================================================
+   COPY & CLEAR
+   ============================================================ */
+// Contact verification gating
+const contactCheckbox = document.getElementById('contact-confirm');
+const contactWrap = document.getElementById('contact-check');
+const copyBtn = document.getElementById('copy-btn');
+function updateContactCheckState(){
+  const checked = contactCheckbox.checked;
+  copyBtn.disabled = !checked;
+  if(checked){
+    contactWrap.classList.add('confirmed');
+    copyBtn.title = '';
+  }else{
+    contactWrap.classList.remove('confirmed');
+    copyBtn.title = 'Tick the verification box above to enable';
+  }
+}
+contactCheckbox.addEventListener('change', updateContactCheckState);
+updateContactCheckState();
+
+document.getElementById('copy-btn').onclick=()=>{
+  if(!contactCheckbox.checked){
+    // Briefly highlight the check box if somehow clicked while disabled
+    contactWrap.style.animation='none';
+    void contactWrap.offsetWidth;
+    contactWrap.style.animation='';
+    return;
+  }
+  const text=document.getElementById('output').textContent;
+  const fallback=()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy')}catch(e){}
+    document.body.removeChild(ta);
+  };
+  const flash=()=>{
+    const b=document.getElementById('copy-btn');
+    const orig=b.textContent;
+    b.textContent='Copied!';
+    b.classList.add('copied-flash');
+    setTimeout(()=>{b.textContent=orig;b.classList.remove('copied-flash')},1500);
+  };
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(flash).catch(()=>{fallback();flash()});
+  }else{fallback();flash()}
+};
+
+document.getElementById('clear-btn').onclick=()=>{
+  const tab=config.tabs.find(t=>t.id===activeTabId);
+  if(!tab)return;
+  const panel=document.getElementById('panel-'+tab.id);
+  if(!panel)return;
+  panel.querySelectorAll('input, select, textarea').forEach(el=>{
+    if(el.readOnly)return;
+    if(el.type==='checkbox')el.checked=false;
+    else el.value='';
+  });
+  panel.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+  // Also reset the contact verification check
+  contactCheckbox.checked=false;
+  updateContactCheckState();
+  applyConditionals();
+  generateNote();
+};
+
+/* ============================================================
+   MODE SWITCHING
+   ============================================================ */
+document.getElementById('mode-use').onclick=()=>{
+  document.getElementById('mode-use').classList.add('active');
+  document.getElementById('mode-build').classList.remove('active');
+  document.getElementById('use-mode').classList.remove('hidden');
+  document.getElementById('build-mode').classList.add('hidden');
+  renderUseMode();
+};
+document.getElementById('mode-build').onclick=()=>{
+  document.getElementById('mode-build').classList.add('active');
+  document.getElementById('mode-use').classList.remove('active');
+  document.getElementById('build-mode').classList.remove('hidden');
+  document.getElementById('use-mode').classList.add('hidden');
+  renderBuilder();
+};
+
+/* ============================================================
+   BUILDER MODE
+   ============================================================ */
+function renderBuilder(){
+  const tabList=document.getElementById('tab-list');
+  tabList.innerHTML='';
+  config.tabs.forEach((t,i)=>{
+    const card=document.createElement('div');
+    card.className='field-card';
+    card.innerHTML=`
+      <div class="field-card-header">
+        <div class="field-card-title">
+          <span class="pill gray">${escapeHtml(t.label)}</span> ${escapeHtml(t.title)}
+          ${t.subTabs?'<span class="pill">'+t.subTabs.length+' sub-tabs</span>':''}
+        </div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-action="edit" data-id="${t.id}">Edit</button>
+          <button class="icon-btn" data-action="up" data-id="${t.id}" ${i===0?'disabled style="opacity:0.3"':''}>↑</button>
+          <button class="icon-btn" data-action="down" data-id="${t.id}" ${i===config.tabs.length-1?'disabled style="opacity:0.3"':''}>↓</button>
+          <button class="icon-btn danger" data-action="delete" data-id="${t.id}">Delete</button>
+        </div>
+      </div>
+      <div class="field-card-details">
+        <span>Fields:</span><span>${t.subTabs?t.subTabs.map(s=>s.label+' ('+s.fields.length+')').join(', '):(t.fields?.length||0)+' fields'}</span>
+      </div>
+    `;
+    tabList.appendChild(card);
+  });
+
+  tabList.querySelectorAll('button[data-action]').forEach(b=>{
+    b.onclick=()=>handleTabAction(b.dataset.action,b.dataset.id);
+  });
+
+  if(editingTabId){
+    renderTabEditor();
+  }else{
+    document.getElementById('tab-editor-panel').innerHTML='<div class="builder-empty">Click "Edit" on a tab to modify its fields, or add a new tab below.</div>';
+  }
+}
+
+function handleTabAction(action,id){
+  const i=config.tabs.findIndex(t=>t.id===id);
+  if(i===-1)return;
+  if(action==='edit'){editingTabId=id;renderBuilder()}
+  if(action==='up'&&i>0){
+    [config.tabs[i-1],config.tabs[i]]=[config.tabs[i],config.tabs[i-1]];
+    saveConfig();renderBuilder();
+  }
+  if(action==='down'&&i<config.tabs.length-1){
+    [config.tabs[i+1],config.tabs[i]]=[config.tabs[i],config.tabs[i+1]];
+    saveConfig();renderBuilder();
+  }
+  if(action==='delete'){
+    if(confirm(`Delete the tab "${config.tabs[i].label}"? This can't be undone.`)){
+      config.tabs.splice(i,1);
+      if(editingTabId===id)editingTabId=null;
+      if(activeTabId===id)activeTabId=config.tabs[0]?.id||null;
+      saveConfig();renderBuilder();
+    }
+  }
+}
+
+document.getElementById('add-tab-btn').onclick=()=>{
+  openTabModal(null);
+};
+
+function openTabModal(tab){
+  const isNew=!tab;
+  if(!tab)tab={id:'',label:'',title:'',fields:[]};
+  showModal(`
+    <h2>${isNew?'Add tab':'Tab settings'}</h2>
+    <div class="builder-row"><label>Short label</label><input type="text" id="m-label" value="${escapeHtml(tab.label)}" placeholder="e.g. RN"></div>
+    <div class="builder-row"><label>Full title</label><input type="text" id="m-title" value="${escapeHtml(tab.title)}" placeholder="e.g. RENEWAL"></div>
+    <p class="help-text">The label shows on the tab button; the title appears as a header in the generated note.</p>
+    <div class="modal-actions">
+      <button class="icon-btn" data-close>Cancel</button>
+      <button class="icon-btn primary" id="m-save">${isNew?'Add tab':'Save'}</button>
+    </div>
+  `,()=>{
+    document.getElementById('m-save').onclick=()=>{
+      const label=document.getElementById('m-label').value.trim();
+      const title=document.getElementById('m-title').value.trim();
+      if(!label||!title){alert('Both label and title are required.');return}
+      if(isNew){
+        const newTab={id:slugify(label)+'_'+Date.now().toString(36),label,title,fields:[]};
+        config.tabs.push(newTab);
+        editingTabId=newTab.id;
+      }else{
+        tab.label=label;tab.title=title;
+      }
+      saveConfig();closeModal();renderBuilder();
+    };
+  });
+}
+
+function renderTabEditor(){
+  const tab=config.tabs.find(t=>t.id===editingTabId);
+  if(!tab){document.getElementById('tab-editor-panel').innerHTML='';return}
+  const panel=document.getElementById('tab-editor-panel');
+  let html=`
+    <div class="builder-section">
+      <h3>Editing: ${escapeHtml(tab.label)} — ${escapeHtml(tab.title)}</h3>
+      <div class="builder-actions" style="margin-bottom:12px">
+        <button class="icon-btn" id="edit-tab-meta">Edit tab name</button>
+        ${!tab.subTabs?'<button class="icon-btn" id="convert-subtabs">Convert to sub-tabbed</button>':''}
+        <button class="icon-btn" id="close-editor">Close editor</button>
+      </div>
+    </div>
+  `;
+
+  if(tab.subTabs){
+    html+='<div class="builder-section"><h3>Sub-tabs</h3>';
+    tab.subTabs.forEach((st,i)=>{
+      html+=`
+        <div class="field-card">
+          <div class="field-card-header">
+            <div class="field-card-title">${escapeHtml(st.label)} <span class="pill gray">${st.fields.length} fields</span></div>
+            <div class="field-card-actions">
+              <button class="icon-btn" data-stub-edit="${st.id}">Edit fields</button>
+              <button class="icon-btn" data-stub-rename="${st.id}">Rename</button>
+              <button class="icon-btn danger" data-stub-delete="${st.id}">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html+='<button class="icon-btn" id="add-subtab">+ Add sub-tab</button></div>';
+    // If a sub-tab is currently selected for editing, show its fields below
+    const currentSub=tab.subTabs.find(s=>s.id===window.__editingSubTabId);
+    if(currentSub){
+      html+=`<div class="builder-section"><h3>Fields in: ${escapeHtml(currentSub.label)}</h3>`;
+      html+=renderFieldsEditor(currentSub.fields,(idx,action,val)=>handleFieldAction(currentSub.fields,idx,action,val));
+      html+=`<button class="icon-btn" data-add-field-sub="${currentSub.id}" style="margin-top:8px">+ Add field</button></div>`;
+    }
+  }else{
+    html+='<div class="builder-section"><h3>Fields</h3>';
+    html+=renderFieldsEditor(tab.fields||[],(idx,action,val)=>handleFieldAction(tab.fields,idx,action,val));
+    html+='<button class="icon-btn" id="add-field" style="margin-top:8px">+ Add field</button></div>';
+  }
+  panel.innerHTML=html;
+  wireEditorActions(tab);
+}
+
+function renderFieldsEditor(fields,handler){
+  if(!fields.length)return '<div class="builder-empty">No fields yet. Add one below.</div>';
+  return fields.map((f,i)=>`
+    <div class="field-card">
+      <div class="field-card-header">
+        <div class="field-card-title">${escapeHtml(f.label)} <span class="pill">${getTypeLabel(f.type)}</span></div>
+        <div class="field-card-actions">
+          <button class="icon-btn" data-field-edit="${i}">Edit</button>
+          <button class="icon-btn" data-field-up="${i}" ${i===0?'disabled style="opacity:0.3"':''}>↑</button>
+          <button class="icon-btn" data-field-down="${i}" ${i===fields.length-1?'disabled style="opacity:0.3"':''}>↓</button>
+          <button class="icon-btn danger" data-field-delete="${i}">Delete</button>
+        </div>
+      </div>
+      ${f.options?`<div class="field-card-details"><span>Options:</span><span>${f.options.map(escapeHtml).join(', ')}</span></div>`:''}
+    </div>
+  `).join('');
+}
+
+function getTypeLabel(t){return FIELD_TYPES.find(x=>x.value===t)?.label||t}
+
+function wireEditorActions(tab){
+  const editTabMeta=document.getElementById('edit-tab-meta');
+  if(editTabMeta)editTabMeta.onclick=()=>openTabModal(tab);
+  const closeBtn=document.getElementById('close-editor');
+  if(closeBtn)closeBtn.onclick=()=>{editingTabId=null;window.__editingSubTabId=null;renderBuilder()};
+  const convertBtn=document.getElementById('convert-subtabs');
+  if(convertBtn)convertBtn.onclick=()=>{
+    if(confirm('Convert this tab to use sub-tabs? Your existing fields will be moved into a new "Default" sub-tab.')){
+      tab.subTabs=[{id:'default_'+Date.now().toString(36),label:'Default',titleSuffix:'',fields:tab.fields||[]}];
+      delete tab.fields;
+      saveConfig();renderBuilder();
+    }
+  };
+  const addSubBtn=document.getElementById('add-subtab');
+  if(addSubBtn)addSubBtn.onclick=()=>{
+    const label=prompt('Sub-tab label (e.g. Accept):');
+    if(!label)return;
+    const suffix=prompt('Title suffix to add to the note (e.g. " - ACCEPTED"). Leave blank for none.',' - '+label.toUpperCase())||'';
+    tab.subTabs.push({id:slugify(label)+'_'+Date.now().toString(36),label,titleSuffix:suffix,fields:[]});
+    saveConfig();renderBuilder();
+  };
+  // Sub-tab actions
+  document.querySelectorAll('[data-stub-edit]').forEach(b=>{
+    b.onclick=()=>{window.__editingSubTabId=b.dataset.stubEdit;renderTabEditor()};
+  });
+  document.querySelectorAll('[data-stub-rename]').forEach(b=>{
+    b.onclick=()=>{
+      const st=tab.subTabs.find(s=>s.id===b.dataset.stubRename);
+      const newLabel=prompt('New label:',st.label);
+      if(newLabel){st.label=newLabel.trim();saveConfig();renderTabEditor()}
+    };
+  });
+  document.querySelectorAll('[data-stub-delete]').forEach(b=>{
+    b.onclick=()=>{
+      const idx=tab.subTabs.findIndex(s=>s.id===b.dataset.stubDelete);
+      if(idx>-1&&confirm('Delete this sub-tab?')){
+        tab.subTabs.splice(idx,1);
+        if(window.__editingSubTabId===b.dataset.stubDelete)window.__editingSubTabId=null;
+        saveConfig();renderTabEditor();
+      }
+    };
+  });
+  // Field add
+  const addFieldBtn=document.getElementById('add-field');
+  if(addFieldBtn)addFieldBtn.onclick=()=>openFieldModal(tab.fields,null);
+  document.querySelectorAll('[data-add-field-sub]').forEach(b=>{
+    b.onclick=()=>{
+      const sub=tab.subTabs.find(s=>s.id===b.dataset.addFieldSub);
+      if(sub)openFieldModal(sub.fields,null);
+    };
+  });
+  // Field actions
+  document.querySelectorAll('[data-field-edit]').forEach(b=>{
+    b.onclick=()=>{
+      const idx=parseInt(b.dataset.fieldEdit);
+      const fields=window.__editingSubTabId?tab.subTabs.find(s=>s.id===window.__editingSubTabId).fields:tab.fields;
+      openFieldModal(fields,idx);
+    };
+  });
+  document.querySelectorAll('[data-field-up]').forEach(b=>{
+    b.onclick=()=>{
+      const idx=parseInt(b.dataset.fieldUp);
+      const fields=window.__editingSubTabId?tab.subTabs.find(s=>s.id===window.__editingSubTabId).fields:tab.fields;
+      if(idx>0){[fields[idx-1],fields[idx]]=[fields[idx],fields[idx-1]];saveConfig();renderTabEditor()}
+    };
+  });
+  document.querySelectorAll('[data-field-down]').forEach(b=>{
+    b.onclick=()=>{
+      const idx=parseInt(b.dataset.fieldDown);
+      const fields=window.__editingSubTabId?tab.subTabs.find(s=>s.id===window.__editingSubTabId).fields:tab.fields;
+      if(idx<fields.length-1){[fields[idx+1],fields[idx]]=[fields[idx],fields[idx+1]];saveConfig();renderTabEditor()}
+    };
+  });
+  document.querySelectorAll('[data-field-delete]').forEach(b=>{
+    b.onclick=()=>{
+      const idx=parseInt(b.dataset.fieldDelete);
+      const fields=window.__editingSubTabId?tab.subTabs.find(s=>s.id===window.__editingSubTabId).fields:tab.fields;
+      if(confirm('Delete field "'+fields[idx].label+'"?')){fields.splice(idx,1);saveConfig();renderTabEditor()}
+    };
+  });
+}
+
+function handleFieldAction(fields,idx,action,val){/* placeholder for future inline edits */}
+
+function openFieldModal(fields,editIndex){
+  const isNew=editIndex===null||editIndex===undefined;
+  const f=isNew?{label:'',type:'text'}:JSON.parse(JSON.stringify(fields[editIndex]));
+  const typeOpts=FIELD_TYPES.map(t=>`<option value="${t.value}" ${f.type===t.value?'selected':''}>${t.label}</option>`).join('');
+  showModal(`
+    <h2>${isNew?'Add field':'Edit field'}</h2>
+    <div class="builder-row"><label>Label</label><input type="text" id="f-label" value="${escapeHtml(f.label)}" placeholder="e.g. Annual Price"></div>
+    <div class="builder-row"><label>Type</label><select id="f-type">${typeOpts}</select></div>
+    <div id="f-options-wrap" style="display:${['dropdown','toggle','toggleWithAmount'].includes(f.type)?'block':'none'}">
+      <div class="builder-row"><label>Options</label><div style="flex:1"><div id="f-options-list"></div><div class="options-input"><input type="text" id="f-new-option" placeholder="Add option..."><button class="icon-btn" id="f-add-option">Add</button></div></div></div>
+    </div>
+    <div id="f-other-wrap" style="display:${f.type==='dropdown'?'block':'none'}">
+      <div class="builder-row"><label></label><div class="checkbox-row"><input type="checkbox" id="f-other" ${f.otherText?'checked':''}><label for="f-other">Show "Other" text box when "Other" is selected</label></div></div>
+    </div>
+    <div id="f-autodate-wrap" style="display:${f.type==='autoDate'?'block':'none'}">
+      <div class="builder-row"><label>Days from now</label><input type="number" id="f-days" value="${f.daysFromNow||7}" min="0"></div>
+    </div>
+    <div id="f-text-wrap" style="display:${f.type==='text'?'block':'none'}">
+      <div class="builder-row"><label></label><div class="checkbox-row"><input type="checkbox" id="f-uppercase" ${f.uppercase?'checked':''}><label for="f-uppercase">Auto-uppercase value</label></div></div>
+      <div class="builder-row"><label></label><div class="checkbox-row"><input type="checkbox" id="f-postcode" ${f.postcode?'checked':''}><label for="f-postcode">Format as UK postcode</label></div></div>
+    </div>
+    <div id="f-checkbox-wrap" style="display:${f.type==='checkbox'?'block':'none'}">
+      <div class="builder-row"><label></label><div class="checkbox-row"><input type="checkbox" id="f-omit-false" ${f.omitWhenFalse!==false?'checked':''}><label for="f-omit-false">Omit from note when unchecked</label></div></div>
+    </div>
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--ink-soft)">Conditional visibility (show only when…)</summary>
+      <div style="margin-top:8px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--line)">
+        <p class="help-text">Show this field only when another field has a specific value. Useful for things like "Settled" only appearing for Outstanding Balance.</p>
+        <div class="builder-row"><label>Show when</label><select id="f-show-field"><option value="">(always shown)</option>${fields.filter((_,i)=>i!==editIndex).map(of=>`<option value="${escapeHtml(of.id)}" ${f.showWhen?.field===of.id?'selected':''}>${escapeHtml(of.label)}</option>`).join('')}</select></div>
+        <div class="builder-row"><label>equals</label><input type="text" id="f-show-val" value="${escapeHtml(f.showWhen?.value||'')}" placeholder="e.g. Outstanding Balance"></div>
+      </div>
+    </details>
+    <div class="modal-actions">
+      <button class="icon-btn" data-close>Cancel</button>
+      <button class="icon-btn primary" id="f-save">${isNew?'Add field':'Save'}</button>
+    </div>
+  `,()=>{
+    // Render existing options
+    const renderOptionsList=()=>{
+      const list=document.getElementById('f-options-list');
+      list.innerHTML=(f.options||[]).map((opt,i)=>`
+        <div class="option-row">
+          <input type="text" value="${escapeHtml(opt)}" data-opt-idx="${i}">
+          <button class="icon-btn danger" data-opt-del="${i}">×</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('[data-opt-idx]').forEach(inp=>{
+        inp.oninput=()=>{f.options[parseInt(inp.dataset.optIdx)]=inp.value};
+      });
+      list.querySelectorAll('[data-opt-del]').forEach(b=>{
+        b.onclick=()=>{f.options.splice(parseInt(b.dataset.optDel),1);renderOptionsList()};
+      });
+    };
+    if(!f.options)f.options=[];
+    renderOptionsList();
+    document.getElementById('f-add-option').onclick=()=>{
+      const inp=document.getElementById('f-new-option');
+      const v=inp.value.trim();
+      if(v){f.options.push(v);inp.value='';renderOptionsList()}
+    };
+    document.getElementById('f-new-option').addEventListener('keydown',e=>{
+      if(e.key==='Enter'){e.preventDefault();document.getElementById('f-add-option').click()}
+    });
+    // Type-dependent visibility
+    document.getElementById('f-type').onchange=e=>{
+      const t=e.target.value;
+      document.getElementById('f-options-wrap').style.display=['dropdown','toggle','toggleWithAmount'].includes(t)?'block':'none';
+      document.getElementById('f-other-wrap').style.display=t==='dropdown'?'block':'none';
+      document.getElementById('f-autodate-wrap').style.display=t==='autoDate'?'block':'none';
+      document.getElementById('f-text-wrap').style.display=t==='text'?'block':'none';
+      document.getElementById('f-checkbox-wrap').style.display=t==='checkbox'?'block':'none';
+    };
+    // Save
+    document.getElementById('f-save').onclick=()=>{
+      const label=document.getElementById('f-label').value.trim();
+      const type=document.getElementById('f-type').value;
+      if(!label){alert('Label is required.');return}
+      const newField={id:isNew?(slugify(label)+'_'+Date.now().toString(36).slice(-4)):f.id||slugify(label),label,type};
+      if(['dropdown','toggle','toggleWithAmount'].includes(type)){
+        newField.options=(f.options||[]).filter(o=>o.trim());
+        if(!newField.options.length){alert('Add at least one option.');return}
+      }
+      if(type==='dropdown'&&document.getElementById('f-other').checked)newField.otherText=true;
+      if(type==='autoDate')newField.daysFromNow=parseInt(document.getElementById('f-days').value)||7;
+      if(type==='text'){
+        if(document.getElementById('f-uppercase').checked)newField.uppercase=true;
+        if(document.getElementById('f-postcode').checked)newField.postcode=true;
+      }
+      if(type==='checkbox'){
+        if(document.getElementById('f-omit-false').checked)newField.omitWhenFalse=true;
+      }
+      const showField=document.getElementById('f-show-field').value;
+      const showVal=document.getElementById('f-show-val').value.trim();
+      if(showField&&showVal)newField.showWhen={field:showField,value:showVal};
+      if(isNew)fields.push(newField);
+      else fields[editIndex]=newField;
+      saveConfig();closeModal();renderTabEditor();
+    };
+  });
+}
+
+/* ============================================================
+   IMPORT / EXPORT
+   ============================================================ */
+document.getElementById('export-json-btn').onclick=()=>{
+  const data=JSON.stringify(config,null,2);
+  downloadFile('cs_notes_config.json',data,'application/json');
+};
+document.getElementById('import-json-btn').onclick=()=>{
+  document.getElementById('import-file').click();
+};
+document.getElementById('import-file').onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const imported=JSON.parse(reader.result);
+      if(!imported.tabs||!Array.isArray(imported.tabs))throw new Error('Invalid config');
+      if(confirm('Replace current config with imported file?')){
+        config=imported;
+        saveConfig();
+        activeTabId=config.tabs[0]?.id||null;
+        editingTabId=null;
+        renderBuilder();
+      }
+    }catch(err){alert('Could not import: '+err.message)}
+  };
+  reader.readAsText(file);
+};
+
+document.getElementById('export-html-btn').onclick=()=>{
+  // Grab the current HTML and embed the config as the default
+  const currentHtml=document.documentElement.outerHTML;
+  // Replace DEFAULT_CONFIG with current config
+  const configJson=JSON.stringify(config,null,2);
+  // Find the start and end of the DEFAULT_CONFIG block
+  const startMarker='const DEFAULT_CONFIG = ';
+  const endMarker='\nconst FIELD_TYPES';
+  const startIdx=currentHtml.indexOf(startMarker);
+  const endIdx=currentHtml.indexOf(endMarker);
+  if(startIdx===-1||endIdx===-1){
+    alert('Could not locate config block in source HTML. Try exporting JSON instead.');
+    return;
+  }
+  // Also clear localStorage value embed (so a new user starts with the baked config)
+  const newHtml=currentHtml.slice(0,startIdx)+startMarker+configJson+';'+currentHtml.slice(endIdx);
+  const fullHtml='<!DOCTYPE html>\n'+newHtml;
+  downloadFile('notes_template.html',fullHtml,'text/html');
+};
+
+document.getElementById('reset-btn').onclick=()=>{
+  if(confirm('Reset all tabs and fields back to the original 10? Your customisations will be lost.')){
+    config=JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    saveConfig();
+    activeTabId=config.tabs[0]?.id||null;
+    editingTabId=null;
+    renderBuilder();
+  }
+};
+
+function downloadFile(name,content,type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},100);
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+function showModal(html,onMount){
+  const host=document.getElementById('modal-host');
+  host.innerHTML=`<div class="modal-bg"><div class="modal">${html}</div></div>`;
+  host.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeModal);
+  host.querySelector('.modal-bg').onclick=e=>{if(e.target.classList.contains('modal-bg'))closeModal()};
+  if(onMount)onMount();
+}
+function closeModal(){document.getElementById('modal-host').innerHTML=''}
+
+/* ============================================================
+   UTIL
+   ============================================================ */
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function slugify(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')||'item'}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderUseMode();
+
+/* ambient topographic contour generator (matches AND-e Hub) */
+(function buildContours(){
+  var g=document.querySelector(".ambient .contours"); if(!g) return;
+  var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion:reduce)").matches;
+  var W=1200,H=800,rings=14,cx=W*0.5,cy=H*0.42,frag="";
+  for(var k=0;k<rings;k++){
+    var rad=70+k*46, pts=[], steps=46;
+    for(var p=0;p<=steps;p++){
+      var a=p/steps*Math.PI*2;
+      var wob=Math.sin(a*3+k*0.7)*14 + Math.cos(a*2-k*0.4)*10;
+      var rr=rad+wob;
+      pts.push((cx+Math.cos(a)*rr*1.7).toFixed(1)+","+(cy+Math.sin(a)*rr).toFixed(1));
+    }
+    frag+='<path class="ln" style="opacity:'+(0.5-k*0.03).toFixed(2)+'" d="M'+pts.join("L")+'Z"/>';
+  }
+  g.innerHTML=frag;
+  if(reduce){ var amb=document.querySelector(".ambient"); if(amb) amb.style.animation="none"; }
+})();
+</script>
+
+
+</body></html>
