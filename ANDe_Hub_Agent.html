@@ -3276,7 +3276,8 @@
     var start=t[0], end=t[1]; if(end<=start) end+=12;
     return {start:start,end:end};
   }
-  function coverAt(rows,tt){ var n=0; rows.forEach(function(r){ if(r.status&&r.status!=="On") return; var p=parseShift(r.shift); if(!p){ n++; return; } if(tt>=p.start&&tt<p.end) n++; }); return n; }
+  function secHours(r){ if(r.status && r.status!=="On") return null; var s=r.section; if(s==="Earlies") return {start:8,end:16}; if(s==="Mids") return {start:10,end:18}; if(s==="Lates") return {start:12,end:20}; return parseShift(r.shift); }
+  function coverAt(rows,tt){ var n=0; rows.forEach(function(r){ var p=secHours(r); if(p && tt>=p.start && tt<p.end) n++; }); return n; }
   function fmtHM(v){ var h=Math.floor(v/2), m=(v%2)*30; return (h<10?"0":"")+h+":"+(m===0?"00":"30"); }
   function updateCover(){
     var sl=document.getElementById("coverSlider"); var v=parseInt(sl.value,10);
@@ -3289,11 +3290,11 @@
   function renderCover(){
     var wrap=document.getElementById("cover");
     var rows=DATA.shifts[current]||[];
-    var onRows=rows.filter(function(r){ return (!r.status||r.status==="On"); }); var timed=onRows.filter(function(r){ return parseShift(r.shift); });
+    var onRows=rows.filter(function(r){ return (!r.status||r.status==="On"); }); var spans=onRows.map(secHours).filter(Boolean);
     if(!onRows.length){ wrap.style.display="none"; return; }
     wrap.style.display="";
-    var minS=24,maxE=0; timed.forEach(function(r){ var p=parseShift(r.shift); if(p.start<minS)minS=p.start; if(p.end>maxE)maxE=p.end; });
-    if(!timed.length){ minS=8; maxE=20; } var lo=Math.floor(minS), hi=Math.ceil(maxE);
+    var minS=24,maxE=0; spans.forEach(function(p){ if(p.start<minS)minS=p.start; if(p.end>maxE)maxE=p.end; });
+    if(!spans.length){ minS=8; maxE=20; } var lo=Math.floor(minS), hi=Math.ceil(maxE);
     var bars=document.getElementById("coverBars"); bars.innerHTML="";
     var counts=[]; for(var h=lo;h<hi;h++){ counts.push(coverAt(rows,h+0.5)); }
     var maxc=Math.max.apply(null,counts.concat([1]));
