@@ -652,7 +652,7 @@
 "use strict";
 (function(){
   var HUB_EDITION="manager"; if(HUB_EDITION!=="manager"&&HUB_EDITION!=="agent") HUB_EDITION="agent";
-  var KEY="agentHub.v3", DB="agentHubDB", STORE="kv", IDKEY="state", useLS=false;
+  var KEY="managerHub.v3", DB="managerHubDB", STORE="kv", IDKEY="state", useLS=false;
 
   /* ---------- helpers ---------- */
   function pad(n){ return (n<10?"0":"")+n; }
@@ -694,6 +694,7 @@
 
   /* ---------- persistence (IndexedDB w/ localStorage fallback) ---------- */
   function idbOpen(){ return new Promise(function(res,rej){ var r=indexedDB.open(DB,1); r.onupgradeneeded=function(){ r.result.createObjectStore(STORE); }; r.onsuccess=function(){ res(r.result); }; r.onerror=function(){ rej(r.error); }; }); }
+  function idbGetFrom(dbName){ return new Promise(function(res){ try{ var r=indexedDB.open(dbName,1); r.onupgradeneeded=function(){ try{ r.result.createObjectStore(STORE); }catch(e){} }; r.onsuccess=function(){ try{ var db=r.result; if(!db.objectStoreNames.contains(STORE)){ res(null); return; } var t=db.transaction(STORE,"readonly").objectStore(STORE).get(IDKEY); t.onsuccess=function(){ res(t.result||null); }; t.onerror=function(){ res(null); }; }catch(e){ res(null); } }; r.onerror=function(){ res(null); }; }catch(e){ res(null); } }); }
   function idbGet(){ return idbOpen().then(function(db){ return new Promise(function(res,rej){ var t=db.transaction(STORE,"readonly").objectStore(STORE).get(IDKEY); t.onsuccess=function(){ res(t.result); }; t.onerror=function(){ rej(t.error); }; }); }); }
   function idbSet(v){ return idbOpen().then(function(db){ return new Promise(function(res,rej){ var tx=db.transaction(STORE,"readwrite"); tx.objectStore(STORE).put(v,IDKEY); tx.oncomplete=function(){ res(); }; tx.onerror=function(){ rej(tx.error); }; }); }); }
   function idbGetKey(k){ return idbOpen().then(function(db){ return new Promise(function(res,rej){ var t=db.transaction(STORE,"readonly").objectStore(STORE).get(k); t.onsuccess=function(){ res(t.result); }; t.onerror=function(){ rej(t.error); }; }); }); }
@@ -3291,10 +3292,14 @@
   function boot(){
     if(!("indexedDB" in window)){ useLS=true; try{ var ls=localStorage.getItem(KEY); state=ls?migrate(JSON.parse(ls)):seed(); }catch(e){ state=seed(); } save(); start(); return; }
     idbGet().then(function(v){
-      if(v){ state=migrate(v); }
-      else { try{ var old=localStorage.getItem(KEY)||localStorage.getItem("agentHub.v2"); state=old?migrate(JSON.parse(old)):seed(); }catch(e){ state=seed(); } }
-      save(); start();
-    }).catch(function(){ useLS=true; try{ var ls=localStorage.getItem(KEY); state=ls?migrate(JSON.parse(ls)):seed(); }catch(e){ state=seed(); } start(); });
+      if(v){ state=migrate(v); save(); start(); return; }
+      // new manager store empty: one-time migrate from the legacy shared store, then legacy localStorage
+      idbGetFrom("agentHubDB").then(function(legacy){
+        if(legacy){ state=migrate(legacy); }
+        else { try{ var old=localStorage.getItem(KEY)||localStorage.getItem("agentHub.v3")||localStorage.getItem("agentHub.v2"); state=old?migrate(JSON.parse(old)):seed(); }catch(e){ state=seed(); } }
+        save(); start();
+      });
+    }).catch(function(){ useLS=true; try{ var ls=localStorage.getItem(KEY)||localStorage.getItem("agentHub.v3"); state=ls?migrate(JSON.parse(ls)):seed(); }catch(e){ state=seed(); } start(); });
   }
   boot();
 })();
