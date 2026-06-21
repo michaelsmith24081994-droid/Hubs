@@ -2849,7 +2849,7 @@
   function listManagers(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("manager-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
   function listAgents(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
   function publishManagerPresence(){ if(!TEAM.dir || !isManager()) return Promise.resolve(); var p={kind:"manager", id:myAgentId(), name:state.config.name||"Manager", role:state.config.role||"Manager", updatedAt:nowISO()}; return fsWrite("manager-"+myAgentId()+".json", p).catch(function(){}); }
-  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhAssign(document.getElementById("sec-customise")); enhResets(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
+  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhAssign(document.getElementById("sec-customise")); enhResets(document.getElementById("sec-customise")); enhDanger(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
   function enhAssign(sec){ if(!sec) return; var old=sec.querySelector("#asnPanel"); if(old) old.remove();
     var panel=document.createElement("div"); panel.className="panel"; panel.id="asnPanel"; panel.style.marginBottom="18px";
     if(isManager()){
@@ -2890,6 +2890,25 @@
         Promise.resolve(publishSummary(false)).then(function(){ enhAssign(sec); toast("Assigned to "+name+"."); });
       };
     }
+  }
+
+  function resetHub(){
+    if(!confirm("Delete ALL data in this hub and start fresh? This can’t be undone — back up first if unsure.")) return;
+    if(!confirm("Are you absolutely sure? This wipes this device’s hub data.")) return;
+    function fin(){ Promise.resolve()
+      .then(function(){ try{ return idbSetKey(IDKEY, undefined); }catch(e){} })
+      .then(function(){ try{ return idbSetKey("teamDir", undefined); }catch(e){} })
+      .then(function(){ try{ localStorage.removeItem(KEY); }catch(e){} try{ indexedDB.deleteDatabase(DB); }catch(e){} })
+      .then(function(){ setTimeout(function(){ location.reload(); },400); }, function(){ setTimeout(function(){ location.reload(); },400); }); }
+    var del = (TEAM.dir ? fsDelete((isManager()?"manager-":"summary-")+myAgentId()+".json") : Promise.resolve());
+    Promise.resolve(del).then(fin, fin);
+  }
+  function enhDanger(sec){ if(!sec) return; var old=sec.querySelector("#dangerPanel"); if(old) old.remove();
+    var p=document.createElement("div"); p.className="panel"; p.id="dangerPanel"; p.style.cssText="margin-bottom:18px;border-color:rgba(var(--a1-rgb),.4)";
+    p.innerHTML='<div class="panel-h"><h3>Reset hub</h3></div><div class="panel-b"><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn sm" id="dangerBackup">↓ Backup first</button><button class="btn sm" id="dangerReset" style="border-color:var(--red);color:var(--red)">Delete all data &amp; start fresh</button></div><div class="vhint" style="margin-top:8px">Wipes this device’s hub data and starts fresh — handy after testing. Also removes your '+(isManager()?"manager presence":"shared summary")+' from the shared folder. Team-shared files (the Your Week board, TD Issues, other people’s feedback) are left untouched. Back up first if unsure.</div></div>';
+    sec.appendChild(p);
+    var bk=p.querySelector("#dangerBackup"); if(bk) bk.onclick=function(){ var b=document.getElementById("backupBtn"); if(b) b.click(); };
+    var rs=p.querySelector("#dangerReset"); if(rs) rs.onclick=resetHub;
   }
 
   function enhCSS(){
