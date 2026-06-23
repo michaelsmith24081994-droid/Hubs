@@ -2908,7 +2908,7 @@
 
   /* ================= v7 enhancements (additive) ================= */
   function enhInit(){
-    enhCSS(); enhTopbar(); enhNavDots(); enhWrapCustomise();
+    enhCSS(); enhTopbar(); enhNavDots(); enhWrapCustomise(); enhAutoRefresh();
     enhA11y();
     enhSnapshots();
     enhHistoryButton();
@@ -3089,6 +3089,27 @@
     var bk=p.querySelector("#dangerBackup"); if(bk) bk.onclick=function(){ var b=document.getElementById("backupBtn"); if(b) b.click(); };
     var rs=p.querySelector("#dangerReset"); if(rs) rs.onclick=resetHub;
   }
+
+  function enhBusy(){
+    if(document.body.classList.contains("locked")) return true;          // locked
+    if(typeof TEAM==="undefined" || !TEAM.dir) return true;              // not connected
+    var m=document.getElementById("modal"); if(m&&m.classList.contains("show")) return true;   // a dialog is open
+    var pal=document.getElementById("palette"); if(pal&&pal.classList.contains("show")) return true;
+    var a=document.activeElement; if(a){ var t=(a.tagName||"").toLowerCase(); if(t==="input"||t==="textarea"||t==="select"||a.isContentEditable) return true; } // typing
+    if(current==="yourweek" && (isManager() || (state.teamInbox&&state.teamInbox.admin))) return true; // editing the board
+    return false;
+  }
+  function enhDoAutoRefresh(){
+    if(enhBusy()) return;
+    try{
+      if(isManager()){
+        if(typeof loadTeam==="function") loadTeam().then(function(){ if(current==="team" && (typeof teamSel==="undefined"||!teamSel)) renderers.team(); if(current==="coaching"&&renderers.coaching) renderers.coaching(); var msg=(typeof managerWhatsNew==="function")?managerWhatsNew():""; if(msg) toast(msg); });
+      } else {
+        if(typeof pullFeedback==="function") pullFeedback(true);
+      }
+    }catch(e){}
+  }
+  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 30*60*1000); }
 
   function enhCSS(){
     if(document.getElementById("enhStyle")) return;
