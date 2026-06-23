@@ -2849,7 +2849,7 @@
   function listManagers(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("manager-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
   function listAgents(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
   function publishManagerPresence(){ if(!TEAM.dir || !isManager()) return Promise.resolve(); var p={kind:"manager", id:myAgentId(), name:state.config.name||"Manager", role:state.config.role||"Manager", updatedAt:nowISO()}; return fsWrite("manager-"+myAgentId()+".json", p).catch(function(){}); }
-  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhAssign(document.getElementById("sec-customise")); enhResets(document.getElementById("sec-customise")); enhDanger(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
+  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhAssign(document.getElementById("sec-customise")); enhResets(document.getElementById("sec-customise")); enhDanger(document.getElementById("sec-customise")); enhLockConfig(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
   function enhAssign(sec){ if(!sec) return; var old=sec.querySelector("#asnPanel"); if(old) old.remove();
     var panel=document.createElement("div"); panel.className="panel"; panel.id="asnPanel"; panel.style.marginBottom="18px";
     if(isManager()){
@@ -2931,6 +2931,12 @@
     }catch(e){}
   }
   function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 30*60*1000); }
+
+  function enhLockConfig(sec){ if(!sec) return; if(isManager() || (state.teamInbox&&state.teamInbox.admin)) return;
+    var titles=["KPIs & targets","Evidence categories","Knowledge base categories","Audit chat types"]; var hid=false;
+    [].forEach.call(sec.querySelectorAll(".panel"),function(p){ var h=p.querySelector(".panel-h h3")||p.querySelector("h3"); if(!h) return; var t=h.textContent||""; for(var i=0;i<titles.length;i++){ if(t.indexOf(titles[i])>=0){ p.style.display="none"; hid=true; break; } } });
+    if(hid && !sec.querySelector("#cfgLocked")){ var note=document.createElement("div"); note.className="panel"; note.id="cfgLocked"; note.style.marginBottom="18px"; note.innerHTML='<div class="panel-b"><div class="vhint">📋 Stats KPIs, evidence and knowledge categories are set by your manager so the whole team stays consistent — ask your manager if something needs changing.</div></div>'; var vh=sec.querySelector(".vhead"); if(vh&&vh.nextSibling) sec.insertBefore(note, vh.nextSibling); else sec.insertBefore(note, sec.firstChild); }
+  }
 
   function enhCSS(){
     if(document.getElementById("enhStyle")) return;
