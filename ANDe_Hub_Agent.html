@@ -687,7 +687,7 @@
   function fmtKpi(k,num){ if(num===null||num===undefined||isNaN(num)) return "—"; return k.type==="dur"?fmtDur(num):String(Math.round(num)); }
   function kpiBreach(k,num){ if(num===null||isNaN(num)||!k.lower||k.target===null||k.target===undefined) return false; return num>k.target; }
   function avg(arr){ var n=arr.filter(function(x){return x!=null;}); return n.length?n.reduce(function(a,b){return a+b;},0)/n.length:null; }
-  function aggVal(k,nums){ var v=nums.filter(function(n){return n!=null;}); if(!v.length) return null; return (k.type==="int"||k.id==="breaks")? v.reduce(function(a,b){return a+b;},0) : avg(v); }
+  function aggVal(k,nums){ var v=nums.filter(function(n){return n!=null;}); if(!v.length) return null; return (k.type==="int"||k.sumDur)? v.reduce(function(a,b){return a+b;},0) : avg(v); }
   function weeksSorted(){ return state.stats.weeks.slice().sort(function(a,b){return (a.weekOf||"").localeCompare(b.weekOf||"");}); }
 
   /* ---------- persistence (IndexedDB w/ localStorage fallback) ---------- */
@@ -731,6 +731,7 @@
     if(!s.config.accent) s.config.accent="#ff2d8e";
     if(!s.config.accent2) s.config.accent2="#22e6c1";
     if(s.config.teamRole!=="manager") s.config.teamRole="agent";
+    if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && (k.id==="breaks" || /unsched|break/i.test(k.label||""))){ k.type="dur"; k.sumDur=true; if(k.target==null) k.target=600; k.lower=true; } });
     if(typeof s.config.agentId!=="string") s.config.agentId="";
     if(typeof s.config.autoPull!=="boolean") s.config.autoPull=true;
     if(!s.teamInbox||typeof s.teamInbox!=="object") s.teamInbox={notes:[],stats:[],audits:[],recognitions:[],updatedAt:""};
@@ -2932,7 +2933,7 @@
       }
     }catch(e){}
   }
-  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 30*60*1000); }
+  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 5*60*1000); }
 
   function enhLockConfig(sec){ if(!sec) return; if(isManager() || (state.teamInbox&&state.teamInbox.admin)) return;
     var titles=["KPIs & targets","Evidence categories","Knowledge base categories","Audit chat types"]; var hid=false;
@@ -2944,7 +2945,7 @@
   function enhNotifStyle(){ if(document.getElementById("notifStyle")) return; var s=document.createElement("style"); s.id="notifStyle";
     s.textContent=".bellbtn{position:relative}"
       +".bell-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--a1,#ff5d7a);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;box-shadow:0 0 0 2px var(--card,#fff)}"
-      +".notifpanel{position:fixed;top:64px;right:18px;width:340px;max-width:calc(100vw - 24px);max-height:72vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28);z-index:9999;padding:8px}"
+      +".notifpanel{position:fixed;top:64px;right:18px;width:340px;max-width:calc(100vw - 24px);max-height:72vh;overflow:auto;background:var(--paper,#14141d);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.45);z-index:9999;padding:8px}"
       +".np-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px}"
       +".np-head strong{font-family:var(--disp);font-size:15px}"
       +".np-clear{background:none;border:none;color:var(--ink-faint);font-size:12px;cursor:pointer}"
@@ -3106,10 +3107,10 @@
     }
     enhTimeOwed(sec);
   }
-  var _toPulled=false;
+  var _toPulledAt=0;
   function enhTimeOwed(sec){
-    // pull the latest from the shared folder once on dashboard load so manager entries show without a manual sync
-    if(TEAM.dir && !_toPulled){ _toPulled=true; Promise.resolve(pullFeedback(true)).then(function(){ if(current==="dash") renderers.dash(); }).catch(function(){}); }
+    // pull the latest from the shared folder (throttled) so manager entries show without a manual sync
+    if(TEAM.dir && (Date.now()-_toPulledAt>15000)){ _toPulledAt=Date.now(); Promise.resolve(pullFeedback(true)).then(function(){ if(current==="dash") renderers.dash(); }).catch(function(){}); }
     var to=(state.teamInbox&&state.teamInbox.timeOwed)||[];
     var acks=(state.teamInbox&&state.teamInbox.timeOwedAcks)||[];
     if(!TEAM.dir && !to.length && !(state.timeOwedReq||[]).length) return; // nothing to show & can't request without a folder
@@ -3124,10 +3125,11 @@
       +'<div style="font-size:12px;color:var(--ink-faint)">logged by your manager'+(pending.length?(' · '+pending.length+' request'+(pending.length===1?"":"s")+' pending'):'')+'</div></div>'
       +'<button class="btn sm" id="toReqBtn" style="margin-left:auto">Request change</button></div>'
       +(recent.length?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px"><div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint)">Last 30 days</div>'+recent.map(function(e){return '<div style="font-size:12.5px;color:var(--ink-soft)">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+' <span style="color:var(--ink-faint)">'+esc(fmtShort((e.ts||"").slice(0,10)))+'</span></div>';}).join("")+'</div>'):'')
-      +(pending.length?('<div style="margin-top:8px">'+pending.map(function(r){return '<div style="font-size:12px;color:var(--ink-faint)">⏳ requested '+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+(r.note?(' · '+esc(r.note)):'')+'</div>';}).join("")+'</div>'):'');
+      +(pending.length?('<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">'+pending.map(function(r){return '<div style="font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:8px">⏳ requested '+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+(r.note?(' · '+esc(r.note)):'')+' <button class="btn sm" data-cancelto="'+esc(r.id)+'" style="margin-left:auto;padding:2px 8px">Cancel</button></div>';}).join("")+'</div>'):'');
     var todayList=sec.querySelector("#todayList"), todayPanel=todayList?todayList.closest(".panel"):null;
     if(todayPanel&&todayPanel.parentNode){ todayPanel.parentNode.insertBefore(card, todayPanel.nextSibling); }
     else { var vh=sec.querySelector(".vhead"); if(vh&&vh.nextSibling) sec.insertBefore(card, vh.nextSibling); else sec.appendChild(card); }
+    card.querySelectorAll("[data-cancelto]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-cancelto"); state.timeOwedReq=(state.timeOwedReq||[]).filter(function(x){return x.id!==rid;}); save(); if(TEAM.dir){ Promise.resolve(publishSummary(true)).then(function(){ toast("Request cancelled."); }); } else toast("Request cancelled."); renderers.dash(); }; });
     document.getElementById("toReqBtn").onclick=function(){
       openModal('<div class="modal-h"><h3>Request time owed change</h3><button class="x" id="mX">✕</button></div>'
         +'<div class="modal-b"><div class="seg" id="toSign" style="margin-bottom:12px"><button class="on" data-sign="1">Add time</button><button data-sign="-1">Deduct time</button></div>'
@@ -3560,7 +3562,7 @@
       if(k.sum){ var t=sumOf(names,k); headline=(t===null?"—":String(t)); sub="total across team"; }
       else { var m=meanOf(names,k); headline=fmtVal(k,m); sub="team average"; breach=isBreach(k.id, m); }
       if(k.id==="awol"){ var ta=sumOf(names,k); headline=(ta===null?"—":String(ta)); sub="instances this week"; breach=(ta!==null&&ta>0); }
-      if(k.id==="breaks"){ var tb=sumOf(names,k); headline=fmtVal(k,tb); sub="total time this week"; breach=(tb!==null&&tb>600); }
+      if(k.sumDur){ var tb=sumOf(names,k); headline=fmtVal(k,tb); sub="total time this week"; breach=(tb!==null&&tb>(k.target||600)); }
       var card=elc("div","ts-card"+(breach?" bad":""));
       card.appendChild(elc("div","ck",k.short));
       card.appendChild(elc("div","cv",headline));

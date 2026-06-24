@@ -734,6 +734,7 @@
     if(!s.config.accent) s.config.accent="#ff2d8e";
     if(!s.config.accent2) s.config.accent2="#22e6c1";
     if(s.config.teamRole!=="manager") s.config.teamRole="agent";
+    if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && (k.id==="breaks" || /unsched|break/i.test(k.label||""))){ k.type="dur"; k.sumDur=true; if(k.target==null) k.target=600; k.lower=true; } });
     if(typeof s.config.agentId!=="string") s.config.agentId="";
     if(typeof s.config.autoPull!=="boolean") s.config.autoPull=true;
     if(!s.teamInbox||typeof s.teamInbox!=="object") s.teamInbox={notes:[],stats:[],audits:[],recognitions:[],updatedAt:""};
@@ -2007,7 +2008,7 @@
       var vals=[]; perAgent.forEach(function(x){ x.weeks.forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v!=null) vals.push(v); }); });
       if(!vals.length) return null;
       var sum=vals.reduce(function(s,x){return s+x;},0), mean=sum/vals.length;
-      var isDur=(k.type==="dur"), sumDur=(isDur && k.id==="breaks");
+      var isDur=(k.type==="dur"), sumDur=(isDur && (k.id==="breaks"||k.sumDur));
       var isCount=(!isDur), useTotal=((isCount && teamStatMode==="total")||sumDur);
       var metric=useTotal?sum:mean;
       var disp = isDur ? (typeof fmtKpi==="function"?fmtKpi(k,Math.round(sumDur?sum:mean)):Math.round(sumDur?sum:mean)) : (useTotal?Math.round(sum):(Math.round(mean*10)/10));
@@ -2052,7 +2053,7 @@
       var vals=[]; weeks.forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v!=null) vals.push(v); });
       if(!vals.length) return '';
       var sum=vals.reduce(function(s,v){return s+v;},0), mean=sum/vals.length;
-      var isCount=k.type!=="dur", sumDur=(k.id==="breaks");
+      var isCount=k.type!=="dur", sumDur=(k.id==="breaks"||k.sumDur);
       var big=isCount?String(Math.round(sum)):(sumDur?fmtKpiVal(k,Math.round(sum)):fmtKpiVal(k,Math.round(mean)));
       var onT=null; if(k.target!=null && !sumDur) onT=k.lower?mean<=k.target:mean>=k.target;   // counts: compare weekly avg to target
       var sub=isCount?("avg "+(Math.round(mean*10)/10)+"/wk over "+vals.length+" wk"+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):"")):(sumDur?("total over "+vals.length+" wk"):("avg over "+vals.length+" wk"+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):"")));
@@ -2222,7 +2223,7 @@
     var agg=tt?Math.round(tp/tt*100):null;
     return {points:points, value:agg, disp:agg!=null?agg+"%":"—", sub:tp+" of "+tt+" passed · "+winSpan(keys), pct:true, kind:"pass"}; }
   function teamKpiTrend(k){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk[w.weekOf]=byWk[w.weekOf]||[]).push(v); }); });
-    var isCount=k.type!=="dur", sumDur=(k.id==="breaks"), keys=trendSlice(Object.keys(byWk));
+    var isCount=k.type!=="dur", sumDur=(k.id==="breaks"||k.sumDur), keys=trendSlice(Object.keys(byWk));
     var points=keys.map(function(key){ var arr=byWk[key]; var tot=arr.reduce(function(s,v){return s+v;},0); var val=(isCount||sumDur)?tot:Math.round(tot/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; });
     var all=[]; keys.forEach(function(key){ byWk[key].forEach(function(v){all.push(v);}); });
     var aggVal=null, disp="—", sub="no data · "+winSpan(keys);
@@ -2310,7 +2311,7 @@
       var k=defs.filter(function(d){return d.id===kpiId;})[0]; if(!k){ toast("Unknown metric."); return; }
       var byWk2={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk2[w.weekOf]=byWk2[w.weekOf]||[]).push({id:a.agentId,name:a.agentName||a.agentId, v:v}); }); });
       var keys2=trendSlice(Object.keys(byWk2)); if(!keys2.length){ toast("No stats in "+trendWinLabel()+"."); return; }
-      span=winSpan(keys2); var isCount=k.type!=="dur", sumDur=(k.id==="breaks"); title=k.label+" \u00b7 "+((isCount||sumDur)?"team total":"team average");
+      span=winSpan(keys2); var isCount=k.type!=="dur", sumDur=(k.id==="breaks"||k.sumDur); title=k.label+" \u00b7 "+((isCount||sumDur)?"team total":"team average");
       var per2={}, all2=[]; keys2.forEach(function(key){ byWk2[key].forEach(function(o){ per2[o.id]=per2[o.id]||{name:o.name, vals:[]}; per2[o.id].vals.push(o.v); all2.push(o.v); }); });
       Object.keys(per2).forEach(function(id){ var vs=per2[id].vals, sum=vs.reduce(function(s,v){return s+v;},0); var disp=isCount?String(Math.round(sum)):(sumDur?fmtKpiVal(k,Math.round(sum)):fmtKpiVal(k,Math.round(sum/vs.length))); rows.push({name:per2[id].name, disp:disp, sub:vs.length+" wk"+(vs.length===1?"":"s")+(isCount?(" \u00b7 avg "+Math.round(sum/vs.length*10)/10+"/wk"):(sumDur?" \u00b7 total time":""))}); });
       var sumAll=all2.reduce(function(s,v){return s+v;},0);
@@ -3112,7 +3113,7 @@
       }
     }catch(e){}
   }
-  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 30*60*1000); }
+  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 5*60*1000); }
 
   function enhLockConfig(sec){ if(!sec) return; if(isManager() || (state.teamInbox&&state.teamInbox.admin)) return;
     var titles=["KPIs & targets","Evidence categories","Knowledge base categories","Audit chat types"]; var hid=false;
@@ -3124,7 +3125,7 @@
   function enhNotifStyle(){ if(document.getElementById("notifStyle")) return; var s=document.createElement("style"); s.id="notifStyle";
     s.textContent=".bellbtn{position:relative}"
       +".bell-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--a1,#ff5d7a);color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;box-shadow:0 0 0 2px var(--card,#fff)}"
-      +".notifpanel{position:fixed;top:64px;right:18px;width:340px;max-width:calc(100vw - 24px);max-height:72vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.28);z-index:9999;padding:8px}"
+      +".notifpanel{position:fixed;top:64px;right:18px;width:340px;max-width:calc(100vw - 24px);max-height:72vh;overflow:auto;background:var(--paper,#14141d);border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.45);z-index:9999;padding:8px}"
       +".np-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px 6px}"
       +".np-head strong{font-family:var(--disp);font-size:15px}"
       +".np-clear{background:none;border:none;color:var(--ink-faint);font-size:12px;cursor:pointer}"
