@@ -1871,7 +1871,7 @@
     return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); })
       .then(function(arr){ var all=arr.filter(Boolean); var mine=myAgentId(); var asn=state.assignedAgents||[]; var fl=all.filter(function(s){ return (s.managerId&&s.managerId===mine) || asn.indexOf(s.agentId)>=0; }); TEAMROSTER=fl.sort(function(a,b){ return (a.agentName||"").localeCompare(b.agentName||""); }); return TEAMROSTER; });
   }
-  function getFeedback(id){ return TEAM.dir? fsRead("feedback-"+id+".json").then(function(f){ return f||emptyFeedback(id); }) : Promise.resolve(emptyFeedback(id)); }
+  function getFeedback(id){ return TEAM.dir? fsRead("feedback-"+id+".json").then(function(f){ var fb=f||emptyFeedback(id); fb.agentId=id; return fb; }) : Promise.resolve(emptyFeedback(id)); }
   function saveFeedback(fb,opts){
     // opts: boolean (silent) for back-compat, or {silent, owns:[arrays this write is authoritative for]}.
     // Arrays NOT owned are re-read from disk and preserved, so e.g. sending a note never wipes
@@ -2110,7 +2110,7 @@
         h+='<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin:14px 0 8px">History</div>';
         h+= hist.length? hist.map(function(e){ return '<div class="listrow"><span style="flex:1">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+'</span><span class="date">'+esc(fmtDate((e.ts||"").slice(0,10)))+'</span><button class="rm" data-todel="'+esc(e.id)+'">✕</button></div>'; }).join("") : '<div class="empty">No time logged yet.</div>';
         box.innerHTML=h;
-        box.querySelectorAll("[data-toapprove]").forEach(function(b){ b.onclick=function(){ var r=(a.timeOwedReq||[]).filter(function(x){return x.id===b.getAttribute("data-toapprove");})[0]; if(!r) return; fb.timeOwed.push({id:uid("to"),ts:nowISO(),delta:r.delta,note:(r.note||"")+" (request approved)",by:"manager"}); fb.timeOwedAcks.push({id:uid("ak"),reqId:r.id,status:"approved",ts:nowISO()}); state.toHandled[r.id]="approved"; save(); saveFeedback(fb,{owns:["timeOwed","timeOwedAcks"],silent:true}).then(function(){ loadTimeOwed(fb); }); toast("Approved."); }; });
+        box.querySelectorAll("[data-toapprove]").forEach(function(b){ b.onclick=function(){ var r=(a.timeOwedReq||[]).filter(function(x){return x.id===b.getAttribute("data-toapprove");})[0]; if(!r) return; fb.agentName=a.agentName||fb.agentName||""; fb.timeOwed.push({id:uid("to"),ts:nowISO(),delta:r.delta,note:(r.note||"")+" (request approved)",by:"manager"}); fb.timeOwedAcks.push({id:uid("ak"),reqId:r.id,status:"approved",ts:nowISO()}); state.toHandled[r.id]="approved"; save(); saveFeedback(fb,{owns:["timeOwed","timeOwedAcks"],silent:true}).then(function(){ loadTimeOwed(fb); }); toast("Approved."); }; });
         box.querySelectorAll("[data-todecline]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-todecline"); fb.timeOwedAcks.push({id:uid("ak"),reqId:rid,status:"declined",ts:nowISO()}); state.toHandled[rid]="declined"; save(); saveFeedback(fb,{owns:["timeOwedAcks"],silent:true}).then(function(){ loadTimeOwed(fb); }); toast("Declined."); }; });
         box.querySelectorAll("[data-todel]").forEach(function(b){ b.onclick=function(){ fb.timeOwed=fb.timeOwed.filter(function(x){return x.id!==b.getAttribute("data-todel");}); saveFeedback(fb,{owns:["timeOwed"],silent:true}).then(function(){ loadTimeOwed(fb); }); }; });
       }).catch(function(){ box.innerHTML='<div class="vhint">Couldn’t load — reconnect the folder.</div>'; });
@@ -2120,7 +2120,7 @@
         +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="toSave">'+(sign<0?"Deduct":"Add")+'</button></div>');
       document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
       document.getElementById("toSave").onclick=function(){ var mins=parseMins(document.getElementById("toAmt").value); if(!mins){ toast("Enter an amount."); return; } var note=document.getElementById("toNote").value.trim();
-        getFeedback(a.agentId).then(function(fb){ fb.timeOwed=fb.timeOwed||[]; fb.timeOwed.push({id:uid("to"),ts:nowISO(),delta:sign*mins,note:note,by:"manager"}); return saveFeedback(fb,{owns:["timeOwed"],silent:true}).then(function(){ closeModal(); loadTimeOwed(fb); toast("Logged."); }); }); };
+        getFeedback(a.agentId).then(function(fb){ fb.agentName=a.agentName||fb.agentName||""; fb.timeOwed=fb.timeOwed||[]; fb.timeOwed.push({id:uid("to"),ts:nowISO(),delta:sign*mins,note:note,by:"manager"}); return saveFeedback(fb,{owns:["timeOwed"],silent:true}).then(function(){ closeModal(); loadTimeOwed(fb); toast(sign<0?"Deducted "+fmtMins(mins)+".":"Added "+fmtMins(mins)+"."); }); }); };
     }
     var ta=sec.querySelector("#toAdd"); if(ta) ta.onclick=function(){ logTimeOwed(1); };
     var td=sec.querySelector("#toDeduct"); if(td) td.onclick=function(){ logTimeOwed(-1); };
