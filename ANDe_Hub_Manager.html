@@ -662,7 +662,7 @@
   function mdToHtml(s){ s=esc(s); s=s.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>"); s=s.replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>"); s=s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); return s.replace(/\n/g,"<br>"); }
   function fmtDate(iso){ if(!iso) return ""; var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return iso; return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }
   function fmtShort(iso){ if(!iso) return ""; var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return iso; return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
-  function quarterKey(iso){ var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return {label:"Undated",sort:0}; var q=Math.floor(d.getMonth()/3)+1; var m=["Jan–Mar","Apr–Jun","Jul–Sep","Oct–Dec"][q-1]; return {label:"Q"+q+" "+d.getFullYear()+" · "+m,sort:d.getFullYear()*10+q}; }
+  function quarterKey(iso){ var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return {label:"Undated",sort:0}; var hf=d.getMonth()<6?1:2; var m=hf===1?"Jan–Jun":"Jul–Dec"; return {label:"H"+hf+" "+d.getFullYear()+" · "+m,sort:d.getFullYear()*10+hf}; }
   function fmtDurType(raw){ raw=String(raw); if(/^\d{1,2}:\d{0,2}$/.test(raw)) return raw; var d=raw.replace(/[^0-9]/g,"").slice(0,4); if(d.length<=2) return d; return d.slice(0,2)+":"+d.slice(2); }
   function parseDur(str){ if(str==null) return null; str=String(str).trim(); if(!str) return null; if(str.indexOf(":")>=0){ var p=str.split(":").map(function(x){return parseInt(x,10);}); if(p.some(function(n){return isNaN(n);})) return null; if(p.length===2) return p[0]*60+p[1]; if(p.length===3) return p[0]*3600+p[1]*60+p[2]; return p[0]*60; } var n=parseFloat(str); return isNaN(n)?null:n*60; }
   function fmtDur(sec){ sec=Math.round(sec); var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return h>0?(h+":"+pad(m)+":"+pad(s)):(m+":"+pad(s)); }
@@ -962,7 +962,8 @@
     wrap.innerHTML=shiftHTML+listHTML;
     wrap.querySelectorAll("[data-tev]").forEach(function(el){ el.onclick=function(){ openEvent(el.getAttribute("data-tev")); }; });
   }
-  function drawTasks(){
+  function pruneDoneTasks(){ var t=todayISO(), changed=false; (state.tasks||[]).forEach(function(x){ if(x.done&&!x.doneAt){ x.doneAt=t; changed=true; } }); var before=(state.tasks||[]).length; state.tasks=(state.tasks||[]).filter(function(x){ if(!x.done||!x.doneAt) return true; var d=(new Date(t+"T00:00:00")-new Date(x.doneAt+"T00:00:00"))/86400000; return !(d>7); }); if(changed||state.tasks.length!==before) save(); }
+  function drawTasks(){ pruneDoneTasks();
     var l=document.getElementById("taskList"); if(!l) return; l.innerHTML="";
     var ts=state.tasks.slice().sort(function(a,b){ if(a.done!==b.done) return a.done?1:-1; if(!!a.pr!==!!b.pr) return a.pr?-1:1; return (a.due||"9999").localeCompare(b.due||"9999"); });
     if(!ts.length){ l.innerHTML='<div class="empty">No follow-ups — all clear.</div>'; return; }
@@ -970,7 +971,7 @@
   }
   function taskRow(t){
     var d=document.createElement("div"); d.className="task"+(t.done?" done":"")+(t.pr&&!t.done?" hi":"");
-    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!t.done; cb.onchange=function(){ t.done=cb.checked; save(); drawTasks(); };
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!t.done; cb.onchange=function(){ t.done=cb.checked; t.doneAt=cb.checked?todayISO():""; save(); drawTasks(); };
     var tx=document.createElement("span"); tx.className="tx"; tx.textContent=t.text; tx.title="Click to edit";
     tx.onclick=function(){ if(t.done||tx.isContentEditable) return; tx.contentEditable="true"; tx.focus(); var r=document.createRange(); r.selectNodeContents(tx); r.collapse(false); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); };
     tx.onblur=function(){ if(!tx.isContentEditable) return; tx.contentEditable="false"; var v=tx.textContent.replace(/\s+/g," ").trim(); if(v&&v!==t.text){ t.text=v; save(); } drawTasks(); };
@@ -1075,7 +1076,7 @@
     var qSel=document.getElementById("evQuarter"), cSel=document.getElementById("evCat"); if(!qSel||!cSel) return;
     var qs={}; state.evidence.forEach(function(e){ var k=quarterKey(e.date); qs[k.label]=k.sort; });
     var qList=Object.keys(qs).sort(function(a,b){return qs[b]-qs[a];}); var cq=qSel.value;
-    qSel.innerHTML='<option value="">All quarters</option>'+qList.map(function(l){return '<option'+(l===cq?' selected':'')+'>'+esc(l)+'</option>';}).join("");
+    qSel.innerHTML='<option value="">All halves</option>'+qList.map(function(l){return '<option'+(l===cq?' selected':'')+'>'+esc(l)+'</option>';}).join("");
     var cats={}; state.evidence.forEach(function(e){ if(e.category) cats[e.category]=true; }); var cc=cSel.value;
     cSel.innerHTML='<option value="">All categories</option>'+Object.keys(cats).sort().map(function(c){return '<option'+(c===cc?' selected':'')+'>'+esc(c)+'</option>';}).join("");
   }
@@ -1910,20 +1911,20 @@
   /* ---- MANAGER: Team overview + agent drill-down ---- */
   var teamSel=null, teamRange="all", teamStatMode="total";
   var trendWin={mode:"12w", from:"", to:""};
-  function trendCount(){ return {latest:1,"4w":4,"12w":12,quarter:13,year:52,all:9999,custom:9999}[trendWin.mode]||12; }
+  function trendCount(){ return {latest:1,"4w":4,"12w":12,half:26,year:52,all:9999,custom:9999}[trendWin.mode]||12; }
   function trendKeep(weekISO){ if(!weekISO) return false; if(trendWin.mode==="custom"){ if(trendWin.from && weekISO<trendWin.from) return false; if(trendWin.to && weekISO>trendWin.to) return false; } return true; }
   function trendSlice(keys){ return keys.filter(trendKeep).sort().slice(-trendCount()); }
-  function trendWinLabel(){ return {latest:"latest week","4w":"last 4 weeks","12w":"last 12 weeks",quarter:"last quarter",year:"last year",all:"all time",custom:"custom range"}[trendWin.mode]||"recent"; }
+  function trendWinLabel(){ return {latest:"latest week","4w":"last 4 weeks","12w":"last 12 weeks",half:"last 6 months",year:"last year",all:"all time",custom:"custom range"}[trendWin.mode]||"recent"; }
   function teamKpiDefs(){ var best=state.config.kpis; TEAMROSTER.forEach(function(a){ if(a.kpiDefs&&a.kpiDefs.length>(best?best.length:0)) best=a.kpiDefs; }); return best||[]; }
   function numOf(k,v){ return (typeof numericOf==="function")?numericOf(k,v):(v===""||v==null?null:(k.type==="dur"?(function(){var p=String(v).split(":");return p.length===2?(+p[0]*60+ +p[1]):parseFloat(v);})():parseFloat(v))); }
   function fmtKpiVal(k,v){ return (typeof fmtKpi==="function" && v!=null)?fmtKpi(k,v):(v==null?"\u2014":String(v)); }
   function rangeStart(){ var n=new Date(); n.setHours(0,0,0,0);
     if(teamRange==="month") return new Date(n.getFullYear(),n.getMonth(),1);
-    if(teamRange==="quarter") return new Date(n.getFullYear(),Math.floor(n.getMonth()/3)*3,1);
+    if(teamRange==="half") return new Date(n.getFullYear(), n.getMonth()<6?0:6, 1);
     if(teamRange==="year") return new Date(n.getFullYear(),0,1);
     return null; }
   function inRange(d){ if(!d) return false; var s=rangeStart(); if(!s) return true; var dt=new Date(d); return !isNaN(dt)&&dt>=s; }
-  function rangeLabel(){ return teamRange==="month"?"this month":teamRange==="quarter"?"this quarter":teamRange==="year"?"this year":"all time"; }
+  function rangeLabel(){ return teamRange==="month"?"this month":teamRange==="half"?"this half":teamRange==="year"?"this year":"all time"; }
   function fAudits(a){ return (a.audits||[]).filter(function(x){ return teamRange==="all"||inRange(x.date); }); }
   function fWeeks(a){ return (a.weeks||[]).filter(function(w){ return teamRange==="all"||inRange(w.weekOf); }); }
   function auAvgOf(audits){ var s=audits.map(function(x){return x.score;}).filter(function(x){return x!=null;}); return s.length?Math.round(s.reduce(function(p,c){return p+c;},0)/s.length):null; }
@@ -1939,7 +1940,7 @@
   }
   function rangeSeg(){
     return '<div class="seg" id="teamRange" style="flex-wrap:wrap">'+
-      [["month","This month"],["quarter","This quarter"],["year","This year"],["all","All time"]].map(function(r){ return '<button data-rg="'+r[0]+'"'+(teamRange===r[0]?' class="on"':'')+'>'+r[1]+'</button>'; }).join("")+'</div>';
+      [["month","This month"],["half","This half"],["year","This year"],["all","All time"]].map(function(r){ return '<button data-rg="'+r[0]+'"'+(teamRange===r[0]?' class="on"':'')+'>'+r[1]+'</button>'; }).join("")+'</div>';
   }
 
   renderers.team=function(){
@@ -2005,9 +2006,10 @@
       var vals=[]; perAgent.forEach(function(x){ x.weeks.forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v!=null) vals.push(v); }); });
       if(!vals.length) return null;
       var sum=vals.reduce(function(s,x){return s+x;},0), mean=sum/vals.length;
-      var isCount=(k.type!=="dur"), useTotal=(isCount && teamStatMode==="total");
+      var isDur=(k.type==="dur"), sumDur=(isDur && k.id==="breaks");
+      var isCount=(!isDur), useTotal=((isCount && teamStatMode==="total")||sumDur);
       var metric=useTotal?sum:mean;
-      var disp = k.type==="dur" ? (typeof fmtKpi==="function"?fmtKpi(k,Math.round(mean)):Math.round(mean)) : (useTotal?Math.round(sum):(Math.round(mean*10)/10));
+      var disp = isDur ? (typeof fmtKpi==="function"?fmtKpi(k,Math.round(sumDur?sum:mean)):Math.round(sumDur?sum:mean)) : (useTotal?Math.round(sum):(Math.round(mean*10)/10));
       var onT=null; if(k.target!=null && !useTotal){ onT=k.lower? mean<=k.target : mean>=k.target; }
       var foot=useTotal?("team total \u00b7 "+esc(rangeLabel())):("team avg \u00b7 "+esc(rangeLabel())+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):""));
       return '<div class="pill '+(onT==null?"neutral":(onT?"good":"bad"))+'"><div class="pl">'+esc(k.label)+'</div><div class="pv">'+esc(String(disp))+'</div><div class="pf">'+foot+'</div></div>';
@@ -2049,11 +2051,11 @@
       var vals=[]; weeks.forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v!=null) vals.push(v); });
       if(!vals.length) return '';
       var sum=vals.reduce(function(s,v){return s+v;},0), mean=sum/vals.length;
-      var isCount=k.type!=="dur";
-      var big=isCount?String(Math.round(sum)):fmtKpiVal(k,Math.round(mean));
-      var onT=null; if(k.target!=null) onT=k.lower?mean<=k.target:mean>=k.target;   // counts: compare weekly avg to target
-      var sub=isCount?("avg "+(Math.round(mean*10)/10)+"/wk over "+vals.length+" wk"+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):"")):("avg over "+vals.length+" wk"+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):""));
-      return '<div class="pill '+(onT==null?"neutral":(onT?"good":"bad"))+'"><div class="pl">'+esc(k.label)+(isCount?" \u00b7 total":"")+'</div><div class="pv">'+esc(big)+'</div><div class="pf">'+esc(sub)+'</div></div>';
+      var isCount=k.type!=="dur", sumDur=(k.id==="breaks");
+      var big=isCount?String(Math.round(sum)):(sumDur?fmtKpiVal(k,Math.round(sum)):fmtKpiVal(k,Math.round(mean)));
+      var onT=null; if(k.target!=null && !sumDur) onT=k.lower?mean<=k.target:mean>=k.target;   // counts: compare weekly avg to target
+      var sub=isCount?("avg "+(Math.round(mean*10)/10)+"/wk over "+vals.length+" wk"+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):"")):(sumDur?("total over "+vals.length+" wk"):("avg over "+vals.length+" wk"+(k.target!=null?(" \u00b7 target "+fmtKpiVal(k,k.target)):"")));
+      return '<div class="pill '+(onT==null?"neutral":(onT?"good":"bad"))+'"><div class="pl">'+esc(k.label)+((isCount||sumDur)?" \u00b7 total":"")+'</div><div class="pv">'+esc(big)+'</div><div class="pf">'+esc(sub)+'</div></div>';
     }).filter(Boolean).join("");
 
     sec.innerHTML='<div class="vhead"><div><button class="btn sm" id="teamBack" style="margin-bottom:12px">\u2190 Back to team</button><div class="eyebrow">Team member</div><h2>'+esc(a.agentName||a.agentId)+'</h2><p class="lede">'+esc(a.role||"Agent")+' \u00b7 shared '+esc(fmtAgo(a.updatedAt))+' \u00b7 showing '+esc(rangeLabel())+'</p></div><div class="actions"><button class="btn" id="agAdmin"></button><button class="btn primary" id="agPush">\u21c8 Push to '+esc((a.agentName||"agent").split(" ")[0])+'</button></div></div>'+
@@ -2201,7 +2203,7 @@
   function mondayKey(d){ return (typeof mondayOf==="function")?mondayOf(d):d; }
   function prevBounds(){ var n=new Date(); n.setHours(0,0,0,0);
     if(teamRange==="month") return {s:new Date(n.getFullYear(),n.getMonth()-1,1), e:new Date(n.getFullYear(),n.getMonth(),1)};
-    if(teamRange==="quarter"){ var q=Math.floor(n.getMonth()/3); return {s:new Date(n.getFullYear(),q*3-3,1), e:new Date(n.getFullYear(),q*3,1)}; }
+    if(teamRange==="half"){ return n.getMonth()<6?{s:new Date(n.getFullYear()-1,6,1), e:new Date(n.getFullYear(),0,1)}:{s:new Date(n.getFullYear(),0,1), e:new Date(n.getFullYear(),6,1)}; }
     if(teamRange==="year") return {s:new Date(n.getFullYear()-1,0,1), e:new Date(n.getFullYear(),0,1)};
     return null; }
   function inPrev(d){ var b=prevBounds(); if(!b||!d) return false; var dt=new Date(d); return !isNaN(dt)&&dt>=b.s&&dt<b.e; }
@@ -2219,11 +2221,11 @@
     var agg=tt?Math.round(tp/tt*100):null;
     return {points:points, value:agg, disp:agg!=null?agg+"%":"—", sub:tp+" of "+tt+" passed · "+winSpan(keys), pct:true, kind:"pass"}; }
   function teamKpiTrend(k){ var byWk={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk[w.weekOf]=byWk[w.weekOf]||[]).push(v); }); });
-    var isCount=k.type!=="dur", keys=trendSlice(Object.keys(byWk));
-    var points=keys.map(function(key){ var arr=byWk[key]; var val=isCount?arr.reduce(function(s,v){return s+v;},0):Math.round(arr.reduce(function(s,v){return s+v;},0)/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; });
+    var isCount=k.type!=="dur", sumDur=(k.id==="breaks"), keys=trendSlice(Object.keys(byWk));
+    var points=keys.map(function(key){ var arr=byWk[key]; var tot=arr.reduce(function(s,v){return s+v;},0); var val=(isCount||sumDur)?tot:Math.round(tot/arr.length); return {label:fmtShort(key),value:val,disp:isCount?String(Math.round(val)):fmtKpiVal(k,val)}; });
     var all=[]; keys.forEach(function(key){ byWk[key].forEach(function(v){all.push(v);}); });
     var aggVal=null, disp="—", sub="no data · "+winSpan(keys);
-    if(all.length){ if(isCount){ var sum=all.reduce(function(s,v){return s+v;},0); aggVal=sum; disp=String(Math.round(sum)); sub="team total · "+winSpan(keys); } else { var mean=all.reduce(function(s,v){return s+v;},0)/all.length; aggVal=mean; disp=fmtKpiVal(k,Math.round(mean)); sub="team avg · "+winSpan(keys); } }
+    if(all.length){ if(isCount||sumDur){ var sum=all.reduce(function(s,v){return s+v;},0); aggVal=sum; disp=isCount?String(Math.round(sum)):fmtKpiVal(k,Math.round(sum)); sub="team total · "+winSpan(keys); } else { var mean=all.reduce(function(s,v){return s+v;},0)/all.length; aggVal=mean; disp=fmtKpiVal(k,Math.round(mean)); sub="team avg · "+winSpan(keys); } }
     return {points:points, value:aggVal, disp:disp, sub:sub, lower:k.lower, kind:"kpi", kpiId:k.id, isCount:isCount}; }
   function trendBars(points){ if(!points.length) return '<div class="empty" style="padding:14px">Not enough history yet \u2014 a few weeks of data will fill this in.</div>';
     var max=Math.max.apply(null,points.map(function(p){return p.value;}))||1;
@@ -2267,7 +2269,7 @@
     defs.forEach(function(k){ cards.push(trendCard(k.label, teamKpiTrend(k))); });
     cards=cards.filter(Boolean);
     var body=cards.length? '<div class="trend-grid">'+cards.join("")+'</div>' : '<div class="empty">No data in '+esc(trendWinLabel())+' yet.</div>';
-    var opts=[["latest","Latest"],["4w","4 wks"],["12w","12 wks"],["quarter","Quarter"],["year","Year"],["all","All"],["custom","Custom"]];
+    var opts=[["latest","Latest"],["4w","4 wks"],["12w","12 wks"],["half","6 months"],["year","Year"],["all","All"],["custom","Custom"]];
     var seg='<div class="seg sm" id="twSeg" style="flex-wrap:wrap">'+opts.map(function(o){return '<button data-tw="'+o[0]+'"'+(trendWin.mode===o[0]?' class="on"':'')+'>'+o[1]+'</button>';}).join("")+'</div>';
     var dateRow=trendWin.mode==="custom"?('<div class="addline" style="margin-top:10px;gap:8px;align-items:center"><span class="vhint">From</span><input class="in" type="date" id="twFrom" value="'+esc(trendWin.from)+'" style="max-width:160px"><span class="vhint">to</span><input class="in" type="date" id="twTo" value="'+esc(trendWin.to)+'" style="max-width:160px"></div>'):'';
     return '<div class="panel" style="margin-top:6px"><div class="panel-h" style="flex-wrap:wrap;gap:10px"><h3>Team trends \u00b7 '+esc(trendWinLabel())+'</h3>'+seg+'<span class="vhint" style="flex-basis:100%;margin:0">\u25b2 better \u25bc worse \u00b7 tap a card for the per-agent breakdown</span></div><div class="panel-b">'+dateRow+body+'</div></div>'; }
@@ -2307,12 +2309,12 @@
       var k=defs.filter(function(d){return d.id===kpiId;})[0]; if(!k){ toast("Unknown metric."); return; }
       var byWk2={}; TEAMROSTER.forEach(function(a){ (a.weeks||[]).forEach(function(w){ var v=numOf(k,(w.vals||{})[k.id]); if(v==null) return; (byWk2[w.weekOf]=byWk2[w.weekOf]||[]).push({id:a.agentId,name:a.agentName||a.agentId, v:v}); }); });
       var keys2=trendSlice(Object.keys(byWk2)); if(!keys2.length){ toast("No stats in "+trendWinLabel()+"."); return; }
-      span=winSpan(keys2); var isCount=k.type!=="dur"; title=k.label+" \u00b7 "+(isCount?"team total":"team average");
+      span=winSpan(keys2); var isCount=k.type!=="dur", sumDur=(k.id==="breaks"); title=k.label+" \u00b7 "+((isCount||sumDur)?"team total":"team average");
       var per2={}, all2=[]; keys2.forEach(function(key){ byWk2[key].forEach(function(o){ per2[o.id]=per2[o.id]||{name:o.name, vals:[]}; per2[o.id].vals.push(o.v); all2.push(o.v); }); });
-      Object.keys(per2).forEach(function(id){ var vs=per2[id].vals, sum=vs.reduce(function(s,v){return s+v;},0); var disp=isCount?String(Math.round(sum)):fmtKpiVal(k,Math.round(sum/vs.length)); rows.push({name:per2[id].name, disp:disp, sub:vs.length+" wk"+(vs.length===1?"":"s")+(isCount?(" \u00b7 avg "+Math.round(sum/vs.length*10)/10+"/wk"):"")}); });
+      Object.keys(per2).forEach(function(id){ var vs=per2[id].vals, sum=vs.reduce(function(s,v){return s+v;},0); var disp=isCount?String(Math.round(sum)):(sumDur?fmtKpiVal(k,Math.round(sum)):fmtKpiVal(k,Math.round(sum/vs.length))); rows.push({name:per2[id].name, disp:disp, sub:vs.length+" wk"+(vs.length===1?"":"s")+(isCount?(" \u00b7 avg "+Math.round(sum/vs.length*10)/10+"/wk"):(sumDur?" \u00b7 total time":""))}); });
       var sumAll=all2.reduce(function(s,v){return s+v;},0);
-      overallDisp=all2.length?(isCount?String(Math.round(sumAll)):fmtKpiVal(k,Math.round(sumAll/all2.length))):"\u2014";
-      note=isCount?("Overall = sum of every agent's figures across the window. Each agent's value is their own total."):("Overall = mean of every agent's weekly figures across the window.");
+      overallDisp=all2.length?(isCount?String(Math.round(sumAll)):(sumDur?fmtKpiVal(k,Math.round(sumAll)):fmtKpiVal(k,Math.round(sumAll/all2.length)))):"\u2014";
+      note=isCount?("Overall = sum of every agent's figures across the window. Each agent's value is their own total."):(sumDur?("Overall = total break time summed across every agent and week."):("Overall = mean of every agent's weekly figures across the window."));
     }
     rows.sort(function(a,b){return (a.name||"").localeCompare(b.name||"");});
     var tbl=rows.length?('<table class="tbl" style="width:100%"><thead><tr><th>Agent</th><th style="text-align:right">Value</th><th>Detail</th></tr></thead><tbody>'+rows.map(function(r){return '<tr><td>'+esc(r.name)+'</td><td class="num" style="text-align:right;font-variant-numeric:tabular-nums">'+esc(r.disp)+'</td><td style="color:var(--ink-faint)">'+esc(r.sub||"")+'</td></tr>';}).join("")+'</tbody></table>'):'<div class="empty">No agent figures in this window.</div>';

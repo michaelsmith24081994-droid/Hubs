@@ -660,7 +660,7 @@
   function mdToHtml(s){ s=esc(s); s=s.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>"); s=s.replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>"); s=s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); return s.replace(/\n/g,"<br>"); }
   function fmtDate(iso){ if(!iso) return ""; var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return iso; return d.toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}); }
   function fmtShort(iso){ if(!iso) return ""; var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return iso; return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
-  function quarterKey(iso){ var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return {label:"Undated",sort:0}; var q=Math.floor(d.getMonth()/3)+1; var m=["Jan–Mar","Apr–Jun","Jul–Sep","Oct–Dec"][q-1]; return {label:"Q"+q+" "+d.getFullYear()+" · "+m,sort:d.getFullYear()*10+q}; }
+  function quarterKey(iso){ var d=new Date(iso+"T00:00:00"); if(isNaN(d.getTime())) return {label:"Undated",sort:0}; var hf=d.getMonth()<6?1:2; var m=hf===1?"Jan–Jun":"Jul–Dec"; return {label:"H"+hf+" "+d.getFullYear()+" · "+m,sort:d.getFullYear()*10+hf}; }
   function fmtDurType(raw){ raw=String(raw); if(/^\d{1,2}:\d{0,2}$/.test(raw)) return raw; var d=raw.replace(/[^0-9]/g,"").slice(0,4); if(d.length<=2) return d; return d.slice(0,2)+":"+d.slice(2); }
   function parseDur(str){ if(str==null) return null; str=String(str).trim(); if(!str) return null; if(str.indexOf(":")>=0){ var p=str.split(":").map(function(x){return parseInt(x,10);}); if(p.some(function(n){return isNaN(n);})) return null; if(p.length===2) return p[0]*60+p[1]; if(p.length===3) return p[0]*3600+p[1]*60+p[2]; return p[0]*60; } var n=parseFloat(str); return isNaN(n)?null:n*60; }
   function fmtDur(sec){ sec=Math.round(sec); var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return h>0?(h+":"+pad(m)+":"+pad(s)):(m+":"+pad(s)); }
@@ -687,7 +687,7 @@
   function fmtKpi(k,num){ if(num===null||num===undefined||isNaN(num)) return "—"; return k.type==="dur"?fmtDur(num):String(Math.round(num)); }
   function kpiBreach(k,num){ if(num===null||isNaN(num)||!k.lower||k.target===null||k.target===undefined) return false; return num>k.target; }
   function avg(arr){ var n=arr.filter(function(x){return x!=null;}); return n.length?n.reduce(function(a,b){return a+b;},0)/n.length:null; }
-  function aggVal(k,nums){ var v=nums.filter(function(n){return n!=null;}); if(!v.length) return null; return k.type==="int"? v.reduce(function(a,b){return a+b;},0) : avg(v); }
+  function aggVal(k,nums){ var v=nums.filter(function(n){return n!=null;}); if(!v.length) return null; return (k.type==="int"||k.id==="breaks")? v.reduce(function(a,b){return a+b;},0) : avg(v); }
   function weeksSorted(){ return state.stats.weeks.slice().sort(function(a,b){return (a.weekOf||"").localeCompare(b.weekOf||"");}); }
 
   /* ---------- persistence (IndexedDB w/ localStorage fallback) ---------- */
@@ -956,7 +956,8 @@
     wrap.innerHTML=shiftHTML+listHTML;
     wrap.querySelectorAll("[data-tev]").forEach(function(el){ el.onclick=function(){ openEvent(el.getAttribute("data-tev")); }; });
   }
-  function drawTasks(){
+  function pruneDoneTasks(){ var t=todayISO(), changed=false; (state.tasks||[]).forEach(function(x){ if(x.done&&!x.doneAt){ x.doneAt=t; changed=true; } }); var before=(state.tasks||[]).length; state.tasks=(state.tasks||[]).filter(function(x){ if(!x.done||!x.doneAt) return true; var d=(new Date(t+"T00:00:00")-new Date(x.doneAt+"T00:00:00"))/86400000; return !(d>7); }); if(changed||state.tasks.length!==before) save(); }
+  function drawTasks(){ pruneDoneTasks();
     var l=document.getElementById("taskList"); if(!l) return; l.innerHTML="";
     var ts=state.tasks.slice().sort(function(a,b){ if(a.done!==b.done) return a.done?1:-1; if(!!a.pr!==!!b.pr) return a.pr?-1:1; return (a.due||"9999").localeCompare(b.due||"9999"); });
     if(!ts.length){ l.innerHTML='<div class="empty">No follow-ups — all clear.</div>'; return; }
@@ -964,7 +965,7 @@
   }
   function taskRow(t){
     var d=document.createElement("div"); d.className="task"+(t.done?" done":"")+(t.pr&&!t.done?" hi":"");
-    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!t.done; cb.onchange=function(){ t.done=cb.checked; save(); drawTasks(); };
+    var cb=document.createElement("input"); cb.type="checkbox"; cb.checked=!!t.done; cb.onchange=function(){ t.done=cb.checked; t.doneAt=cb.checked?todayISO():""; save(); drawTasks(); };
     var tx=document.createElement("span"); tx.className="tx"; tx.textContent=t.text; tx.title="Click to edit";
     tx.onclick=function(){ if(t.done||tx.isContentEditable) return; tx.contentEditable="true"; tx.focus(); var r=document.createRange(); r.selectNodeContents(tx); r.collapse(false); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); };
     tx.onblur=function(){ if(!tx.isContentEditable) return; tx.contentEditable="false"; var v=tx.textContent.replace(/\s+/g," ").trim(); if(v&&v!==t.text){ t.text=v; save(); } drawTasks(); };
@@ -1069,7 +1070,7 @@
     var qSel=document.getElementById("evQuarter"), cSel=document.getElementById("evCat"); if(!qSel||!cSel) return;
     var qs={}; state.evidence.forEach(function(e){ var k=quarterKey(e.date); qs[k.label]=k.sort; });
     var qList=Object.keys(qs).sort(function(a,b){return qs[b]-qs[a];}); var cq=qSel.value;
-    qSel.innerHTML='<option value="">All quarters</option>'+qList.map(function(l){return '<option'+(l===cq?' selected':'')+'>'+esc(l)+'</option>';}).join("");
+    qSel.innerHTML='<option value="">All halves</option>'+qList.map(function(l){return '<option'+(l===cq?' selected':'')+'>'+esc(l)+'</option>';}).join("");
     var cats={}; state.evidence.forEach(function(e){ if(e.category) cats[e.category]=true; }); var cc=cSel.value;
     cSel.innerHTML='<option value="">All categories</option>'+Object.keys(cats).sort().map(function(c){return '<option'+(c===cc?' selected':'')+'>'+esc(c)+'</option>';}).join("");
   }
@@ -1956,11 +1957,11 @@
   function fmtKpiVal(k,v){ return (typeof fmtKpi==="function" && v!=null)?fmtKpi(k,v):(v==null?"\u2014":String(v)); }
   function rangeStart(){ var n=new Date(); n.setHours(0,0,0,0);
     if(teamRange==="month") return new Date(n.getFullYear(),n.getMonth(),1);
-    if(teamRange==="quarter") return new Date(n.getFullYear(),Math.floor(n.getMonth()/3)*3,1);
+    if(teamRange==="half") return new Date(n.getFullYear(), n.getMonth()<6?0:6, 1);
     if(teamRange==="year") return new Date(n.getFullYear(),0,1);
     return null; }
   function inRange(d){ if(!d) return false; var s=rangeStart(); if(!s) return true; var dt=new Date(d); return !isNaN(dt)&&dt>=s; }
-  function rangeLabel(){ return teamRange==="month"?"this month":teamRange==="quarter"?"this quarter":teamRange==="year"?"this year":"all time"; }
+  function rangeLabel(){ return teamRange==="month"?"this month":teamRange==="half"?"this half":teamRange==="year"?"this year":"all time"; }
   function fAudits(a){ return (a.audits||[]).filter(function(x){ return teamRange==="all"||inRange(x.date); }); }
   function fWeeks(a){ return (a.weeks||[]).filter(function(w){ return teamRange==="all"||inRange(w.weekOf); }); }
   function auAvgOf(audits){ var s=audits.map(function(x){return x.score;}).filter(function(x){return x!=null;}); return s.length?Math.round(s.reduce(function(p,c){return p+c;},0)/s.length):null; }
@@ -1976,7 +1977,7 @@
   }
   function rangeSeg(){
     return '<div class="seg" id="teamRange" style="flex-wrap:wrap">'+
-      [["month","This month"],["quarter","This quarter"],["year","This year"],["all","All time"]].map(function(r){ return '<button data-rg="'+r[0]+'"'+(teamRange===r[0]?' class="on"':'')+'>'+r[1]+'</button>'; }).join("")+'</div>';
+      [["month","This month"],["half","This half"],["year","This year"],["all","All time"]].map(function(r){ return '<button data-rg="'+r[0]+'"'+(teamRange===r[0]?' class="on"':'')+'>'+r[1]+'</button>'; }).join("")+'</div>';
   }
 
   renderers.team=function(){
@@ -2189,7 +2190,7 @@
   function mondayKey(d){ return (typeof mondayOf==="function")?mondayOf(d):d; }
   function prevBounds(){ var n=new Date(); n.setHours(0,0,0,0);
     if(teamRange==="month") return {s:new Date(n.getFullYear(),n.getMonth()-1,1), e:new Date(n.getFullYear(),n.getMonth(),1)};
-    if(teamRange==="quarter"){ var q=Math.floor(n.getMonth()/3); return {s:new Date(n.getFullYear(),q*3-3,1), e:new Date(n.getFullYear(),q*3,1)}; }
+    if(teamRange==="half"){ return n.getMonth()<6?{s:new Date(n.getFullYear()-1,6,1), e:new Date(n.getFullYear(),0,1)}:{s:new Date(n.getFullYear(),0,1), e:new Date(n.getFullYear(),6,1)}; }
     if(teamRange==="year") return {s:new Date(n.getFullYear()-1,0,1), e:new Date(n.getFullYear(),0,1)};
     return null; }
   function inPrev(d){ var b=prevBounds(); if(!b||!d) return false; var dt=new Date(d); return !isNaN(dt)&&dt>=b.s&&dt<b.e; }
@@ -3505,6 +3506,7 @@
       if(k.sum){ var t=sumOf(names,k); headline=(t===null?"—":String(t)); sub="total across team"; }
       else { var m=meanOf(names,k); headline=fmtVal(k,m); sub="team average"; breach=isBreach(k.id, m); }
       if(k.id==="awol"){ var ta=sumOf(names,k); headline=(ta===null?"—":String(ta)); sub="instances this week"; breach=(ta!==null&&ta>0); }
+      if(k.id==="breaks"){ var tb=sumOf(names,k); headline=fmtVal(k,tb); sub="total time this week"; breach=(tb!==null&&tb>600); }
       var card=elc("div","ts-card"+(breach?" bad":""));
       card.appendChild(elc("div","ck",k.short));
       card.appendChild(elc("div","cv",headline));
