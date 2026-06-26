@@ -19,6 +19,8 @@
     --cond:"Arial Narrow","Helvetica Neue",var(--sans);
   }
   *{box-sizing:border-box}
+  /* unify every icon: one outline family, round caps + joins, consistent weight */
+  svg{stroke-linecap:round;stroke-linejoin:round}
   html,body{margin:0;min-height:100%}
   body{
     background:
@@ -34,25 +36,25 @@
 
   /* ---------- BANNER ---------- */
   .banner{
-    position:sticky;top:0;z-index:30;background:
-      linear-gradient(180deg,#1e2125 0%,#16181b 100%);
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(180deg,#1b1e22 0%,#141619 100%);
     border-bottom:1px solid var(--steel-soft);
     display:flex;align-items:center;justify-content:center;
-    padding:0 16px;height:84px;
-    box-shadow:0 1px 0 0 rgba(1,176,223,.18);
+    padding:0 16px;height:76px;
+    box-shadow:0 1px 0 0 rgba(255,255,255,.02),0 8px 24px -18px rgba(0,0,0,.9);
   }
-  .banner .logo{height:50px;width:auto;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
+  .banner::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(1,176,223,.35),transparent)}
+  .banner .logo{height:46px;width:auto;display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
   .banner .b-left,.banner .b-right{position:absolute;display:flex;gap:8px;align-items:center}
   .banner .b-left{left:14px}.banner .b-right{right:14px}
   .icon-btn{
     width:40px;height:40px;border-radius:11px;border:1px solid var(--steel);
-    background:var(--char);color:var(--muted);display:grid;place-items:center;cursor:pointer;transition:.14s;
+    background:var(--char);color:var(--muted);display:grid;place-items:center;cursor:pointer;transition:.16s ease;
   }
-  .icon-btn:hover{color:var(--cyan-2);border-color:var(--cyan-deep);background:var(--char-2)}
-  .icon-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
-  .banner .spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;
-    box-shadow:0 0 8px 2px rgba(255,255,255,.6);top:22px;animation:tw 3.2s ease-in-out infinite}
-  @keyframes tw{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
+  .icon-btn:hover{color:var(--cyan-2);border-color:var(--cyan-deep);background:var(--char-2);transform:translateY(-1px)}
+  .icon-btn:active{transform:translateY(0)}
+  .icon-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9}
 
   /* ---------- shell ---------- */
   .wrap{max-width:1140px;margin:0 auto;padding:22px 20px 40px}
@@ -64,11 +66,12 @@
   /* ---------- buttons ---------- */
   .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--steel);
     background:var(--char-2);color:var(--txt);padding:9px 15px;border-radius:var(--r-sm);
-    cursor:pointer;font-size:13px;font-weight:600;transition:.14s;white-space:nowrap}
-  .btn:hover{border-color:#39404a;background:var(--raised)}
+    cursor:pointer;font-size:13px;font-weight:600;transition:.16s ease;white-space:nowrap}
+  .btn:hover{border-color:#39404a;background:var(--raised);transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
   .btn.primary{background:linear-gradient(150deg,var(--cyan-2),var(--cyan-deep));border-color:transparent;color:#03141a;font-weight:700;
     box-shadow:0 6px 18px -8px var(--cyan)}
-  .btn.primary:hover{filter:brightness(1.08)}
+  .btn.primary:hover{filter:brightness(1.08);box-shadow:0 9px 22px -8px var(--cyan)}
   .btn.ghost{background:none}
   .btn.danger{color:var(--red);border-color:transparent;background:none}
   .btn.danger:hover{background:rgba(255,93,82,.1)}
@@ -114,7 +117,7 @@
   .tag{display:inline-block;font-size:11px;color:var(--muted);background:var(--char-2);border:1px solid var(--steel);padding:2px 8px;border-radius:6px;margin:2px 4px 2px 0}
 
   .empty{text-align:center;padding:42px 20px;color:var(--faint)}
-  .empty .ico{width:32px;height:32px;stroke:var(--steel);fill:none;stroke-width:1.5;margin-bottom:11px}
+  .empty .ico{width:34px;height:34px;stroke:var(--steel);fill:none;stroke-width:1.6;margin-bottom:12px}
   .empty p{margin:0 0 4px;color:var(--muted);font-size:14px}.empty span{font-size:12.5px}
 
   /* ---------- modal ---------- */
@@ -281,12 +284,11 @@
 
 <header class="banner">
   <div class="b-left">
-    <button class="icon-btn" id="quickQuote" title="New quote"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+    <button class="icon-btn" id="quickQuote" title="New quote"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg></button>
   </div>
   <img class="logo" id="bannerLogo" alt="LUX">
-  <div class="spark" id="spark"></div>
   <div class="b-right">
-    <button class="icon-btn" data-view="settings" title="Settings"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98 0 .33.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg></button>
+    <button class="icon-btn" data-view="settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
 </header>
 
@@ -420,9 +422,9 @@ const LEAD_LABEL={new:'Enquiry',quoted:'Quoted',won:'Won',lost:'Lost'};
 const LEAD_DOT={new:'#46cdf5',quoted:'#f0b73f',won:'#3ddc8a',lost:'#5f676e'};
 function emptyState(icon,t,s){
   const I={calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-    users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',
-    file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
-    zap:'<path d="M13 2L3 14h7l-1 8 10-12h-7z"/>',coin:'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+    users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/>',
+    zap:'<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>',coin:'<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>',
     box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v9"/>'};
   return el('div','empty',`<svg class="ico" viewBox="0 0 24 24">${I[icon]||I.file}</svg><p>${esc(t)}</p><span>${esc(s||'')}</span>`);
 }
@@ -664,12 +666,12 @@ function custModal(c){
       body.appendChild(h);}}
   const foot=footRow();
   if(!isNew){
-    if(c.phone){const callB=el(‘a’,’btn ghost sm’);callB.href=`tel:${esc(c.phone)}`;callB.innerHTML=`<svg class="ico" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg> Call`;foot.appendChild(callB);
-      const waB=el(‘a’,’btn ghost sm’);waB.href=waLink(c.phone);waB.target=’_blank’;waB.innerHTML=`<svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp`;waB.style.color=’#25d166’;foot.appendChild(waB);}
-    foot.appendChild(actionBtn(‘Delete’,async()=>{
-      if(S.appointments.some(a=>a.customerId===c.id)||S.invoices.some(i=>i.customerId===c.id)){toast(‘Has linked jobs/invoices — can\’t delete’);return;}
-      await DB.del(‘customers’,c.id);S.customers=S.customers.filter(x=>x.id!==c.id);closeModal();go(‘customers’);toast(‘Customer deleted’);},’danger’));}
-  foot.appendChild(spacer());foot.appendChild(actionBtn(‘Cancel’,closeModal,’ghost’));
+    if(c.phone){const callB=el('a','btn ghost sm');callB.href=`tel:${esc(c.phone)}`;callB.innerHTML=`<svg class="ico" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg> Call`;foot.appendChild(callB);
+      const waB=el('a','btn ghost sm');waB.href=waLink(c.phone);waB.target='_blank';waB.innerHTML=`<svg class="ico" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp`;waB.style.color='#25d166';foot.appendChild(waB);}
+    foot.appendChild(actionBtn('Delete',async()=>{
+      if(S.appointments.some(a=>a.customerId===c.id)||S.invoices.some(i=>i.customerId===c.id)){toast('Has linked jobs/invoices — can\'t delete');return;}
+      await DB.del('customers',c.id);S.customers=S.customers.filter(x=>x.id!==c.id);closeModal();go('customers');toast('Customer deleted');},'danger'));}
+  foot.appendChild(spacer());foot.appendChild(actionBtn('Cancel',closeModal,'ghost'));
   foot.appendChild(actionBtn('Save',async()=>{
     c.name=$('#f-name').value.trim();if(!c.name){toast('Name is required');return;}
     c.phone=$('#f-phone').value;c.email=$('#f-email').value;c.address=$('#f-addr').value;c.postcode=$('#f-post').value;
@@ -1170,13 +1172,13 @@ VIEWS.pipeline=VIEWS.leads;
    ============================================================ */
 function buildNav(){
   const items=[
-    ['dashboard','Home','<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>'],
+    ['dashboard','Home','<path d="M3 9.5l9-7 9 7V20a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z"/>'],
     ['appointments','Jobs','<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'],
-    ['customers','People','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'],
-    ['pipeline','Pipeline','<path d="M13 2L3 14h7l-1 8 10-12h-7z"/>'],
+    ['customers','People','<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
+    ['pipeline','Pipeline','<path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/>'],
     ['inventory','Stock','<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v9"/>'],
-    ['invoices','Invoices','<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>'],
-    ['money','Money','<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>']];
+    ['invoices','Invoices','<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/>'],
+    ['money','Money','<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>']];
   const nav=$('#botnav');
   items.forEach(([v,l,p])=>{const b=el('button',v==='dashboard'?'active':'',`<svg class="ico" viewBox="0 0 24 24">${p}</svg>${l}`);
     b.dataset.view=v;b.onclick=()=>go(v);nav.appendChild(b);});
@@ -1185,8 +1187,6 @@ document.querySelectorAll('[data-view="settings"]').forEach(b=>b.onclick=()=>go(
 $('#quickQuote').onclick=()=>quoteModal();
 $('#lightbox').onclick=()=>$('#lightbox').classList.remove('show');
 $('#bannerLogo').src=LOGO;
-// random spark position over the wordmark area
-(function(){const s=$('#spark');s.style.left=(window.innerWidth/2+90)+'px';})();
 
 (async function boot(){
   await DB.open();await loadAll();buildNav();
