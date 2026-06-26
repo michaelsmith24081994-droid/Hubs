@@ -761,14 +761,23 @@ function quoteModal(presetCustomer){
     const wrap=el('div');wrap.style.cssText='display:flex;justify-content:flex-end';wrap.appendChild(ctl);
     row.appendChild(wrap);row.appendChild(el('div','',''));lb.appendChild(row);});
   list.appendChild(lb);body.appendChild(list);
+  // custom one-off amount
+  const customBox=el('div');customBox.style.cssText='display:grid;grid-template-columns:1fr 110px;gap:10px;margin:2px 0';
+  customBox.innerHTML=field('Custom item (optional)',`<input id="q-custom-desc" placeholder="e.g. Leather sofa, rug, special job">`)+
+    field('Amount',`<input id="q-custom-amt" type="number" min="0" step="0.01" placeholder="0.00">`);
+  body.appendChild(customBox);
   const totalBox=el('div','quote-total','<span class="dim">Quote total</span><span class="big" id="q-total">'+money(0)+'</span>');
   body.appendChild(totalBox);
-  function calc(){let t=0;S.services.forEach(s=>{t+=(sel[s.id]||0)*s.price;});$('#q-total').textContent=money(t);return t;}
+  function calc(){let t=0;S.services.forEach(s=>{t+=(sel[s.id]||0)*s.price;});t+=Math.max(0,+($('#q-custom-amt')||{}).value||0);$('#q-total').textContent=money(t);return t;}
+  body.querySelector('#q-custom-amt').oninput=calc;
   const foot=footRow();foot.appendChild(spacer());
   foot.appendChild(actionBtn('Cancel',closeModal,'ghost'));
   foot.appendChild(actionBtn('Save quote',async()=>{
-    const total=calc();if(total<=0){toast('Add at least one service');return;}
+    const total=calc();if(total<=0){toast('Add a service or custom amount');return;}
     const items=S.services.filter(s=>sel[s.id]>0).map(s=>({desc:s.name,qty:sel[s.id],price:s.price}));
+    const customAmt=Math.max(0,+$('#q-custom-amt').value||0);
+    const customDesc=$('#q-custom-desc').value.trim();
+    if(customAmt>0)items.push({desc:customDesc||'Custom item',qty:1,price:customAmt});
     const custId=$('#q-cust').value;const nm=$('#q-name').value.trim()||(custId?custName(custId):'');
     if(!nm){toast('Add a name or pick a customer');return;}
     const lead={id:uid(),name:nm,phone:'',email:'',source:'quote',status:'quoted',amount:total,
