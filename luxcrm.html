@@ -316,7 +316,7 @@ const LOGO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA34AAAFmCAYAAAAyM0jLAA
    ============================================================ */
 const DB=(()=>{
   const NAME='lux_crm',VER=2;
-  const STORES=['customers','leads','appointments','invoices','expenses','services','inventory','settings'];
+  const STORES=['customers','leads','appointments','invoices','expenses','services','inventory','settings','funds'];
   let db=null;
   function open(){return new Promise((res,rej)=>{const r=indexedDB.open(NAME,VER);
     r.onupgradeneeded=e=>{const d=e.target.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});};
@@ -346,9 +346,9 @@ function toLocalInput(iso){const d=iso?new Date(iso):new Date();return new Date(
 function startOfWeek(d){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
 function toast(m){const t=$('#toast');$('#toastMsg').textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);}
 
-let S={customers:[],leads:[],appointments:[],invoices:[],expenses:[],services:[],inventory:[]};
+let S={customers:[],leads:[],appointments:[],invoices:[],expenses:[],services:[],inventory:[],funds:[]};
 async function loadAll(){
-  const keys=['customers','leads','appointments','invoices','expenses','services','inventory','settings'];
+  const keys=['customers','leads','appointments','invoices','expenses','services','inventory','settings','funds'];
   const r=await Promise.all(keys.map(k=>DB.all(k)));
   keys.forEach((k,i)=>{if(k!=='settings')S[k]=r[i];});
   const cfg=r[7].find(x=>x.id==='config');if(cfg)CFG={...CFG,...cfg};
@@ -925,8 +925,33 @@ function buildPayBox(){
 let taxYear='all';
 VIEWS.money=()=>{
   const v=$('#view');
-  v.appendChild(pageHead('Money & Tax','Income, expenses & set-aside',[plus('Add expense',()=>expModal())]));
+  v.appendChild(pageHead('Money & Tax','Income, expenses & set-aside',[
+    plus('Add expense',()=>expModal()),
+    (()=>{const b=el('button','action-btn',`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Funds`);b.onclick=()=>fundsModal();return b;})()
+  ]));
   v.appendChild(buildPayBox());
+  // funds balance
+  const fundsBalance=S.funds.reduce((s,f)=>s+(f.type==='add'?1:-1)*(Number(f.amount)||0),0);
+  const fPanel=el('div','panel');fPanel.style.cssText='margin-bottom:20px;cursor:default';
+  fPanel.innerHTML=`<div class="panel-head" style="display:flex;justify-content:space-between;align-items:center">
+    <h2>Cash / Pre-existing Funds</h2>
+    <button class="action-btn" onclick="fundsModal()" style="font-size:12px;padding:5px 12px">+ Add / Remove</button>
+  </div>
+  <div style="padding:14px 17px">
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:${S.funds.length?'14':'0'}px">
+      <div><div class="lbl" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-2);margin-bottom:4px">Current Balance</div>
+        <div class="big" style="font-size:1.6rem;font-weight:700;color:${fundsBalance>=0?'var(--green)':'var(--red)'}">${money(fundsBalance)}</div>
+      </div>
+    </div>
+    ${S.funds.length?`<table style="width:100%;font-size:13px;border-collapse:collapse"><thead><tr style="opacity:.5"><th style="text-align:left;padding:4px 0">Date</th><th style="text-align:left;padding:4px 0">Note</th><th style="text-align:right;padding:4px 0">Amount</th></tr></thead><tbody>
+    ${[...S.funds].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(f=>`<tr class="row-click" onclick="fundsModal(S.funds.find(x=>x.id==='${f.id}'))">
+      <td class="dim" style="padding:5px 0">${fmtDate(f.date)}</td>
+      <td style="padding:5px 0">${esc(f.note||'—')}</td>
+      <td class="num strong" style="padding:5px 0;color:${f.type==='add'?'var(--green)':'var(--red)'}">${f.type==='add'?'+':'-'}${money(f.amount)}</td>
+    </tr>`).join('')}
+    </tbody></table>`:'<div class="faint" style="font-size:13px">No fund entries yet. Use "+ Add / Remove" to record opening balance or cash.</div>'}
+  </div>`;
+  v.appendChild(fPanel);
   const ukYear=d=>{const x=new Date(d);const y=x.getFullYear();return (x.getMonth()>2||(x.getMonth()===3&&x.getDate()>=6))?y:y-1;};
   const years=new Set();
   S.invoices.filter(i=>i.status==='paid'&&i.paidDate).forEach(i=>years.add(ukYear(i.paidDate)));
@@ -986,6 +1011,26 @@ function expModal(e){
     await DB.put('expenses',e);if(isNew)S.expenses.push(e);else S.expenses=S.expenses.map(x=>x.id===e.id?e:x);
     closeModal();go('money');toast(isNew?'Expense added':'Expense updated');},'primary'));
   modal({title:isNew?'Add expense':'Edit expense',bodyEl:body,footEl:foot});
+}
+
+function fundsModal(f){
+  const isNew=!f;f=f||{id:uid(),date:now(),type:'add',amount:'',note:''};
+  const body=el('div');
+  body.innerHTML=
+    `<div class="field-row">${field('Type',`<select id="f-ftype"><option value="add" ${f.type==='add'?'selected':''}>Add funds (deposit / opening balance)</option><option value="remove" ${f.type==='remove'?'selected':''}>Remove funds (withdrawal)</option></select>`)}${field('Date',`<input type="date" id="f-fdate" value="${(f.date||'').slice(0,10)}"`)}</div>`+
+    field('Amount',`<input type="number" id="f-famt" value="${f.amount||''}" placeholder="0.00" min="0" step="0.01">`)+
+    field('Note (optional)',`<input id="f-fnote" value="${esc(f.note||'')}" placeholder="e.g. Opening balance, cash from till…">`);
+  const foot=footRow();
+  if(!isNew)foot.appendChild(actionBtn('Delete',async()=>{await DB.del('funds',f.id);S.funds=S.funds.filter(x=>x.id!==f.id);closeModal();go('money');toast('Entry deleted');},'danger'));
+  foot.appendChild(spacer());foot.appendChild(actionBtn('Cancel',closeModal,'ghost'));
+  foot.appendChild(actionBtn('Save',async()=>{
+    f.type=$('#f-ftype').value;
+    f.date=$('#f-fdate').value?new Date($('#f-fdate').value).toISOString():now();
+    f.amount=Math.abs(+$('#f-famt').value||0);f.note=$('#f-fnote').value.trim();
+    if(!f.amount){toast('Enter an amount');return;}f.updatedAt=now();if(isNew)f.createdAt=now();
+    await DB.put('funds',f);if(isNew)S.funds.push(f);else S.funds=S.funds.map(x=>x.id===f.id?f:x);
+    closeModal();go('money');toast(isNew?'Funds entry saved':'Funds entry updated');},'primary'));
+  modal({title:isNew?'Add / Remove Funds':'Edit Funds Entry',bodyEl:body,footEl:foot});
 }
 
 /* ============================================================
@@ -1123,7 +1168,7 @@ function exportData(){
 function importData(ev){const file=ev.target.files[0];if(!file)return;const r=new FileReader();
   r.onload=async()=>{try{const d=JSON.parse(r.result);if(!confirm('Merge this backup into current data?'))return;
     if(d.config){CFG={...CFG,...d.config};await DB.put('settings',{id:'config',...CFG});}
-    for(const st of ['customers','leads','appointments','invoices','expenses','services','inventory'])for(const rec of (d[st]||[]))await DB.put(st,rec);
+    for(const st of ['customers','leads','appointments','invoices','expenses','services','inventory','funds'])for(const rec of (d[st]||[]))await DB.put(st,rec);
     await loadAll();go('dashboard');toast('Backup imported');}catch(e){toast('Could not read that file');}};
   r.readAsText(file);ev.target.value='';
 }
@@ -1132,7 +1177,7 @@ function importData(ev){const file=ev.target.files[0];if(!file)return;const r=ne
    GOOGLE DRIVE BACKUP
    ============================================================ */
 let _driveToken=null;
-function getExportData(){return{version:2,exported:now(),config:CFG,customers:S.customers,leads:S.leads,appointments:S.appointments,invoices:S.invoices,expenses:S.expenses,services:S.services,inventory:S.inventory};}
+function getExportData(){return{version:2,exported:now(),config:CFG,customers:S.customers,leads:S.leads,appointments:S.appointments,invoices:S.invoices,expenses:S.expenses,services:S.services,inventory:S.inventory,funds:S.funds};}
 
 function getDriveToken(){
   return new Promise(resolve=>{
