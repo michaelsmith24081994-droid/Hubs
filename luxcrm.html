@@ -55,6 +55,14 @@
   .icon-btn:hover{color:var(--cyan-2);border-color:var(--cyan-deep);background:var(--char-2);transform:translateY(-1px)}
   .icon-btn:active{transform:translateY(0)}
   .icon-btn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.9}
+  .quote-pill{display:inline-flex;align-items:center;gap:7px;
+    background:linear-gradient(150deg,var(--cyan-2),var(--cyan-deep));
+    color:#03141a;font-size:13px;font-weight:700;padding:8px 16px;
+    border:none;border-radius:20px;cursor:pointer;
+    box-shadow:0 4px 16px -6px var(--cyan);transition:.16s ease;white-space:nowrap;font-family:inherit}
+  .quote-pill:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 7px 20px -6px var(--cyan)}
+  .quote-pill:active{transform:translateY(0)}
+  .quote-pill svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
 
   /* ---------- shell ---------- */
   .wrap{max-width:1140px;margin:0 auto;padding:22px 20px 40px}
@@ -284,7 +292,7 @@
 
 <header class="banner">
   <div class="b-left">
-    <button class="icon-btn" id="quickQuote" title="New quote"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg></button>
+    <button class="quote-pill" id="quickQuote"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg> New Quote</button>
   </div>
   <img class="logo" id="bannerLogo" alt="LUX">
   <div class="b-right">
