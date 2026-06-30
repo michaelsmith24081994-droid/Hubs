@@ -325,15 +325,44 @@ const DB=(()=>{
   const NAME='lux_crm',VER=2;
   const STORES=['customers','leads','appointments','invoices','expenses','services','inventory','settings','funds'];
   let db=null;
-  function open(){return new Promise((res,rej)=>{const r=indexedDB.open(NAME,VER);
-    r.onupgradeneeded=e=>{const d=e.target.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});};
-    r.onsuccess=e=>{db=e.target.result;res(db);};r.onerror=e=>rej(e.target.error);});}
+  // memFallback is used when IndexedDB is unavailable (e.g. a file opened
+  // directly from disk / file:// on a phone, or private-browsing mode).
+  // The app still works for the session; data persists via localStorage if
+  // available, otherwise it lives only in memory. Hosting the file (e.g.
+  // GitHub Pages) gives full IndexedDB persistence.
+  let memFallback=false;
+  const mem={};STORES.forEach(s=>mem[s]=[]);
+  const LS_KEY='lux_crm_fallback';
+  function loadLS(){try{const raw=localStorage.getItem(LS_KEY);if(raw){const d=JSON.parse(raw);STORES.forEach(s=>{if(Array.isArray(d[s]))mem[s]=d[s];});}}catch(e){}}
+  function saveLS(){try{localStorage.setItem(LS_KEY,JSON.stringify(mem));}catch(e){}}
+  function open(){return new Promise((res)=>{
+    let settled=false;
+    const fail=()=>{if(settled)return;settled=true;memFallback=true;loadLS();res(null);};
+    try{
+      if(!('indexedDB' in window)||!window.indexedDB){return fail();}
+      const r=indexedDB.open(NAME,VER);
+      r.onupgradeneeded=e=>{const d=e.target.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});};
+      r.onsuccess=e=>{if(settled)return;settled=true;db=e.target.result;res(db);};
+      r.onerror=fail;r.onblocked=fail;
+      // some browsers neither succeed nor error on file:// — bail out after a moment
+      setTimeout(fail,2500);
+    }catch(e){fail();}
+  });}
   const tx=(s,m)=>db.transaction(s,m).objectStore(s);
-  const all=s=>new Promise((res,rej)=>{const o=[];const c=tx(s,'readonly').openCursor();
-    c.onsuccess=e=>{const cur=e.target.result;if(cur){o.push(cur.value);cur.continue();}else res(o);};c.onerror=e=>rej(e.target.error);});
-  const put=(s,v)=>new Promise((res,rej)=>{const r=tx(s,'readwrite').put(v);r.onsuccess=()=>res(v);r.onerror=e=>rej(e.target.error);});
-  const del=(s,id)=>new Promise((res,rej)=>{const r=tx(s,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});
-  return {open,all,put,del,STORES};
+  const all=s=>{
+    if(memFallback)return Promise.resolve((mem[s]||[]).slice());
+    return new Promise((res,rej)=>{const o=[];const c=tx(s,'readonly').openCursor();
+      c.onsuccess=e=>{const cur=e.target.result;if(cur){o.push(cur.value);cur.continue();}else res(o);};c.onerror=e=>rej(e.target.error);});
+  };
+  const put=(s,v)=>{
+    if(memFallback){mem[s]=(mem[s]||[]).filter(x=>x.id!==v.id);mem[s].push(v);saveLS();return Promise.resolve(v);}
+    return new Promise((res,rej)=>{const r=tx(s,'readwrite').put(v);r.onsuccess=()=>res(v);r.onerror=e=>rej(e.target.error);});
+  };
+  const del=(s,id)=>{
+    if(memFallback){mem[s]=(mem[s]||[]).filter(x=>x.id!==id);saveLS();return Promise.resolve();}
+    return new Promise((res,rej)=>{const r=tx(s,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=e=>rej(e.target.error);});
+  };
+  return {open,all,put,del,STORES,isFallback:()=>memFallback};
 })();
 
 const uid=()=>crypto.randomUUID();
@@ -1258,10 +1287,22 @@ $('#lightbox').onclick=()=>$('#lightbox').classList.remove('show');
 $('#bannerLogo').src=LOGO;
 
 (async function boot(){
-  await DB.open();await loadAll();buildNav();
-  document.title=(CFG.business||'LUX')+' — Cleaning CRM';
-  go('dashboard');
-  initPWA();
+  try{
+    await DB.open();await loadAll();buildNav();
+    document.title=(CFG.business||'LUX')+' — Cleaning CRM';
+    go('dashboard');
+    initPWA();
+    if(DB.isFallback&&DB.isFallback()){
+      setTimeout(()=>toast('Opened as a local file — data saves to this browser only. Host it (e.g. GitHub Pages) for full backup.'),900);
+    }
+  }catch(err){
+    // Never leave a blank screen — show what went wrong.
+    document.body.innerHTML='<div style="max-width:520px;margin:60px auto;padding:0 24px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#e9edf0">'+
+      '<h2 style="color:#01b0df">Couldn\'t start the app</h2>'+
+      '<p style="color:#8b939b;line-height:1.6">This usually happens when the file is opened directly from your phone\'s downloads. The simplest fix is to open it through a web link instead.</p>'+
+      '<p style="color:#8b939b;line-height:1.6">Ask whoever sent this for the hosted link (it ends in <code>.github.io</code>), or open the file in a desktop browser.</p>'+
+      '<pre style="color:#5f676e;font-size:12px;white-space:pre-wrap;margin-top:24px">'+(err&&err.message?err.message:err)+'</pre></div>';
+  }
 })();
 
 /* ============================================================
