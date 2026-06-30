@@ -2515,7 +2515,7 @@
       if(nd!==dir){ dir=nd; if(raf){cancelAnimationFrame(raf);raf=null;} if(dir) raf=requestAnimationFrame(step); } });
     menu.addEventListener("mouseleave",function(){ dir=0; if(raf){cancelAnimationFrame(raf);raf=null;} }); } })();
   document.getElementById("syncBtn").onclick=function(){ var btn=this; if(!TEAM.dir){ toast("Connect a shared folder in Settings first."); return; } btn.classList.add("spin");
-    var done=function(){ btn.classList.remove("spin"); };
+    var done=function(){ btn.classList.remove("spin"); if(typeof enhResetCd==="function") enhResetCd(); };
     if(isManager()){ loadTeam().then(function(){ if(current==="team") renderers.team(); if(current==="coaching") renderers.coaching(); var msg=managerWhatsNew(); toast(msg||"Team refreshed — nothing new."); done(); }).catch(done); }
     else { Promise.resolve(pullFeedback(false)).then(done).catch(done); } };
   function managerWhatsNew(){
@@ -2830,6 +2830,22 @@
   function ywAutosize(f){ try{ var d=f.contentDocument||(f.contentWindow&&f.contentWindow.document); if(!d) return; var set=function(){ try{ var hh=Math.max(d.documentElement?d.documentElement.scrollHeight:0, d.body?d.body.scrollHeight:0); if(hh && Math.abs((parseInt(f.style.height,10)||0)-hh)>2) f.style.height=(hh+6)+"px"; }catch(e){} }; set(); setTimeout(set,150); setTimeout(set,500); setTimeout(set,1200); try{ if(window.ResizeObserver && !f._ywRO){ var ro=new ResizeObserver(set); if(d.documentElement) ro.observe(d.documentElement); if(d.body) ro.observe(d.body); f._ywRO=ro; } }catch(e){} try{ d.addEventListener("click",function(){ setTimeout(set,80); setTimeout(set,320); }); }catch(e){} try{ if(f.contentWindow) f.contentWindow.addEventListener("resize",set); }catch(e){} }catch(e){} }
   function ywBoardHTML(data){ var t=document.getElementById("ywBoardTpl"); if(!t) return "<p>Board template missing.</p>"; var bs=String.fromCharCode(92); var tpl=t.textContent.split("<"+bs+"/script>").join("</scr"+"ipt>"); var json=JSON.stringify(data).split("<").join(bs+"u003c"); var out=tpl.replace("__DATA_JSON__",function(){ return json; }); return out.replace("</head>","<style>"+ywThemeCSS()+"</style></head>"); }
   function ywPublish(silent){ if(!TEAM.dir){ if(!silent) toast("Connect the shared folder to publish."); return Promise.resolve(); } var payload=Object.assign({kind:"yourweek",updatedAt:nowISO()}, state.yourWeek); return fsWrite("yourweek.json",payload).then(function(){ if(!silent) toast("Published — the team sees it on Refresh."); }).catch(function(){ if(!silent) toast("Couldn’t publish — reconnect the folder."); }); }
+  function ywBoardFonts(){ if(document.getElementById('ywFontLink')) return; var l=document.createElement('link'); l.id='ywFontLink'; l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap'; document.head.appendChild(l); }
+  function ywBoardParts(){ if(ywBoardParts._c) return ywBoardParts._c; var t=document.getElementById('ywBoardTpl'); var raw=t?t.textContent:''; var bs=String.fromCharCode(92); raw=raw.split('<'+bs+'/script>').join('</scr'+'ipt>');
+    var cs=raw.indexOf('<style>'), ce=raw.indexOf('</style>'); var css=(cs>=0&&ce>cs)?raw.slice(cs+7,ce):'';
+    var bi=raw.indexOf('<body>'); var si=raw.indexOf('<script>', bi>=0?bi:0); var body=(bi>=0&&si>bi)?raw.slice(bi+6,si):'';
+    var se=raw.lastIndexOf('</scr'+'ipt>'); var code=(si>=0&&se>si)?raw.slice(si+8,se):'';
+    css=css.replace(/min-height:\s*100vh;?/g,'').replace(/background-attachment:\s*fixed/g,'background-attachment:local');
+    css=css.replace(/:root\s*\{/g,':host{').replace(/(^|\})\s*body\s*\{/g,'$1 .yw-root{').replace(/(^|\})\s*html\s*\{/g,'$1 .yw-root{');
+    code=code.split('document.getElementById').join('__BYID__').split('window.scrollTo(0,0);').join('');
+    ywBoardParts._c={css:css,body:body,code:code}; return ywBoardParts._c; }
+  function ywBoardMount(hostEl, data){ if(!hostEl) return; ywBoardFonts(); var P=ywBoardParts(); if(!P.body||!P.code){ hostEl.innerHTML='<div class="empty">Board template missing.</div>'; return; }
+    var sh=hostEl._yws||hostEl.attachShadow({mode:'open'}); hostEl._yws=sh;
+    var json=JSON.stringify(data).split('<').join(String.fromCharCode(92)+'u003c');
+    var theme=(typeof ywThemeCSS==='function')?ywThemeCSS().replace(/:root\s*\{/g,':host{'):'';
+    sh.innerHTML='<style>'+P.css+'</style><style>'+theme+'</style><div class="yw-root">'+P.body+'</div>';
+    var byId=function(id){ return sh.querySelector('#'+id); };
+    try{ var code=P.code.replace('__DATA_JSON__',function(){return json;}); (new Function('__BYID__', code))(byId); }catch(e){ try{ sh.querySelector('.yw-root').innerHTML='<div style="padding:20px">Board could not render.</div>'; }catch(_){} } }
   function ywRefreshPreview(){ clearTimeout(ywPrevT); ywPrevT=setTimeout(function(){ var f=document.getElementById("ywPreview"); if(f) f.srcdoc=ywBoardHTML(ywBoardData(state.yourWeek)); },350); }
   function ywTouch(){ state.yourWeek.updatedAt=nowISO(); save(); ywRefreshPreview(); if(TEAM.dir){ clearTimeout(ywPubT); ywPubT=setTimeout(function(){ ywPublish(true); },1000); } }
   function ywStyle(){ if(document.getElementById("ywStyle")) return; var s=document.createElement("style"); s.id="ywStyle";
@@ -2838,6 +2854,7 @@
       +".yw-pvhead{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin-bottom:8px}"
       +".yw-preview{width:100%;height:72vh;border:0;border-radius:0;background:transparent;position:sticky;top:80px}"
       +".yw-full{height:auto;min-height:50vh;position:static;width:100%;display:block;overflow:hidden}"
+      +".yw-board-host{display:block;width:100%}"
       +".yw-row{display:grid;grid-template-columns:1.3fr .9fr .8fr .8fr auto;gap:7px;align-items:center;margin-bottom:7px}"
       +"@media(max-width:620px){.yw-row{grid-template-columns:1fr 1fr}}";
     document.head.appendChild(s); }
@@ -2852,7 +2869,7 @@
     if(!TEAM.dir){ host.innerHTML='<div class="empty"><div class="big">Not connected</div>Connect the shared folder in Settings to see Your Week.</div>'; return; }
     host.innerHTML='<div class="vhint">Loading the latest board…</div>';
     fsRead("yourweek.json").then(function(d){ if(!d){ host.innerHTML='<div class="empty"><div class="big">Nothing posted yet</div>Your manager hasn’t published this week’s board.</div>'; return; }
-      host.innerHTML='<iframe class="yw-preview yw-full" id="ywPreview" title="Your Week board" scrolling="no"></iframe>'; var ywf=document.getElementById("ywPreview"); ywf.onload=function(){ ywAutosize(ywf); }; ywf.srcdoc=ywBoardHTML(ywBoardData(ywEnsure(d)));
+      host.innerHTML='<div class="yw-board-host" id="ywHostBoard"></div>'; ywBoardMount(document.getElementById("ywHostBoard"), ywBoardData(ywEnsure(d)));
     }).catch(function(){ host.innerHTML='<div class="empty">Couldn’t load — reconnect the folder.</div>'; });
   }
   function ywRenderManager(sec){
@@ -3114,8 +3131,16 @@
         if(typeof pullFeedback==="function") pullFeedback(true);
       }
     }catch(e){}
+    enhRefreshAt=Date.now()+enhRefreshPeriod;
   }
-  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, 5*60*1000); }
+  var enhRefreshPeriod=5*60*1000, enhRefreshAt=0;
+  function enhAutoRefresh(){ if(enhAutoRefresh._t) return; enhRefreshAt=Date.now()+enhRefreshPeriod; enhAutoRefresh._t=setInterval(enhDoAutoRefresh, enhRefreshPeriod); enhCountdownStart(); }
+  function enhResetCd(){ enhRefreshAt=Date.now()+enhRefreshPeriod; enhCountdownTick(); }
+  function enhCountdownStart(){ if(enhCountdownStart._t) return;
+    if(!document.getElementById('refreshCdStyle')){ var s=document.createElement('style'); s.id='refreshCdStyle'; s.textContent='.refresh-cd{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-variant-numeric:tabular-nums;color:var(--ink-faint);padding:5px 9px;border:1px solid var(--line);border-radius:9px;white-space:nowrap;user-select:none}.refresh-cd b{font-weight:700;color:var(--ink-soft)}@media(max-width:680px){.refresh-cd .lbl{display:none}}'; document.head.appendChild(s); }
+    var actions=document.querySelector('.topactions'); if(actions && !document.getElementById('refreshCd')){ var el=document.createElement('span'); el.id='refreshCd'; el.className='refresh-cd'; el.title='Time until the next automatic refresh from the shared folder'; var sb=document.getElementById('syncBtn'); actions.insertBefore(el, sb||actions.firstChild); }
+    enhCountdownStart._t=setInterval(enhCountdownTick,1000); enhCountdownTick(); }
+  function enhCountdownTick(){ var el=document.getElementById('refreshCd'); if(!el) return; var ms=Math.max(0, enhRefreshAt-Date.now()); var s=Math.round(ms/1000); var m=Math.floor(s/60), ss=s%60; el.innerHTML='\u21bb <span class="lbl">next sync</span> <b>'+m+':'+(ss<10?'0':'')+ss+'</b>'; }
 
   function enhLockConfig(sec){ if(!sec) return; if(isManager() || (state.teamInbox&&state.teamInbox.admin)) return;
     var titles=["KPIs & targets","Evidence categories","Knowledge base categories","Audit chat types"]; var hid=false;
