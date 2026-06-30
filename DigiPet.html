@@ -3,1210 +3,786 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DigiPet · Virtual Monster</title>
-<meta name="theme-color" content="#1b2a17">
+<title>DigiPet · Tamer</title>
+<meta name="theme-color" content="#0d1326">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --shell:#f5a623; --shell-2:#e8930c; --shell-dark:#b46d05;
-    --lcd:#9bbc0f; --lcd-dark:#0f380f; --lcd-mid:#306230; --lcd-light:#8bac0f;
-    --btn:#2b2b33; --btn-face:#3a3a45; --ink:#1c1c22;
+    --bg:#0b1020; --bg2:#121a33; --panel:#161f3c; --panel2:#1d2950;
+    --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+    --ink:#eef2ff; --ink-soft:#9aa6cc; --ink-faint:#6b7699;
+    --acc:#ff8a3d; --acc2:#ffb15c; --blue:#5b8cff; --teal:#27e0c4; --pink:#ff5d92;
+    --good:#37d67a; --bad:#ff5168;
+    --r:18px; --sh:0 14px 40px -16px rgba(0,0,0,.7);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{
-    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
-    background:radial-gradient(120% 120% at 50% 0%,#2a3142,#10131c 70%);
-    color:#e9eef5;display:flex;align-items:center;justify-content:center;
-    min-height:100vh;padding:14px;overflow-x:hidden;
+    font-family:'Outfit',system-ui,-apple-system,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 15% -10%,rgba(91,140,255,.18),transparent 55%),
+      radial-gradient(120% 90% at 100% 0%,rgba(255,138,61,.16),transparent 50%),
+      linear-gradient(180deg,#0c1224,#080c18 70%);
+    min-height:100vh;overflow-x:hidden;
   }
-  .device{
-    width:min(420px,96vw);
-    background:linear-gradient(160deg,var(--shell),var(--shell-2) 55%,var(--shell-dark));
-    border-radius:46% 46% 44% 44%/30% 30% 60% 60%;
-    padding:26px 24px 30px;
-    box-shadow:0 24px 60px -18px rgba(0,0,0,.8),inset 0 3px 8px rgba(255,255,255,.45),inset 0 -10px 24px rgba(0,0,0,.28);
-    position:relative;
-  }
-  .brand{
-    text-align:center;font-weight:800;letter-spacing:3px;color:#5a3a02;
-    font-size:13px;margin-bottom:12px;text-shadow:0 1px 0 rgba(255,255,255,.4);
-    display:flex;align-items:center;justify-content:center;gap:8px;
-  }
-  .brand b{color:#7a4d02;}
-  .screen-frame{
-    background:#2c2c31;border-radius:14px;padding:14px;
-    box-shadow:inset 0 4px 12px rgba(0,0,0,.7),0 2px 0 rgba(255,255,255,.2);
-  }
-  .screen-inner{
-    background:#1a1f12;border-radius:6px;padding:8px;position:relative;overflow:hidden;
-  }
-  canvas#lcd{
-    width:100%;display:block;image-rendering:pixelated;border-radius:3px;
-    background:var(--lcd);
-  }
-  /* top status row icons (rendered above canvas) */
-  .toast{
-    position:absolute;left:50%;top:8px;transform:translateX(-50%);
-    background:rgba(15,56,15,.92);color:var(--lcd);font-size:12px;font-weight:700;
-    padding:4px 10px;border-radius:4px;border:1px solid var(--lcd-mid);
-    pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;z-index:5;
-    image-rendering:pixelated;
-  }
-  .toast.show{opacity:1;}
-  /* function icon ring */
-  .icons{
-    display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;
-  }
-  .ico{
-    background:linear-gradient(180deg,#fff5e0,#f2d79c);
-    border:none;border-radius:11px;padding:8px 4px 6px;cursor:pointer;
-    box-shadow:0 3px 0 var(--shell-dark),0 5px 8px rgba(0,0,0,.25);
-    transition:transform .08s,box-shadow .08s;display:flex;flex-direction:column;
-    align-items:center;gap:3px;color:#5a3a02;position:relative;
-  }
-  .ico:active{transform:translateY(3px);box-shadow:0 0 0 var(--shell-dark);}
-  .ico svg{width:24px;height:24px;}
-  .ico span{font-size:9px;font-weight:800;letter-spacing:.3px;}
-  .ico .badge{
-    position:absolute;top:-5px;right:-5px;background:#e23b3b;color:#fff;
-    min-width:16px;height:16px;border-radius:9px;font-size:10px;font-weight:800;
-    display:none;align-items:center;justify-content:center;padding:0 4px;
-    box-shadow:0 1px 3px rgba(0,0,0,.4);
-  }
-  .ico.alert{animation:pulse 1s infinite;}
-  .ico.alert .badge{display:flex;}
-  @keyframes pulse{50%{box-shadow:0 3px 0 var(--shell-dark),0 0 0 4px rgba(226,59,59,.5);}}
-  .ico.on{background:linear-gradient(180deg,#bfe06a,#8fbf2f);color:#1c3a00;}
-  .ftr{display:flex;justify-content:space-between;align-items:center;margin-top:14px;
-    font-size:11px;color:#6b4502;font-weight:700;}
-  .pill{background:rgba(255,255,255,.35);border:none;border-radius:20px;padding:6px 12px;
-    cursor:pointer;font-weight:800;color:#5a3a02;font-size:11px;}
-  .pill:active{transform:translateY(1px);}
-  /* overlay menus drawn over screen for food/battle selection use simple buttons under screen */
-  .tray{display:none;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px;}
-  .tray.show{display:flex;}
-  .tray button{
-    background:#243018;color:var(--lcd);border:1px solid var(--lcd-mid);border-radius:6px;
-    padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;
-  }
-  .tray button:active{background:var(--lcd-mid);}
-  .hint{text-align:center;font-size:11px;color:#7a4d02;margin-top:10px;min-height:14px;font-weight:600;}
-  @media (max-width:380px){ .ico span{font-size:8px;} }
+  .app{max-width:980px;margin:0 auto;padding:18px 16px 40px;}
+  .hidden{display:none!important;}
+
+  /* ---------- shared bits ---------- */
+  h1.title{font-size:26px;font-weight:800;letter-spacing:.3px;}
+  .sub{color:var(--ink-soft);font-size:14px;margin-top:2px;}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;gap:12px;}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:1px;}
+  .logo .dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--acc),var(--pink));
+    box-shadow:0 6px 16px -6px var(--acc);display:grid;place-items:center;font-size:15px;}
+  .btn{border:none;border-radius:14px;padding:13px 18px;font-family:inherit;font-weight:700;font-size:15px;
+    cursor:pointer;transition:transform .08s,filter .15s,background .2s;color:#fff;}
+  .btn:active{transform:translateY(1px) scale(.99);}
+  .btn.primary{background:linear-gradient(135deg,var(--acc),#ff6f3d);box-shadow:0 12px 26px -10px var(--acc);}
+  .btn.primary:disabled{filter:grayscale(.6) brightness(.7);cursor:not-allowed;box-shadow:none;}
+  .btn.ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line2);}
+  .btn.sm{padding:9px 12px;font-size:13px;border-radius:11px;}
+
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);
+    border-radius:var(--r);box-shadow:var(--sh);}
+  .card .ttl{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;letter-spacing:1.5px;
+    text-transform:uppercase;color:var(--ink-soft);padding:14px 16px 0;}
+  .card .ttl b{color:var(--acc2);}
+
+  /* ---------- creation layout ---------- */
+  #creator .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:760px){ #creator .grid{grid-template-columns:1fr;} }
+
+  .preview{display:grid;place-items:center;padding:18px 10px 6px;}
+  canvas.avatar{width:168px;height:196px;image-rendering:pixelated;
+    background:radial-gradient(60% 55% at 50% 42%,rgba(91,140,255,.16),transparent 70%);}
+  canvas.device{width:150px;height:206px;image-rendering:pixelated;}
+
+  .rowctrl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 14px;}
+  .rowctrl .lab{font-size:13px;color:var(--ink-soft);font-weight:600;min-width:54px;}
+  .stepper{display:flex;align-items:center;gap:8px;flex:1;justify-content:center;}
+  .stepper .name{min-width:96px;text-align:center;font-weight:700;font-size:14px;}
+  .arrow{width:34px;height:34px;border-radius:10px;background:var(--panel2);border:1px solid var(--line2);
+    color:var(--ink);font-size:17px;cursor:pointer;display:grid;place-items:center;}
+  .arrow:active{transform:scale(.94);}
+  .swatch{width:30px;height:30px;border-radius:9px;border:2px solid var(--line2);cursor:pointer;flex:0 0 auto;
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);}
+  .swatch.wheelbtn{background:conic-gradient(#ff5168,#ffb15c,#37d67a,#27e0c4,#5b8cff,#b06bff,#ff5d92,#ff5168);}
+
+  .seg{display:flex;background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:3px;gap:3px;}
+  .seg button{flex:1;border:none;background:transparent;color:var(--ink-soft);font-family:inherit;font-weight:700;
+    font-size:13px;padding:8px 6px;border-radius:9px;cursor:pointer;}
+  .seg button.on{background:linear-gradient(135deg,var(--blue),#3f6fe0);color:#fff;}
+
+  .skins{display:flex;gap:8px;padding:4px 14px 12px;flex-wrap:wrap;}
+  .dots{display:flex;gap:6px;justify-content:center;padding:6px 0 12px;}
+  .dots i{width:8px;height:8px;border-radius:50%;background:var(--line2);transition:.2s;}
+  .dots i.on{background:var(--acc);width:20px;border-radius:5px;}
+
+  .toggle{display:flex;align-items:center;gap:10px;padding:6px 14px 14px;}
+  .switch{width:46px;height:26px;border-radius:20px;background:var(--bg);border:1px solid var(--line2);
+    position:relative;cursor:pointer;transition:.2s;}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:var(--ink-faint);transition:.2s;}
+  .switch.on{background:linear-gradient(135deg,var(--teal),#1fb9a3);}
+  .switch.on::after{left:22px;background:#fff;}
+
+  .namebar{margin-top:16px;display:flex;gap:12px;align-items:center;}
+  .namebar input{flex:1;background:var(--panel);border:1px solid var(--line2);border-radius:14px;
+    padding:15px 16px;color:var(--ink);font-family:inherit;font-size:16px;font-weight:600;outline:none;}
+  .namebar input:focus{border-color:var(--acc);}
+  .namebar input::placeholder{color:var(--ink-faint);}
+
+  .devname{text-align:center;font-weight:800;font-size:15px;margin-top:2px;}
+  .devseries{text-align:center;color:var(--ink-faint);font-size:12px;margin-top:1px;}
+
+  /* ---------- color wheel modal ---------- */
+  .modal{position:fixed;inset:0;background:rgba(4,7,16,.72);backdrop-filter:blur(4px);z-index:50;
+    display:grid;place-items:center;padding:20px;}
+  .wheelbox{background:var(--panel);border:1px solid var(--line2);border-radius:20px;padding:20px;width:300px;
+    box-shadow:var(--sh);text-align:center;}
+  .wheelbox h3{font-size:14px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:14px;}
+  .wheelwrap{position:relative;width:220px;height:220px;margin:0 auto;}
+  canvas.wheel{width:220px;height:220px;cursor:crosshair;border-radius:50%;}
+  .wheelcursor{position:absolute;width:16px;height:16px;border:3px solid #fff;border-radius:50%;
+    transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.6);}
+  .brightrow{display:flex;align-items:center;gap:10px;margin:16px 0 6px;}
+  .brightrow input{flex:1;}
+  .chip{width:30px;height:30px;border-radius:8px;border:2px solid var(--line2);}
+  input[type=range]{-webkit-appearance:none;height:8px;border-radius:6px;
+    background:linear-gradient(90deg,#000,#fff);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:#fff;border:2px solid var(--acc);cursor:pointer;}
+  .wheelbtns{display:flex;gap:10px;margin-top:8px;}
+  .wheelbtns .btn{flex:1;}
+
+  /* ---------- home dashboard ---------- */
+  #home .tamerbar{display:flex;align-items:center;gap:14px;padding:14px;}
+  #home canvas.avatarMini{width:84px;height:98px;image-rendering:pixelated;flex:0 0 auto;}
+  #home .who{flex:1;}
+  #home .who .nm{font-size:20px;font-weight:800;}
+  #home .who .rk{color:var(--acc2);font-size:13px;font-weight:700;letter-spacing:.5px;}
+  #home canvas.deviceMini{width:54px;height:74px;image-rendering:pixelated;flex:0 0 auto;}
+  .dash{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+  @media (max-width:560px){ .dash{grid-template-columns:repeat(2,1fr);} }
+  .tile{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);
+    border-radius:16px;padding:18px 14px;cursor:pointer;transition:transform .1s,border-color .15s;
+    display:flex;flex-direction:column;gap:8px;min-height:104px;}
+  .tile:active{transform:translateY(2px);}
+  .tile:hover{border-color:var(--line2);}
+  .tile .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;}
+  .tile .ic svg{width:22px;height:22px;}
+  .tile .tn{font-weight:700;font-size:15px;}
+  .tile .td{font-size:12px;color:var(--ink-faint);}
+  .tile .soon{font-size:10px;font-weight:800;color:var(--acc2);letter-spacing:1px;}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--panel2);border:1px solid var(--line2);color:var(--ink);padding:12px 18px;border-radius:14px;
+    font-weight:600;z-index:60;transition:.25s;pointer-events:none;box-shadow:var(--sh);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
-<div class="device">
-  <div class="brand"><b>◆</b> DIGI&middot;PET <b>◆</b></div>
-  <div class="screen-frame">
-    <div class="screen-inner">
-      <div class="toast" id="toast"></div>
-      <canvas id="lcd" width="160" height="120"></canvas>
+<div class="app">
+
+  <!-- ============================ CREATOR ============================ -->
+  <section id="creator">
+    <div class="head">
+      <div>
+        <h1 class="title">Create Your Tamer</h1>
+        <div class="sub">Design your avatar, choose a Digivice, then begin your adventure.</div>
+      </div>
+      <div class="logo"><span class="dot">◆</span> DIGI·PET</div>
+    </div>
+
+    <div class="grid">
+      <!-- TAMER CARD -->
+      <div class="card">
+        <div class="ttl"><b>◆</b> Tamer</div>
+        <div class="preview"><canvas class="avatar" id="avCanvas" width="84" height="98"></canvas></div>
+        <div style="padding:0 14px 6px">
+          <div class="seg" id="genderSeg">
+            <button data-g="m" class="on">Male</button>
+            <button data-g="f">Female</button>
+          </div>
+        </div>
+        <div class="rowctrl">
+          <span class="lab">Hair</span>
+          <div class="stepper">
+            <button class="arrow" data-step="hair" data-d="-1">‹</button>
+            <span class="name" id="hairName">Short</span>
+            <button class="arrow" data-step="hair" data-d="1">›</button>
+          </div>
+          <div class="swatch wheelbtn" id="hairColor" title="Hair colour"></div>
+        </div>
+        <div class="rowctrl">
+          <span class="lab">Outfit</span>
+          <div class="stepper">
+            <button class="arrow" data-step="outfit" data-d="-1">‹</button>
+            <span class="name" id="outfitName">Jacket</span>
+            <button class="arrow" data-step="outfit" data-d="1">›</button>
+          </div>
+          <div class="swatch wheelbtn" id="outfitColor" title="Outfit colour"></div>
+        </div>
+        <div class="rowctrl" style="padding-bottom:2px">
+          <span class="lab">Skin</span>
+          <div class="skins" id="skinRow" style="padding:0;flex:1"></div>
+        </div>
+        <div class="toggle">
+          <div class="switch on" id="goggleSwitch"></div>
+          <span style="font-weight:600;font-size:14px;color:var(--ink-soft)">Goggles (Tamer's mark)</span>
+        </div>
+      </div>
+
+      <!-- DIGIVICE CARD -->
+      <div class="card">
+        <div class="ttl"><b>◆</b> Digivice</div>
+        <div class="preview"><canvas class="device" id="devCanvas" width="64" height="88"></canvas></div>
+        <div class="devname" id="devName">Digivice</div>
+        <div class="devseries" id="devSeries">Adventure</div>
+        <div class="dots" id="devDots"></div>
+        <div class="rowctrl">
+          <button class="arrow" data-step="device" data-d="-1">‹</button>
+          <div class="stepper"><span class="name" style="min-width:120px">Model</span></div>
+          <button class="arrow" data-step="device" data-d="1">›</button>
+        </div>
+        <div class="rowctrl" style="justify-content:center;gap:12px;padding-bottom:16px">
+          <span class="lab" style="min-width:auto">Colour</span>
+          <div class="swatch wheelbtn" id="devColor" title="Device colour" style="width:34px;height:34px"></div>
+          <span id="devHex" style="font-size:12px;color:var(--ink-faint);font-weight:700">#5b8cff</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="namebar">
+      <input id="nameInput" maxlength="12" placeholder="Enter tamer name…" autocomplete="off">
+      <button class="btn primary" id="beginBtn" disabled>Begin Adventure ›</button>
+    </div>
+  </section>
+
+  <!-- ============================ HOME ============================ -->
+  <section id="home" class="hidden">
+    <div class="head">
+      <div class="logo"><span class="dot">◆</span> DIGI·PET</div>
+      <button class="btn ghost sm" id="editBtn">Edit Tamer</button>
+    </div>
+    <div class="card tamerbar">
+      <canvas class="avatarMini" id="homeAv" width="84" height="98"></canvas>
+      <div class="who">
+        <div class="nm" id="homeName">—</div>
+        <div class="rk" id="homeRank">Rookie Tamer · Lv.1</div>
+        <div class="sub" id="homeDev">—</div>
+      </div>
+      <canvas class="deviceMini" id="homeDev2" width="64" height="88"></canvas>
+    </div>
+    <div class="dash" id="dash"></div>
+  </section>
+
+  <!-- color wheel modal -->
+  <div class="modal hidden" id="wheelModal">
+    <div class="wheelbox">
+      <h3 id="wheelTitle">Pick a colour</h3>
+      <div class="wheelwrap">
+        <canvas class="wheel" id="wheelCv" width="220" height="220"></canvas>
+        <div class="wheelcursor" id="wheelCur"></div>
+      </div>
+      <div class="brightrow">
+        <span style="font-size:12px;color:var(--ink-faint)">Bright</span>
+        <input type="range" id="brightSlider" min="20" max="100" value="100">
+        <div class="chip" id="wheelChip"></div>
+      </div>
+      <div class="wheelbtns">
+        <button class="btn ghost" id="wheelCancel">Cancel</button>
+        <button class="btn primary" id="wheelApply">Apply</button>
+      </div>
     </div>
   </div>
 
-  <div class="tray" id="tray"></div>
-  <div class="hint" id="hint">Tap the egg to begin.</div>
-
-  <div class="icons" id="iconbar"></div>
-
-  <div class="ftr">
-    <button class="pill" id="soundBtn">♪ Sound: On</button>
-    <span id="ageLabel">—</span>
-    <button class="pill" id="resetBtn">Reset</button>
-  </div>
+  <div class="toast" id="toast"></div>
 </div>
 
 <script>
 "use strict";
-/* ============================================================================
-   DigiPet — an offline Digimon-style virtual pet.
-   Single file, no dependencies. Saves to localStorage. Faithful to classic
-   vpet devices: egg → digivolution stages, care stats, care-mistake driven
-   evolution branches, turn-based battles and adventures, all on a dot-matrix LCD.
-   ========================================================================== */
+/* ========================================================================
+   DigiPet — Tamer creation + home dashboard.
+   Modern flat UI; chibi pixel-sprite avatars (recolorable); selectable
+   Digivice models with an HSV colour wheel. Saves to localStorage.
+   ====================================================================== */
 
-/* ---------- LCD setup ---------------------------------------------------- */
-const SCREEN_W = 160, SCREEN_H = 120;       // logical LCD resolution (low-res dot matrix)
-const cv = document.getElementById('lcd');
-const ctx = cv.getContext('2d');
-ctx.imageSmoothingEnabled = false;
-const DARK = '#0f380f', MID = '#306230', LITE = '#8bac0f', BG = '#9bbc0f';
-
-/* ---------- tiny pixel-art helpers --------------------------------------- */
-// Sprites are arrays of 16 strings of length 16. '#'=dark, 'o'=mid shade, '.'/' '=off.
-function drawSprite(art, px, py, scale, flip, color){
-  color = color || DARK;
-  for(let y=0;y<art.length;y++){
-    const row = art[y];
-    for(let x=0;x<row.length;x++){
-      const c = row[x];
-      if(c===' '||c==='.') continue;
-      ctx.fillStyle = (c==='o') ? MID : color;
-      const dx = flip ? (15-x) : x;
-      ctx.fillRect(px+dx*scale, py+y*scale, scale, scale);
-    }
-  }
-}
-// 5x7 pixel font for on-screen text (uppercase + digits + few symbols)
-const FONT = {
- 'A':['01110','10001','10001','11111','10001','10001','10001'],
- 'B':['11110','10001','11110','10001','10001','10001','11110'],
- 'C':['01110','10001','10000','10000','10000','10001','01110'],
- 'D':['11110','10001','10001','10001','10001','10001','11110'],
- 'E':['11111','10000','11110','10000','10000','10000','11111'],
- 'F':['11111','10000','11110','10000','10000','10000','10000'],
- 'G':['01110','10001','10000','10111','10001','10001','01111'],
- 'H':['10001','10001','10001','11111','10001','10001','10001'],
- 'I':['11111','00100','00100','00100','00100','00100','11111'],
- 'J':['00111','00010','00010','00010','10010','10010','01100'],
- 'K':['10001','10010','10100','11000','10100','10010','10001'],
- 'L':['10000','10000','10000','10000','10000','10000','11111'],
- 'M':['10001','11011','10101','10101','10001','10001','10001'],
- 'N':['10001','11001','10101','10011','10001','10001','10001'],
- 'O':['01110','10001','10001','10001','10001','10001','01110'],
- 'P':['11110','10001','10001','11110','10000','10000','10000'],
- 'Q':['01110','10001','10001','10001','10101','10010','01101'],
- 'R':['11110','10001','10001','11110','10100','10010','10001'],
- 'S':['01111','10000','10000','01110','00001','00001','11110'],
- 'T':['11111','00100','00100','00100','00100','00100','00100'],
- 'U':['10001','10001','10001','10001','10001','10001','01110'],
- 'V':['10001','10001','10001','10001','10001','01010','00100'],
- 'W':['10001','10001','10001','10101','10101','11011','10001'],
- 'X':['10001','01010','00100','00100','00100','01010','10001'],
- 'Y':['10001','01010','00100','00100','00100','00100','00100'],
- 'Z':['11111','00010','00100','01000','10000','10000','11111'],
- '0':['01110','10011','10101','10101','11001','10001','01110'],
- '1':['00100','01100','00100','00100','00100','00100','01110'],
- '2':['01110','10001','00001','00110','01000','10000','11111'],
- '3':['11110','00001','00001','01110','00001','00001','11110'],
- '4':['00010','00110','01010','10010','11111','00010','00010'],
- '5':['11111','10000','11110','00001','00001','10001','01110'],
- '6':['01110','10000','11110','10001','10001','10001','01110'],
- '7':['11111','00001','00010','00100','01000','01000','01000'],
- '8':['01110','10001','01110','10001','10001','10001','01110'],
- '9':['01110','10001','10001','01111','00001','00001','01110'],
- ' ':['00000','00000','00000','00000','00000','00000','00000'],
- '.':['00000','00000','00000','00000','00000','00110','00110'],
- ':':['00000','00110','00110','00000','00110','00110','00000'],
- '!':['00100','00100','00100','00100','00100','00000','00100'],
- '?':['01110','10001','00010','00100','00100','00000','00100'],
- '-':['00000','00000','00000','11111','00000','00000','00000'],
- '/':['00001','00010','00010','00100','01000','01000','10000'],
- '%':['11001','11010','00100','01000','10011','00011','00000'],
- '+':['00000','00100','00100','11111','00100','00100','00000'],
- '*':['00000','10101','01110','11111','01110','10101','00000'],
- '<':['00010','00100','01000','10000','01000','00100','00010'],
- '>':['01000','00100','00010','00001','00010','00100','01000'],
- ',':['00000','00000','00000','00000','00110','00110','00100'],
- "'":['00100','00100','00100','00000','00000','00000','00000'],
+/* ---------- option data ---------- */
+const HAIR_STYLES = {
+  m:[ {id:'short',n:'Short'},{id:'spiky',n:'Spiky'},{id:'mohawk',n:'Punk'},
+      {id:'bowl',n:'Bowl'},{id:'long',n:'Long'},{id:'buzz',n:'Buzz'} ],
+  f:[ {id:'bob',n:'Bob'},{id:'pony',n:'Ponytail'},{id:'twin',n:'Twin-tail'},
+      {id:'longf',n:'Long'},{id:'spikyf',n:'Spiky'},{id:'short',n:'Short'} ],
 };
-function textWidth(s,sc){ sc=sc||1; return s.length*6*sc; }
-function drawText(s, x, y, sc, color){
-  sc = sc||1; color = color||DARK; s = String(s).toUpperCase();
-  let cx = x;
-  for(const ch of s){
-    const g = FONT[ch] || FONT['?'];
-    for(let r=0;r<7;r++) for(let c=0;c<5;c++)
-      if(g[r][c]==='1'){ ctx.fillStyle=color; ctx.fillRect(cx+c*sc, y+r*sc, sc, sc); }
-    cx += 6*sc;
-  }
-  return cx;
-}
-function drawTextCenter(s,y,sc,color){ drawText(s, (SCREEN_W-textWidth(s,sc))/2, y, sc, color); }
-
-/* ---------- creature roster (pixel art + evolution data) ----------------- */
-// stage order: 0 egg, 1 baby, 2 in-training, 3 rookie, 4 champion, 5 ultimate, 6 mega
-const EGG = [
- "......####......",
- "....########....",
- "...##########...",
- "..####oo######..",
- ".#####oo#######.",
- ".##############.",
- ".######oo######.",
- ".#####oooo#####.",
- ".######oo######.",
- ".##############.",
- ".##############.",
- "..############..",
- "..############..",
- "...##########...",
- "....########....",
- "......####......",
+const OUTFITS = [
+  {id:'jacket',n:'Jacket'},{id:'hoodie',n:'Hoodie'},{id:'tee',n:'T-Shirt'},
+  {id:'vest',n:'Vest'},{id:'uniform',n:'Uniform'},{id:'dress',n:'Dress'},
 ];
-const C = {
- egg:{ name:"EGG", stage:0, art:EGG, hp:10, pow:2 },
-
- botari:{ name:"BOTARI", stage:1, hp:14, pow:3, art:[
-  ".......#........",
-  ".......#........",
-  "......###.......",
-  ".....#####......",
-  "....#######.....",
-  "...#########....",
-  "..###########...",
-  "..##..###..##...",
-  "..###########...",
-  "..###########...",
-  "...#########....",
-  "....#######.....",
-  ".....#####......",
-  "...##.....##....",
-  "..###.....###...",
-  "................",
- ], evolve:[ {to:'koro'} ] },
-
- koro:{ name:"KORO", stage:2, hp:20, pow:5, art:[
-  "..##........##..",
-  "..###......###..",
-  "...##.####.##...",
-  "...##########...",
-  "..############..",
-  ".##############.",
-  ".##..######..##.",
-  ".##..######..##.",
-  ".##############.",
-  ".####oooooo####.",
-  ".##############.",
-  ".##############.",
-  "..############..",
-  "...##########...",
-  "..###......###..",
-  "..####....####..",
- ], evolve:[
-   {to:'agumo', maxMistakes:3},     // good care
-   {to:'goburi'}                    // default / neglect
- ] },
-
- agumo:{ name:"AGUMO", stage:3, hp:34, pow:9, atk:'fire', art:[
-  ".........####...",
-  "........######..",
-  "........##.o##..",
-  "........######..",
-  ".......#######..",
-  ".....#########..",
-  "....##########..",
-  "...####ooo####.#",
-  "...##########.##",
-  "...##########.#.",
-  "...##########...",
-  "...####...####..",
-  "...###.....###..",
-  "..####.....####.",
-  "..###.......###.",
-  ".####.......####",
- ], evolve:[
-   {to:'greymo', minWins:2, maxMistakes:4},
-   {to:'tyranno'}
- ] },
-
- goburi:{ name:"GOBURI", stage:3, hp:30, pow:8, atk:'bolt', art:[
-  "..#.........#...",
-  "..##.......##...",
-  "...##.....##....",
-  "....#######.....",
-  "...#########....",
-  "..##.#####.##...",
-  "..##.#####.##...",
-  "..###########...",
-  "..####ooo####...",
-  "..###########...",
-  "...#########....",
-  "....#.....#.....",
-  "...##.....##....",
-  "..###.....###...",
-  "..##.......##...",
-  ".###.......###..",
- ], evolve:[
-   {to:'ogremo', minWins:2},
-   {to:'tyranno'}
- ] },
-
- tyranno:{ name:"TYRANNO", stage:4, hp:52, pow:14, atk:'fire', art:[
-  "..........#####.",
-  ".........###.o#.",
-  ".........######.",
-  "........#######.",
-  ".......########.",
-  "......#########.",
-  "....###########.",
-  "...####ooo####.#",
-  "..############.#",
-  "..############..",
-  "..############..",
-  "..####....####..",
-  "..###......###..",
-  ".####......####.",
-  ".###........###.",
-  "###..........###",
- ], evolve:[ {to:'megadrago', minWins:5} ] },
-
- greymo:{ name:"GREYMO", stage:4, hp:60, pow:16, atk:'fire', art:[
-  "....###....#....",
-  "...##o##..##....",
-  "...#####.###....",
-  "...##########...",
-  "..#####ooo###...",
-  "..###########...",
-  ".#############..",
-  ".####ooooo####.#",
-  ".#############.#",
-  ".#############..",
-  ".#############..",
-  ".####.....####..",
-  ".###.......###..",
-  "####.......####.",
-  "###.........###.",
-  "##...........###",
- ], evolve:[
-   {to:'metalgrey', minWins:6, maxMistakes:5},
-   {to:'skullgrey'}
- ] },
-
- ogremo:{ name:"OGREMO", stage:4, hp:56, pow:15, atk:'bolt', art:[
-  "..##.......##...",
-  "..###.....###...",
-  "...###...###....",
-  "....#######.....",
-  "...####o####....",
-  "..##.#####.##...",
-  "..##o#####o##...",
-  "..###########...",
-  "..####ooo####...",
-  "..###########...",
-  ".####.....####..",
-  ".###.......###..",
-  "####.......####.",
-  "###.........###.",
-  "##...........###",
-  "#.............##",
- ], evolve:[ {to:'skullgrey'} ] },
-
- skullgrey:{ name:"SKULLGREY", stage:5, hp:90, pow:24, atk:'bolt', art:[
-  "....######......",
-  "...##o##o##.....",
-  "...########.....",
-  "...##.##.##.....",
-  "..##########....",
-  ".############...",
-  "############.#..",
-  "#.########.#.##.",
-  ".#.######.#.##..",
-  "..########.##...",
-  "..########......",
-  "..##....##......",
-  ".###....###.....",
-  "###......###....",
-  "##........###...",
-  "#..........##...",
- ], evolve:[ {to:'megadrago'} ] },
-
- metalgrey:{ name:"METALGREY", stage:5, hp:110, pow:28, atk:'beam', art:[
-  "....######.#....",
-  "...##oo##.##....",
-  "...########.....",
-  "..o##########...",
-  "..############..",
-  ".#####ooo#####.#",
-  ".o###########.##",
-  ".#############.#",
-  "o#############..",
-  ".#############..",
-  ".####.....####..",
-  ".###.......###..",
-  "o###.......###o.",
-  "####.......####.",
-  "###.........###.",
-  "##...........###",
- ], evolve:[ {to:'omega', maxMistakes:6} ] },
-
- megadrago:{ name:"MEGADRAGO", stage:6, hp:150, pow:36, atk:'beam', art:[
-  "..#####...#####.",
-  ".##ooo##.##ooo#.",
-  ".#######.######.",
-  "..############..",
-  ".##############.",
-  "###ooooooooo####",
-  "################",
-  "#.############.#",
-  "##.#########.##.",
-  ".##.#######.##..",
-  "..#############.",
-  "..####...####...",
-  ".####.....####..",
-  "####.......####.",
-  "###.........###.",
-  "##...........###",
- ] },
-
- omega:{ name:"OMEGAMON", stage:6, hp:180, pow:42, atk:'beam', art:[
-  ".....#####......",
-  "....##ooo##.....",
-  "....#######.....",
-  "...####.####....",
-  "..o#########o...",
-  ".o###########o..",
-  ".#####ooo#####..",
-  "##############o#",
-  "o#############.#",
-  ".#############..",
-  ".#####ooo#####..",
-  ".####.....####..",
-  ".###.......###..",
-  "o###.......###o.",
-  "###.........###.",
-  "##...........###",
- ] },
-
- // --- wild enemies for battles / adventures ---
- mushy:{ name:"MUSHY", stage:3, hp:26, pow:7, atk:'bolt', wild:true, art:[
-  "....######......",
-  "...########.....",
-  "..##oo##oo##.....",
-  "..##########....",
-  "...########.....",
-  "....######......",
-  ".....####.......",
-  ".....####.......",
-  "....######......",
-  "...##.##.##.....",
-  "..##.####.##....",
-  "..#..####..#....",
-  ".....####.......",
-  "....##..##......",
-  "...###..###.....",
-  "................",
- ]},
- kuwa:{ name:"KUWA", stage:4, hp:48, pow:13, atk:'bolt', wild:true, art:[
-  ".#..........#...",
-  ".##........##...",
-  "..###....###....",
-  "...########.....",
-  "..##o####o##....",
-  "..##########....",
-  ".############...",
-  ".####ooo#####...",
-  ".############...",
-  "..##########....",
-  "..##......##....",
-  ".###......###...",
-  "###........###..",
-  "##..........##..",
-  "#............#..",
-  "................",
- ]},
- devil:{ name:"DEVIMON", stage:5, hp:88, pow:22, atk:'beam', wild:true, art:[
-  "..#..####..#....",
-  "..##.####.##....",
-  "...########.....",
-  "...##o##o##.....",
-  "...########.....",
-  "..##########....",
-  ".############...",
-  ".##.######.##...",
-  ".#.o######o.#...",
-  "...########.....",
-  "...##....##.....",
-  "..###....###....",
-  ".###......###...",
-  "###........###..",
-  "##..........##..",
-  "#............#..",
- ]},
-};
-
-/* ---------- game configuration / pacing ---------------------------------- */
-const CFG = {
-  hungerDrop: 95,    // sec to lose 1 hunger heart
-  strDrop: 130,      // sec to lose 1 strength heart
-  poopEvery: 150,    // sec between droppings
-  callCheck: 60,     // sec a need can go unanswered before a care mistake
-  // active-age (sec) required IN a stage before it may digivolve
-  stageDur: { 1:50, 2:110, 3:240, 4:480, 5:780 },
-  maxStat: 4,
-  offlineCap: 6*3600 // cap offline catch-up at 6h
-};
-
-/* ---------- save / state ------------------------------------------------- */
-const SAVE_KEY = 'digipet.save.v1';
-let S = null;       // game state
-let sound = true;
-
-function freshPet(){
-  return {
-    species:'egg', born:Date.now(), lastTick:Date.now(),
-    ageSec:0, stageSec:0,
-    hunger:CFG.maxStat, strength:CFG.maxStat, weight:20, effort:0,
-    hp:10, maxhp:10,
-    poop:0, sick:false, asleep:false, lightOn:true, injured:false,
-    careMistakes:0, wins:0, battles:0, trainCount:0, overfeed:0,
-    hungerOwe:0, strOwe:0, alive:true, hatched:false,
-    needTimer:0, // sec a need has been unmet
-    items:{ meat:5, vita:2, potion:2, weight:1 },
-  };
-}
-function load(){
-  try{
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(raw){ S = JSON.parse(raw); sound = S._sound!==false; return; }
-  }catch(e){}
-  S = freshPet();
-}
-function save(){ try{ S._sound = sound; localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
-
-/* ---------- audio (simple vpet blips) ------------------------------------ */
-let actx=null;
-function beep(freq,dur,type){
-  if(!sound) return;
-  try{
-    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
-    const o=actx.createOscillator(), g=actx.createGain();
-    o.type=type||'square'; o.frequency.value=freq;
-    g.gain.value=0.05; o.connect(g); g.connect(actx.destination);
-    o.start(); g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+(dur||0.08));
-    o.stop(actx.currentTime+(dur||0.08));
-  }catch(e){}
-}
-const sfx = {
-  ok:()=>{ beep(660,.06); setTimeout(()=>beep(880,.08),60); },
-  no:()=>{ beep(200,.12,'sawtooth'); },
-  eat:()=>{ beep(520,.05); setTimeout(()=>beep(420,.05),70); },
-  hit:()=>{ beep(150,.07,'sawtooth'); },
-  win:()=>{ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12),i*110)); },
-  evo:()=>{ [392,523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.14),i*130)); },
-  call:()=>{ beep(880,.1); setTimeout(()=>beep(880,.1),160); },
-};
-
-/* ---------- screen / view management ------------------------------------- */
-let view = 'main';        // main | stats | battle | adventure | dead | hatch
-let anim = 0;             // global animation frame counter
-let toastTimer = null;
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove('show'),1600);
-}
-function hint(msg){ document.getElementById('hint').textContent = msg; }
-
-/* ---------- rendering ---------------------------------------------------- */
-function clearLCD(){ ctx.fillStyle=BG; ctx.fillRect(0,0,SCREEN_W,SCREEN_H); }
-
-function speciesArt(id){ return (C[id]&&C[id].art) || EGG; }
-
-function drawHearts(label, x, y, val, max){
-  drawText(label, x, y, 1);
-  for(let i=0;i<max;i++){
-    const filled = i<val;
-    const hx = x + textWidth(label,1) + 2 + i*8;
-    drawMiniHeart(hx, y, filled);
-  }
-}
-function drawMiniHeart(x,y,filled){
-  if(filled){
-    const h=['01010','11111','11111','01110','00100'];
-    ctx.fillStyle=DARK;
-    for(let r=0;r<5;r++) for(let c=0;c<5;c++) if(h[r][c]==='1') ctx.fillRect(x+c,y+r,1,1);
-  } else {
-    const o=['01010','10101','10001','01010','00100']; // hollow outline
-    ctx.fillStyle=MID;
-    for(let r=0;r<5;r++) for(let c=0;c<5;c++) if(o[r][c]==='1') ctx.fillRect(x+c,y+r,1,1);
-  }
-}
-
-function petBob(){ return (Math.floor(anim/30)%2===0)?0:1; } // slow 2-frame idle bob
-
-function renderMain(){
-  clearLCD();
-  // floor line
-  ctx.fillStyle=MID; ctx.fillRect(0,100,SCREEN_W,1);
-  // status hearts top
-  drawHearts('H', 4, 4, S.hunger, CFG.maxStat);
-  const sx = SCREEN_W - (textWidth('S',1)+2+CFG.maxStat*8) - 4;
-  drawHearts('S', sx, 4, S.strength, CFG.maxStat);
-
-  if(S.species==='egg'){
-    const bob = (Math.floor(anim/20)%2===0)?0:2;
-    drawSprite(EGG, 56, 48+bob, 3); // 16*3=48 wide, centred on 160px screen
-    drawTextCenter('TAP TO HATCH', 100, 1, MID);
-    return;
-  }
-
-  const art = speciesArt(S.species);
-  const scale = 3;
-  const w = 16*scale;
-  const px = (SCREEN_W - w)/2;
-  const bob = petBob();
-  // pet (asleep => add Zzz, draw lower)
-  drawSprite(art, px, 44 + (S.asleep?6:bob), scale, false);
-
-  // poop
-  for(let i=0;i<Math.min(S.poop,4);i++){
-    drawPoop(8 + i*18, 88);
-  }
-  // sick skull overlay
-  if(S.sick){ drawSkull(px+ w + 2, 40); }
-  // sleeping zzz
-  if(S.asleep){ drawText('Z', px+w-4, 38, 1, MID); drawText('Z', px+w+2, 32, 2, MID); }
-  // injured bandage indicator
-  if(S.injured){ drawText('+', px-8, 50, 1, DARK); }
-
-  // call attention indicator (blinking !)
-  if(needsAttention() && Math.floor(anim/15)%2===0){
-    drawText('!', px + w/2 - 2, 30, 2, DARK);
-  }
-  // name + age
-  drawTextCenter(C[S.species].name, 104, 1);
-}
-
-function drawPoop(x,y){
-  const p=['00100','01110','11111','01110'];
-  for(let r=0;r<4;r++) for(let c=0;c<5;c++) if(p[r][c]==='1'){ctx.fillStyle=DARK;ctx.fillRect(x+c*2,y+r*2,2,2);}
-}
-function drawSkull(x,y){
-  const s=['0110','1001','1101','1011','0110','0100'];
-  for(let r=0;r<6;r++) for(let c=0;c<4;c++) if(s[r][c]==='1'){ctx.fillStyle=DARK;ctx.fillRect(x+c*2,y+r*2,2,2);}
-}
-
-/* ---------- needs / care logic ------------------------------------------- */
-function needsAttention(){
-  if(!S.alive || S.species==='egg') return false;
-  return S.hunger<=0 || S.strength<=0 || S.sick || S.poop>0;
-}
-
-function stageOf(id){ return C[id]?C[id].stage:0; }
-
-/* core per-second simulation (also used for offline catch-up) */
-function simulate(seconds){
-  if(!S.alive) return;
-  for(let s=0;s<seconds;s++){
-    S.ageSec++; S.stageSec++;
-    if(S.species==='egg') continue;
-
-    if(S.asleep){
-      // sleeping: needs barely change, recover a little
-      if(S.ageSec%5===0 && S.hp<S.maxhp) S.hp++;
-      continue;
-    }
-
-    // hunger depletion
-    S.hungerOwe++;
-    if(S.hungerOwe>=CFG.hungerDrop){ S.hungerOwe=0; if(S.hunger>0) S.hunger--; }
-    // strength depletion
-    S.strOwe++;
-    if(S.strOwe>=CFG.strDrop){ S.strOwe=0; if(S.strength>0) S.strength--; }
-    // weight slowly drifts toward healthy when not fed
-    if(S.ageSec%200===0 && S.weight>10) S.weight--;
-    // poop
-    if(S.ageSec%CFG.poopEvery===0 && S.poop<6) S.poop++;
-    // sickness from neglect
-    if(S.poop>=4 && !S.sick && Math.random()<0.01) S.sick=true;
-    if(S.hunger<=0 && S.strength<=0 && !S.sick && Math.random()<0.008) S.sick=true;
-
-    // care-mistake accounting: a need unmet for callCheck sec = 1 mistake
-    if(needsAttention()){
-      S.needTimer++;
-      if(S.needTimer>=CFG.callCheck){ S.needTimer=0; S.careMistakes++; }
-    } else { S.needTimer=0; }
-
-    // health damage from prolonged sickness/starvation -> death
-    if(S.sick && S.poop>=4){ if(Math.random()<0.004 && S.hp>0) S.hp--; }
-    if(S.hunger<=0 && S.strength<=0 && S.sick){ if(Math.random()<0.006 && S.hp>0) S.hp--; }
-    if(S.hp<=0){ die(); return; }
-
-    // evolution check
-    tryEvolve();
-  }
-}
-
-function die(){
-  S.alive=false; S.hp=0;
-  view='dead'; sfx.no();
-}
-
-function maxHpFor(id){ return C[id]?C[id].hp:10; }
-
-function tryEvolve(){
-  const cur = C[S.species];
-  if(!cur || !cur.evolve || cur.stage>=6) return;
-  const need = CFG.stageDur[cur.stage];
-  if(need===undefined || S.stageSec < need) return;
-
-  // pick first matching branch
-  let chosen=null;
-  for(const rule of cur.evolve){
-    if(rule.minWins!==undefined && S.wins<rule.minWins) continue;
-    if(rule.maxMistakes!==undefined && S.careMistakes>rule.maxMistakes) continue;
-    if(rule.minTrain!==undefined && S.trainCount<rule.minTrain) continue;
-    chosen=rule.to; break;
-  }
-  if(!chosen) chosen = cur.evolve[cur.evolve.length-1].to;
-  evolveTo(chosen);
-}
-
-function evolveTo(id){
-  S.species=id; S.stageSec=0;
-  S.maxhp=maxHpFor(id); S.hp=S.maxhp;
-  S.hunger=CFG.maxStat; S.strength=Math.max(S.strength, Math.floor(CFG.maxStat/2));
-  S.sick=false; S.injured=false;
-  sfx.evo(); evoFlash=60;
-  toast('DIGIVOLVE!');
-  hint(C[id].name + ' digivolved!');
-  save();
-}
-let evoFlash=0;
-
-/* ---------- care actions ------------------------------------------------- */
-function ensureAwake(){
-  if(S.asleep){ toast('SHHH... ASLEEP'); sfx.no(); return false; }
-  return true;
-}
-function feed(kind){
-  if(S.species==='egg'){ toast('NOT YET'); return; }
-  if(!ensureAwake()) return;
-  if(kind==='meat'){
-    if(S.items.meat<=0){ toast('NO MEAT'); sfx.no(); return; }
-    S.items.meat--;
-    if(S.hunger>=CFG.maxStat){ S.weight+=2; S.overfeed++; toast('TOO FULL!'); }
-    else { S.hunger=Math.min(CFG.maxStat,S.hunger+1); S.weight+=1; }
-    sfx.eat();
-  } else { // vita / protein -> strength
-    if(S.items.vita<=0){ toast('NO VITA'); sfx.no(); return; }
-    S.items.vita--;
-    S.strength=Math.min(CFG.maxStat,S.strength+1); S.weight+=2; sfx.eat();
-    toast('STRENGTH UP');
-  }
-  closeTray(); save(); refreshIcons();
-}
-function toggleLight(){
-  if(S.species==='egg'){ toast('NOT YET'); return; }
-  S.lightOn=!S.lightOn;
-  if(!S.lightOn){ S.asleep=true; toast('LIGHTS OFF'); beep(300,.1); }
-  else { S.asleep=false; toast('LIGHTS ON'); beep(600,.1); }
-  save(); refreshIcons();
-}
-function clean(){
-  if(S.poop<=0){ toast('ALL CLEAN'); return; }
-  S.poop=0; toast('CLEANED!'); sfx.ok();
-  // cleaning quickly can cure poop-induced risk
-  save(); refreshIcons();
-}
-function heal(){
-  if(S.species==='egg'){ toast('NOT YET'); return; }
-  if(!S.sick && !S.injured && S.hp>=S.maxhp){ toast('NOT SICK'); return; }
-  if(S.items.potion<=0){ toast('NO POTION'); sfx.no(); return; }
-  S.items.potion--; S.sick=false; S.injured=false;
-  S.hp=S.maxhp; toast('HEALED!'); sfx.ok();
-  save(); refreshIcons();
-}
-function train(){
-  if(S.species==='egg'){ toast('NOT YET'); return; }
-  if(!ensureAwake()) return;
-  if(S.strength<=0){ toast('TOO TIRED'); sfx.no(); return; }
-  view='train'; startTraining();
-}
-
-/* ---------- training mini-game (timing press) ---------------------------- */
-let trainState=null;
-function startTraining(){
-  trainState={ round:0, score:0, barX:0, dir:1, done:false };
-  hint('TAP when the bar is in the centre! (3 rounds)');
-}
-function trainTap(){
-  if(!trainState||trainState.done) return;
-  const center = SCREEN_W/2;
-  const dist = Math.abs(trainState.barX - center);
-  const good = dist < 14;
-  if(good){ trainState.score++; sfx.ok(); } else { sfx.no(); }
-  trainState.round++;
-  if(trainState.round>=3){
-    trainState.done=true;
-    const gained = trainState.score;
-    S.effort += gained; S.trainCount++;
-    S.strength=Math.max(0,S.strength-1);
-    S.weight=Math.max(8,S.weight-2);
-    S.hunger=Math.max(0,S.hunger-1);
-    if(S.hp<S.maxhp) S.hp=Math.min(S.maxhp,S.hp+gained); // condition up
-    toast('EFFORT +'+gained);
-    setTimeout(()=>{ view='main'; trainState=null; hint(''); save(); },1100);
-  }
-}
-function renderTrain(){
-  clearLCD();
-  drawTextCenter('TRAINING', 8, 1);
-  drawTextCenter('ROUND '+(Math.min(trainState.round+1,3))+'/3', 22, 1, MID);
-  // target zone
-  ctx.fillStyle=MID; ctx.fillRect(SCREEN_W/2-14, 56, 28, 16);
-  ctx.fillStyle=DARK; ctx.fillRect(SCREEN_W/2-1, 50, 2, 28);
-  // moving bar
-  ctx.fillStyle=DARK; ctx.fillRect(trainState.barX-2, 50, 4, 28);
-  drawTextCenter('SCORE '+trainState.score, 92, 1);
-  if(!trainState.done){
-    trainState.barX += trainState.dir*4;
-    if(trainState.barX>SCREEN_W-8){trainState.dir=-1;} if(trainState.barX<8){trainState.dir=1;}
-  }
-}
-
-/* ---------- battle system ------------------------------------------------ */
-let battle=null;
-function startBattle(enemyId){
-  if(S.species==='egg' || stageOf(S.species)<3){ toast('TOO YOUNG'); sfx.no(); return; }
-  if(!ensureAwake()) return;
-  if(S.strength<=0){ toast('TOO WEAK'); sfx.no(); return; }
-  const e = C[enemyId];
-  battle={
-    enemy:enemyId,
-    pHp:S.hp, pMax:S.maxhp,
-    eHp:e.hp, eMax:e.hp,
-    phase:'intro', timer:60, proj:null, log:'', turn:'p',
-    pPow: C[S.species].pow + S.strength*2 + Math.floor(S.effort/2),
-    ePow: e.pow,
-    result:null
-  };
-  view='battle'; closeTray(); hint('');
-  beep(440,.1); setTimeout(()=>beep(550,.1),120);
-}
-function battleStep(){
-  const b=battle; if(!b) return;
-  if(b.timer>0){ b.timer--; }
-
-  if(b.phase==='intro' && b.timer<=0){ b.phase='turn'; b.timer=20; }
-  else if(b.phase==='turn' && b.timer<=0){
-    // launch attack from whoever's turn
-    b.phase='attack'; b.timer=30;
-    b.proj={ from:b.turn, x: b.turn==='p'?40:120 };
-  }
-  else if(b.phase==='attack'){
-    if(b.proj){ b.proj.x += (b.proj.from==='p'?6:-6); }
-    if(b.timer<=0){
-      // resolve damage
-      if(b.proj.from==='p'){
-        const dmg = Math.max(3, b.pPow + rand(-3,4));
-        b.eHp=Math.max(0,b.eHp-dmg); sfx.hit(); b.log=C[S.species].name+' '+dmg;
-      } else {
-        const dmg = Math.max(2, b.ePow + rand(-3,3));
-        b.pHp=Math.max(0,b.pHp-dmg); sfx.hit(); b.log=C[b.enemy].name+' '+dmg;
-      }
-      b.proj=null;
-      if(b.eHp<=0){ b.phase='end'; b.result='win'; b.timer=80; onBattleEnd(true); }
-      else if(b.pHp<=0){ b.phase='end'; b.result='lose'; b.timer=80; onBattleEnd(false); }
-      else { b.turn = b.turn==='p'?'e':'p'; b.phase='turn'; b.timer=18; }
-    }
-  }
-  else if(b.phase==='end' && b.timer<=0){
-    finishBattle();
-  }
-}
-let battleSettled=false;
-function onBattleEnd(win){
-  if(battleSettled) return; battleSettled=true;
-  S.battles++;
-  S.hp = Math.max(1, battle.pHp);
-  if(win){ S.wins++; S.effort+=2; S.strength=Math.max(0,S.strength-1); sfx.win();
-    if(adventure){ adventureReward(); } }
-  else { S.injured=true; S.hp=Math.max(1,Math.floor(S.maxhp*0.2)); sfx.no(); }
-  S.strength=Math.max(0,S.strength-1);
-  save();
-}
-function finishBattle(){
-  const wasAdv = !!adventure;
-  battle=null; battleSettled=false;
-  if(wasAdv){ view='adventure'; advNext(); }
-  else { view='main'; refreshIcons(); }
-}
-function renderBattle(){
-  const b=battle; clearLCD();
-  ctx.fillStyle=MID; ctx.fillRect(0,86,SCREEN_W,1);
-  // HP bars
-  drawText('YOU',4,4,1); drawBar(28,4,40,b.pHp/b.pMax);
-  drawText('FOE',SCREEN_W-66,4,1); drawBar(SCREEN_W-42,4,40,b.eHp/b.eMax);
-
-  const myArt=speciesArt(S.species), foeArt=speciesArt(b.enemy);
-  const lunge = (b.phase==='attack'&&b.proj) ? (b.proj.from==='p'?4:-4) : 0;
-  const py=46, ey=46;
-  drawSpriteScaled(myArt, 18 + (lunge>0?lunge:0), py, 2.5, false);
-  drawSpriteScaled(foeArt, SCREEN_W-18-16*2.5 + (lunge<0?lunge:0), ey, 2.5, true);
-
-  // projectile
-  if(b.proj){
-    const py2=64;
-    ctx.fillStyle=DARK;
-    for(let i=0;i<3;i++) ctx.fillRect(b.proj.x - (b.proj.from==='p'?i*4:-i*4), py2+rand(-2,2), 4,4);
-  }
-  if(b.phase==='intro') drawTextCenter('BATTLE START', 96, 1);
-  else if(b.phase==='end'){
-    drawTextCenter(b.result==='win'?'YOU WIN!':'YOU LOSE...', 96, 1);
-  } else if(b.log){ drawTextCenter('HIT '+b.log, 96, 1, MID); }
-}
-function drawSpriteScaled(art, px, py, scale, flip){
-  for(let y=0;y<art.length;y++) for(let x=0;x<art[y].length;x++){
-    const c=art[y][x]; if(c===' '||c==='.')continue;
-    ctx.fillStyle=(c==='o')?MID:DARK;
-    const dx=flip?(15-x):x;
-    ctx.fillRect(Math.round(px+dx*scale), Math.round(py+y*scale), Math.ceil(scale), Math.ceil(scale));
-  }
-}
-function drawBar(x,y,w,frac){
-  frac=Math.max(0,Math.min(1,frac));
-  ctx.fillStyle=MID; ctx.fillRect(x,y,w,6);
-  ctx.fillStyle=DARK; ctx.fillRect(x,y,Math.round(w*frac),6);
-  ctx.fillStyle=MID; ctx.fillRect(x,y,w,1); ctx.fillRect(x,y+5,w,1);
-}
-
-/* ---------- adventure mode ---------------------------------------------- */
-const AREAS=[
-  { name:'FILE ISLAND', steps:5, foes:['mushy','mushy','kuwa'], boss:'kuwa' },
-  { name:'DARK CAVE',   steps:6, foes:['mushy','kuwa','devil'], boss:'devil' },
+const SKINS = ['#ffd9b3','#f1c197','#e0a878','#c8895c','#a06a43','#7c4f30'];
+const DEVICES = [
+  {id:'classic', n:'D-1 Classic',  series:'Adventure', def:'#e8eef7', screen:'#9bbc0f'},
+  {id:'d3',      n:'D-3',          series:'Adventure 02', def:'#ffffff', screen:'#79d2ff'},
+  {id:'dark',    n:'D-Ark',        series:'Tamers', def:'#2b3550', screen:'#7fe0c0'},
+  {id:'scanner', n:'D-Scanner',    series:'Frontier', def:'#9a9aa6', screen:'#ffd23f'},
+  {id:'xros',    n:'Xros Loader',  series:'Xros Wars', def:'#e23b3b', screen:'#bff0ff'},
+  {id:'vital',   n:'Vital Bracelet',series:'Modern', def:'#1c1c22', screen:'#39ff9d'},
 ];
-let adventure=null;
-function startAdventure(areaIdx){
-  if(stageOf(S.species)<3){ toast('TOO YOUNG'); sfx.no(); return; }
-  if(!ensureAwake()) return;
-  if(S.strength<=0){ toast('TOO WEAK'); sfx.no(); return; }
-  const a=AREAS[areaIdx];
-  adventure={ area:a, step:0, msg:'ENTERING '+a.name, timer:70, x:0, foundLog:[] };
-  view='adventure'; closeTray(); hint('');
-  beep(500,.1);
-}
-function advNext(){
-  const a=adventure.area;
-  adventure.step++;
-  if(adventure.step>a.steps){
-    // boss fight then finish
-    if(!adventure.bossDone){ adventure.bossDone=true; adventure.msg='BOSS!'; adventure.timer=50;
-      setTimeout(()=>startBattle(a.boss),900); return; }
-    adventure.msg='AREA CLEAR!'; adventure.timer=120; adventure.finished=true; sfx.win();
-    return;
-  }
-  // random event
-  const roll=Math.random();
-  if(roll<0.45){
-    const foe = a.foes[rand(0,a.foes.length-1)];
-    adventure.msg='WILD '+C[foe].name+'!'; adventure.timer=40;
-    setTimeout(()=>startBattle(foe),700);
-  } else if(roll<0.7){
-    const items=['meat','vita','potion'];
-    const it=items[rand(0,items.length-1)];
-    S.items[it]=(S.items[it]||0)+1; adventure.msg='FOUND '+it.toUpperCase()+'!';
-    adventure.timer=60; sfx.ok(); save();
-  } else if(roll<0.85){
-    S.hp=Math.max(1,S.hp-rand(2,6)); adventure.msg='TRAP! -HP'; adventure.timer=60; sfx.hit();
-  } else {
-    adventure.msg='...NOTHING HERE'; adventure.timer=50;
-  }
-}
-function adventureReward(){
-  S.items.meat=(S.items.meat||0)+1;
-}
-function renderAdventure(){
-  const ad=adventure; clearLCD();
-  drawTextCenter(ad.area.name, 6, 1);
-  drawText('STEP '+Math.min(ad.step+1,ad.area.steps+1)+'/'+(ad.area.steps+1), 4, 18, 1, MID);
-  // walking pet
-  ad.x=(ad.x+1)%SCREEN_W;
-  ctx.fillStyle=MID; ctx.fillRect(0,82,SCREEN_W,1);
-  const bob=petBob();
-  drawSpriteScaled(speciesArt(S.species), 60, 46+bob, 2.5, false);
-  // simple scenery dots scrolling
-  for(let i=0;i<6;i++){ const sx=(i*30 - ad.x*0.7)%SCREEN_W; ctx.fillStyle=MID; ctx.fillRect((sx+SCREEN_W)%SCREEN_W,80,2,2);}
-  drawTextCenter(ad.msg, 96, 1);
-  if(ad.timer>0) ad.timer--;
-  else if(ad.finished){ /* wait for tap */ }
-  else if(!battle){ advNext(); }
+
+/* ---------- creation state ---------- */
+let T = {
+  gender:'m', hairIdx:0, hairColor:'#5a3a22',
+  outfitIdx:0, outfitColor:'#3f6fe0', skin:SKINS[0],
+  goggles:true, devIdx:0, devColor:DEVICES[0].def, name:'',
+};
+const SAVE_KEY = 'digipet.tamer.v2';
+
+/* ===================================================================== */
+/*  PIXEL HELPERS                                                         */
+/* ===================================================================== */
+function px(c,x,y,w,h,col){ c.fillStyle=col; c.fillRect(x,y,w,h); }
+function shade(hex,amt){ // darken (amt<0) / lighten (amt>0) a #rrggbb by amt (-1..1)
+  const n=parseInt(hex.slice(1),16);
+  const R=(n>>16)&255, G=(n>>8)&255, B=n&255;
+  const ch=v => amt<0 ? Math.round(v*(1+amt)) : Math.round(v+(255-v)*amt);
+  return 'rgb('+ch(R)+','+ch(G)+','+ch(B)+')';
 }
 
-/* ---------- stats screen ------------------------------------------------- */
-function renderStats(){
-  clearLCD();
-  drawTextCenter(C[S.species]?C[S.species].name:'?', 4, 1);
-  let y=18;
-  const line=(l,v)=>{ drawText(l,6,y,1); drawText(String(v), SCREEN_W-6-textWidth(String(v),1), y,1); y+=11; };
-  line('STAGE', ['EGG','BABY','TRAIN','ROOKIE','CHAMP','ULTRA','MEGA'][stageOf(S.species)]);
-  line('AGE', fmtAge(S.ageSec));
-  line('WEIGHT', S.weight+'G');
-  line('EFFORT', S.effort);
-  line('WINS', S.wins+'/'+S.battles);
-  line('MISTAKES', S.careMistakes);
-  line('HP', S.hp+'/'+S.maxhp);
-  drawTextCenter('TAP TO RETURN', 110, 1, MID);
-}
-function fmtAge(sec){
-  if(sec<3600) return Math.floor(sec/60)+'M';
-  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60);
-  return h+'H'+m+'M';
+/* ===================================================================== */
+/*  CHIBI AVATAR  (logical 42x49 grid, front-facing)                      */
+/* ===================================================================== */
+function drawAvatar(canvas, opts, frame){
+  const c = canvas.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  const W = canvas.width, H = canvas.height;
+  c.clearRect(0,0,W,H);
+  const bob = (frame && Math.floor(frame/40)%2) ? 1 : 0;   // idle bob
+  const fem = opts.gender==='f';
+  const skin = opts.skin, skinSh = shade(skin,-0.22);
+  const hair = opts.hairColor, hairSh = shade(hair,-0.3);
+  const out = opts.outfitColor, outSh = shade(out,-0.25), outLt = shade(out,0.22);
+  const pants = shade('#2c3550',0), pantsSh = '#222a42';
+  const OL = '#10131f';                 // outline
+  const cx = Math.floor(W/2);
+  const oy = bob;                       // vertical offset for bob
+
+  // ---- shadow ----
+  px(c, cx-12, 92, 24, 4, 'rgba(0,0,0,.28)');
+
+  // ---- legs / pants ----
+  px(c, cx-9, 70+oy, 7, 16, pants); px(c, cx-9, 70+oy, 2, 16, pantsSh);
+  px(c, cx+2, 70+oy, 7, 16, pants); px(c, cx+6, 70+oy, 3, 16, pantsSh);
+  // shoes
+  px(c, cx-10, 86+oy, 9, 6, '#1a1f30'); px(c, cx+1, 86+oy, 9, 6, '#1a1f30');
+  px(c, cx-10, 90+oy, 9, 2, '#e7ecff'); px(c, cx+1, 90+oy, 9, 2, '#e7ecff');
+
+  // ---- body / outfit ----
+  const torsoTop = 46+oy;
+  const shoulderW = fem ? 22 : 26;
+  // arms (sleeves + hands)
+  px(c, cx-15, torsoTop+2, 6, 18, out); px(c, cx-15, torsoTop+2, 2, 18, outSh);
+  px(c, cx+9, torsoTop+2, 6, 18, out);  px(c, cx+13, torsoTop+2, 2, 18, outSh);
+  px(c, cx-15, torsoTop+18, 6, 5, skin);px(c, cx+9, torsoTop+18, 6, 5, skin); // hands
+  // torso
+  drawOutfit(c, cx, torsoTop, opts.outfitIdx, out, outSh, outLt, skin, fem);
+  // outline torso sides
+  px(c, cx-Math.floor(shoulderW/2)-1, torsoTop, 1, 24, OL);
+  px(c, cx+Math.floor(shoulderW/2), torsoTop, 1, 24, OL);
+
+  // ---- neck ----
+  px(c, cx-3, 42+oy, 6, 6, skin); px(c, cx-3, 46+oy, 6, 2, skinSh);
+
+  // ---- head ----
+  const hx = cx-12, hy = 8+oy, hw=24, hh=28;
+  px(c, hx+2, hy, hw-4, hh, skin);           // face block
+  px(c, hx, hy+3, 2, hh-8, skin);            // left cheek round
+  px(c, hx+hw-2, hy+3, 2, hh-8, skin);       // right cheek
+  px(c, hx+2, hy+hh-3, hw-4, 2, skinSh);     // chin shade
+  // ears
+  px(c, hx-1, hy+13, 3, 6, skin); px(c, hx+hw-2, hy+13, 3, 6, skin);
+  // head outline (rough)
+  c.fillStyle=OL;
+  c.fillRect(hx+2,hy-1,hw-4,1); c.fillRect(hx-1,hy+3,1,hh-8); c.fillRect(hx+hw,hy+3,1,hh-8);
+  c.fillRect(hx+1,hy,1,hh-4); c.fillRect(hx+hw-2,hy,1,hh-4);
+
+  // ---- face: eyes, brows, mouth ----
+  const ey = hy+15;
+  // whites
+  px(c, hx+5, ey, 5, 5, '#ffffff'); px(c, hx+14, ey, 5, 5, '#ffffff');
+  // pupils (look forward, blink occasionally)
+  const blink = frame && (Math.floor(frame/6)%40===0);
+  if(blink){ px(c, hx+5, ey+2, 5, 1, OL); px(c, hx+14, ey+2, 5, 1, OL); }
+  else { px(c, hx+6, ey+1, 3, 4, '#2a3a66'); px(c, hx+15, ey+1, 3, 4, '#2a3a66');
+         px(c, hx+7, ey+1, 1, 2, '#cfe0ff'); px(c, hx+16, ey+1, 1, 2, '#cfe0ff'); }
+  // brows (hair colour)
+  px(c, hx+5, ey-2, 5, 1, hairSh); px(c, hx+14, ey-2, 5, 1, hairSh);
+  // mouth + blush
+  px(c, hx+10, ey+7, 4, 1, shade(skin,-0.35));
+  px(c, hx+3, ey+4, 2, 2, 'rgba(255,120,120,.35)'); px(c, hx+19, ey+4, 2, 2, 'rgba(255,120,120,.35)');
+
+  // ---- hair ----
+  drawHair(c, cx, hy, opts.hairIdx, opts.gender, hair, hairSh, OL);
+
+  // ---- goggles ----
+  if(opts.goggles) drawGoggles(c, cx, hy);
 }
 
-function renderDead(){
-  clearLCD();
-  // ghost / grave
-  drawTextCenter('GAME OVER', 16, 2);
-  const grave=['001110','011111','011111','010101','010101','011111'];
-  const gx=SCREEN_W/2-18;
-  for(let r=0;r<6;r++)for(let c=0;c<6;c++) if(grave[r][c]==='1'){ctx.fillStyle=DARK;ctx.fillRect(gx+c*6,46+r*6,6,6);}
-  drawTextCenter(C[S.species]?C[S.species].name+' DIED':'DIED', 88, 1, MID);
-  drawTextCenter('TAP FOR NEW EGG', 102, 1);
-}
-
-/* ---------- main draw loop ----------------------------------------------- */
-function draw(){
-  anim++;
-  if(evoFlash>0){ evoFlash--; if(evoFlash%6<3){ ctx.fillStyle=BG; ctx.fillRect(0,0,SCREEN_W,SCREEN_H);
-    drawTextCenter('DIGIVOLVING', 50, 1); requestAnimationFrame(draw); return; } }
-
-  switch(view){
-    case 'main': renderMain(); break;
-    case 'stats': renderStats(); break;
-    case 'battle': battleStep(); renderBattle(); break;
-    case 'adventure': renderAdventure(); break;
-    case 'train': renderTrain(); break;
-    case 'dead': renderDead(); break;
-    default: renderMain();
-  }
-  requestAnimationFrame(draw);
-}
-
-/* ---------- per-second tick ---------------------------------------------- */
-function tick(){
-  if(view==='battle' || view==='train') return; // pause world sim during these
-  const now=Date.now();
-  let elapsed=Math.floor((now - S.lastTick)/1000);
-  if(elapsed<=0) return;
-  if(elapsed>CFG.offlineCap) elapsed=CFG.offlineCap;
-  S.lastTick = now - ((now-S.lastTick)%1000);
-  simulate(elapsed);
-  updateAgeLabel();
-  refreshIcons();
-  save();
-}
-function updateAgeLabel(){
-  document.getElementById('ageLabel').textContent =
-    S.alive ? (['EGG','BABY','IN-TRAIN','ROOKIE','CHAMPION','ULTIMATE','MEGA'][stageOf(S.species)]+' · '+fmtAge(S.ageSec)) : 'R.I.P.';
-}
-
-/* ---------- util --------------------------------------------------------- */
-function rand(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
-
-/* ---------- icon bar / UI ------------------------------------------------ */
-const ICONS=[
-  {id:'feed', label:'FEED', svg:'<path d="M7 3v8M5 3v4a2 2 0 002 2M17 3c-1.5 0-2 2-2 4s.5 4 2 4v6M7 13v8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'},
-  {id:'light',label:'LIGHT',svg:'<circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'},
-  {id:'train',label:'TRAIN',svg:'<path d="M6 6v12M18 6v12M6 12h12M2 9v6M22 9v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'},
-  {id:'battle',label:'BATTLE',svg:'<path d="M4 20l8-8M14 6l4-4 2 2-4 4M14 6l4 4M20 20l-8-8M10 6L6 2 4 4l4 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'},
-  {id:'adventure',label:'QUEST',svg:'<path d="M12 2l2.5 7H22l-6 4.5 2.3 7L12 16l-6.3 4.5L8 13.5 2 9h7.5z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/>'},
-  {id:'clean',label:'CLEAN',svg:'<path d="M3 21h18M6 21l1-9h10l1 9M9 12V7a3 3 0 016 0v5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>'},
-  {id:'heal', label:'HEAL', svg:'<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'},
-  {id:'stats',label:'STATS',svg:'<path d="M4 20V10M10 20V4M16 20v-8M22 20H2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'},
-];
-function buildIcons(){
-  const bar=document.getElementById('iconbar'); bar.innerHTML='';
-  for(const ic of ICONS){
-    const b=document.createElement('button'); b.className='ico'; b.dataset.id=ic.id;
-    b.innerHTML='<svg viewBox="0 0 24 24">'+ic.svg+'</svg><span>'+ic.label+'</span><i class="badge">!</i>';
-    b.addEventListener('click',()=>handleIcon(ic.id));
-    bar.appendChild(b);
+function drawOutfit(c, cx, top, idx, out, outSh, outLt, skin, fem){
+  const w = fem?20:24, x=cx-w/2;
+  const id = OUTFITS[idx].id;
+  // base torso
+  px(c, x, top, w, 24, out);
+  px(c, x, top, w, 3, outLt);          // shoulder highlight
+  px(c, x, top+20, w, 4, outSh);       // hem shade
+  if(id==='jacket'){
+    px(c, cx-1, top, 2, 24, outSh);    // zipper line
+    px(c, x, top, 5, 24, outSh); px(c, x+w-5, top, 5, 24, outLt); // lapels
+    px(c, cx-6, top+3, 12, 5, skin);   // open collar -> inner shirt? use skin/white
+    px(c, cx-6, top+3, 12, 5, '#e7ecff');
+  } else if(id==='hoodie'){
+    px(c, cx-7, top-1, 14, 5, outSh);  // hood
+    px(c, cx-1, top+5, 2, 16, outSh);  // string area
+    px(c, cx-4, top+18, 8, 6, outLt);  // pocket
+  } else if(id==='tee'){
+    px(c, cx-5, top, 10, 4, '#e7ecff'); // collar
+    px(c, cx-3, top+8, 6, 8, outLt);    // print
+  } else if(id==='vest'){
+    px(c, x+4, top, w-8, 24, skin);     // exposed arms/shirt
+    px(c, x, top, 5, 24, out); px(c, x+w-5, top, 5, 24, out);
+    px(c, x+4, top, w-8, 24, '#e7ecff');
+    px(c, x, top, 5, 24, out); px(c, x+w-5, top, 5, 24, out);
+  } else if(id==='uniform'){
+    px(c, cx-1, top, 2, 24, '#ffd23f'); // buttons line
+    px(c, cx-6, top, 12, 4, outLt);
+    px(c, cx-1, top+5, 2, 2, '#ffd23f'); px(c, cx-1, top+10, 2, 2, '#ffd23f'); px(c, cx-1, top+15, 2, 2, '#ffd23f');
+  } else if(id==='dress'){
+    // flare skirt
+    px(c, cx-w/2-3, top+16, w+6, 10, out);
+    px(c, cx-w/2-3, top+22, w+6, 4, outSh);
+    px(c, cx-5, top+2, 10, 4, '#e7ecff');
   }
 }
-function refreshIcons(){
-  updateAgeLabel();
-  const get=id=>document.querySelector('.ico[data-id="'+id+'"]');
-  // light toggle visual
-  const lb=get('light'); if(lb) lb.classList.toggle('on', !S.lightOn);
-  // alert badges
-  const setAlert=(id,on)=>{ const e=get(id); if(e) e.classList.toggle('alert',!!on); };
-  setAlert('feed', S.hunger<=1);
-  setAlert('train', S.strength<=1 && stageOf(S.species)>=1);
-  setAlert('clean', S.poop>0);
-  setAlert('heal', S.sick||S.injured);
-}
 
-function handleIcon(id){
-  if(!S.alive){ toast('NO PET'); return; }
-  if(view==='battle'||view==='train'){ return; }
-  if(view==='adventure'){ toast('ON QUEST'); return; }
-  if(view==='stats' && id!=='stats'){ view='main'; }
-  closeTray();
+function drawHair(c, cx, hy, idx, gender, hair, hairSh, OL){
+  const styles = HAIR_STYLES[gender];
+  const id = styles[idx].id;
+  const hx = cx-12, hw=24;
+  function cap(extra){ // basic top cap covering forehead
+    px(c, hx+1, hy-3, hw-2, 8, hair);
+    px(c, hx+1, hy-3, hw-2, 2, OL_or(hair));
+    px(c, hx, hy, 3, 6, hair); px(c, hx+hw-3, hy, 3, 6, hair);
+  }
+  function OL_or(h){ return shade(h,-0.4); }
   switch(id){
-    case 'feed': openTray([
-        {label:'🍖 MEAT ('+S.items.meat+')', fn:()=>feed('meat')},
-        {label:'💊 VITA ('+S.items.vita+')', fn:()=>feed('vita')},
-        {label:'CLOSE', fn:closeTray}
-      ]); break;
-    case 'light': toggleLight(); break;
-    case 'train': train(); break;
-    case 'clean': clean(); break;
-    case 'heal': heal(); break;
-    case 'stats': view = view==='stats'?'main':'stats'; break;
-    case 'battle': openTray([
-        {label:'⚔ '+C.mushy.name, fn:()=>startBattle('mushy')},
-        {label:'⚔ '+C.kuwa.name, fn:()=>startBattle('kuwa')},
-        {label:'⚔ '+C.devil.name, fn:()=>startBattle('devil')},
-        {label:'CLOSE', fn:closeTray}
-      ]); break;
-    case 'adventure': openTray(
-        AREAS.map((a,i)=>({label:'➤ '+a.name, fn:()=>startAdventure(i)}))
-          .concat([{label:'CLOSE',fn:closeTray}])
-      ); break;
+    case 'short': case 'buzz':
+      px(c, hx+1, hy-2, hw-2, 7, hair); px(c, hx+1, hy-2, hw-2, 2, shade(hair,.2));
+      px(c, hx, hy+1, 2, 5, hair); px(c, hx+hw-2, hy+1, 2, 5, hair);
+      break;
+    case 'spiky': case 'spikyf':
+      px(c, hx+1, hy-1, hw-2, 7, hair);
+      for(let i=0;i<6;i++){ const sxp=hx+2+i*3; px(c, sxp, hy-5, 2, 6, hair); px(c, sxp, hy-5, 1, 6, shade(hair,.25)); }
+      px(c, hx, hy+1, 2, 6, hair); px(c, hx+hw-2, hy+1, 2, 6, hair);
+      break;
+    case 'mohawk':
+      px(c, hx+3, hy+1, hw-6, 4, shade(hair,-.2));
+      px(c, cx-3, hy-7, 6, 12, hair); px(c, cx-3, hy-7, 2, 12, shade(hair,.25));
+      break;
+    case 'bowl':
+      px(c, hx, hy-3, hw, 11, hair); px(c, hx, hy-3, hw, 2, shade(hair,.2));
+      px(c, hx, hy+8, hw, 2, shade(hair,-.2));
+      break;
+    case 'long': case 'longf':
+      px(c, hx-1, hy-3, hw+2, 10, hair);
+      px(c, hx-1, hy+4, 4, 30, hair); px(c, hx+hw-3, hy+4, 4, 30, hair);   // long sides
+      px(c, hx-1, hy+4, 2, 30, shade(hair,-.2)); px(c, hx+hw-1, hy+4, 2, 30, shade(hair,-.2));
+      px(c, hx, hy-3, hw, 2, shade(hair,.2));
+      break;
+    case 'bob':
+      px(c, hx-1, hy-3, hw+2, 12, hair);
+      px(c, hx-1, hy+6, 4, 8, hair); px(c, hx+hw-3, hy+6, 4, 8, hair);
+      px(c, hx, hy-3, hw, 2, shade(hair,.2));
+      px(c, hx+4, hy+5, hw-8, 4, '#000'); // peek of face handled by face already
+      px(c, hx+4, hy+5, hw-8, 4, hair);
+      break;
+    case 'pony':
+      px(c, hx+1, hy-2, hw-2, 8, hair); px(c, hx+1, hy-2, hw-2, 2, shade(hair,.2));
+      px(c, hx+hw-2, hy+2, 5, 22, hair); px(c, hx+hw-2, hy+2, 2, 22, shade(hair,-.2)); // tail
+      break;
+    case 'twin':
+      px(c, hx+1, hy-2, hw-2, 8, hair); px(c, hx+1, hy-2, hw-2, 2, shade(hair,.2));
+      px(c, hx-3, hy+4, 5, 18, hair); px(c, hx+hw-2, hy+4, 5, 18, hair);
+      px(c, hx-3, hy+4, 2, 18, shade(hair,-.2)); px(c, hx+hw+1, hy+4, 2, 18, shade(hair,-.2));
+      break;
+    default:
+      px(c, hx+1, hy-2, hw-2, 7, hair);
   }
 }
-function openTray(opts){
-  const tray=document.getElementById('tray'); tray.innerHTML='';
-  for(const o of opts){
-    const btn=document.createElement('button'); btn.textContent=o.label;
-    btn.addEventListener('click',o.fn); tray.appendChild(btn);
-  }
-  tray.classList.add('show');
-}
-function closeTray(){ const t=document.getElementById('tray'); t.classList.remove('show'); t.innerHTML=''; }
 
-/* ---------- canvas tap handling ------------------------------------------ */
-cv.addEventListener('click',()=>{
-  if(!S.alive){ S=freshPet(); view='main'; save(); refreshIcons(); toast('NEW EGG!'); return; }
-  if(S.species==='egg'){ hatch(); return; }
-  if(view==='stats'){ view='main'; return; }
-  if(view==='train'){ trainTap(); return; }
-  if(view==='adventure'){ if(adventure&&adventure.finished){ adventure=null; view='main'; refreshIcons(); } return; }
-  if(view==='dead'){ S=freshPet(); view='main'; save(); return; }
-  // petting: small happiness / wake check
-  if(view==='main'){
-    if(S.asleep){ toast('ZZZ...'); }
-    else { beep(700,.05); toast('♥'); }
-  }
-});
-function hatch(){
-  S.species='botari'; S.hatched=true; S.stageSec=0;
-  S.maxhp=maxHpFor('botari'); S.hp=S.maxhp;
-  sfx.evo(); toast('IT HATCHED!'); hint('Care for your DigiPet!');
-  save(); refreshIcons();
+function drawGoggles(c, cx, hy){
+  const gy = hy-3, frame='#2b2b33', glass='rgba(120,200,255,.85)';
+  px(c, cx-11, gy, 22, 4, '#b08d3a');          // strap
+  px(c, cx-9, gy-1, 7, 7, frame); px(c, cx+2, gy-1, 7, 7, frame);
+  px(c, cx-8, gy, 5, 5, glass); px(c, cx+3, gy, 5, 5, glass);
+  px(c, cx-8, gy, 2, 2, '#ffffff'); px(c, cx+3, gy, 2, 2, '#ffffff');
 }
 
-/* ---------- footer buttons ----------------------------------------------- */
-document.getElementById('soundBtn').addEventListener('click',function(){
-  sound=!sound; this.textContent='♪ Sound: '+(sound?'On':'Off'); save();
-});
-document.getElementById('resetBtn').addEventListener('click',()=>{
-  if(confirm('Reset your DigiPet to a new egg? This erases progress.')){
-    S=freshPet(); view='main'; closeTray(); save(); refreshIcons();
-    hint('Tap the egg to begin.'); toast('RESET');
+/* ===================================================================== */
+/*  DIGIVICE  (logical 64x88)                                            */
+/* ===================================================================== */
+function drawDevice(canvas, idx, color, frame){
+  const c=canvas.getContext('2d'); c.imageSmoothingEnabled=false;
+  const W=canvas.width,H=canvas.height; c.clearRect(0,0,W,H);
+  const dev=DEVICES[idx]; const body=color, bodySh=shade(color,-0.28), bodyLt=shade(color,0.25);
+  const scr=dev.screen, OL='#0c0e16';
+  const cx=W/2;
+  function rrect(x,y,w,h,r,col){ c.fillStyle=col;
+    c.beginPath(); c.moveTo(x+r,y);
+    c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r);
+    c.closePath(); c.fill();
   }
+  function screen(x,y,w,h,r){ rrect(x-1,y-1,w+2,h+2,r+1,'#0b0f1a'); rrect(x,y,w,h,r,scr);
+    // subtle scanline + a pixel pet egg
+    c.fillStyle='rgba(0,0,0,.08)'; for(let i=0;i<h;i+=3) c.fillRect(x,y+i,w,1);
+    const ex=x+w/2-3, ey=y+h/2-4; c.fillStyle='rgba(0,0,0,.55)';
+    c.fillRect(ex,ey,6,8); c.fillRect(ex-1,ey+2,8,4); c.fillRect(ex+1,ey-1,2,1);
+  }
+  c.save();
+  switch(dev.id){
+    case 'classic':{ // egg-ish oval body
+      rrect(cx-18,8,36,72,18,bodySh); rrect(cx-18,6,36,72,18,body); rrect(cx-15,9,30,30,14,bodyLt);
+      px(c,cx-2,4,4,5,bodySh); // top nub
+      screen(cx-12,16,24,22,6);
+      // 3 buttons
+      px(c,cx-9,46,7,7,bodySh); px(c,cx+2,46,7,7,bodySh); px(c,cx-3,58,7,7,bodySh);
+      rrect(cx-9,45,7,7,3,bodyLt); rrect(cx+2,45,7,7,3,bodyLt); rrect(cx-3,57,7,7,3,bodyLt);
+      break; }
+    case 'd3':{ // rounded rect + side grips, round screen
+      rrect(cx-19,8,38,72,14,bodySh); rrect(cx-19,6,38,72,14,body);
+      rrect(cx-22,24,5,26,3,bodySh); rrect(cx+17,24,5,26,3,bodySh); // grips
+      c.fillStyle='#0b0f1a'; c.beginPath(); c.arc(cx,30,15,0,7); c.fill();
+      c.fillStyle=scr; c.beginPath(); c.arc(cx,30,13,0,7); c.fill();
+      const ex=cx-3,ey=26; c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(ex,ey,6,8);
+      px(c,cx-3,52,6,6,bodyLt); px(c,cx-10,58,5,5,bodySh); px(c,cx+5,58,5,5,bodySh);
+      break; }
+    case 'dark':{ // D-Ark: body + circular dial right + trigger
+      rrect(cx-17,8,34,70,10,bodySh); rrect(cx-17,6,34,70,10,body);
+      screen(cx-11,14,20,20,4);
+      c.fillStyle=bodyLt; c.beginPath(); c.arc(cx+9,52,9,0,7); c.fill();
+      c.fillStyle=bodySh; c.beginPath(); c.arc(cx+9,52,9,0,7); c.stroke?0:0;
+      c.fillStyle=bodySh; c.beginPath(); c.arc(cx+9,52,4,0,7); c.fill();
+      rrect(cx-13,46,10,8,3,bodySh);  // left button
+      px(c,cx-1,74,4,8,bodySh);       // trigger
+      break; }
+    case 'scanner':{ // Frontier flip scanner
+      rrect(cx-16,30,32,50,8,bodySh); rrect(cx-16,28,32,50,8,body);  // base
+      rrect(cx-16,8,32,24,8,bodyLt); rrect(cx-16,8,32,22,8,body);    // flip top
+      screen(cx-11,38,22,18,4);
+      px(c,cx-2,12,4,12,bodySh);
+      px(c,cx-9,62,7,6,bodySh); px(c,cx+2,62,7,6,bodySh);
+      break; }
+    case 'xros':{ // phone-like big screen
+      rrect(cx-18,6,36,76,9,bodySh); rrect(cx-18,4,36,76,9,body);
+      screen(cx-13,14,26,40,4);
+      c.fillStyle=bodySh; for(let i=0;i<3;i++) c.fillRect(cx-4+i*4,60,2,2); // speaker
+      rrect(cx-6,66,12,8,4,bodyLt);
+      break; }
+    case 'vital':{ // round watch face + band
+      rrect(cx-10,2,20,18,6,bodySh); rrect(cx-10,70,20,18,6,bodySh);   // bands
+      c.fillStyle=body; c.beginPath(); c.arc(cx,44,22,0,7); c.fill();
+      c.fillStyle=bodyLt; c.beginPath(); c.arc(cx,44,22,Math.PI,Math.PI*1.6); c.fill();
+      c.fillStyle='#0b0f1a'; c.beginPath(); c.arc(cx,44,16,0,7); c.fill();
+      c.fillStyle=scr; c.beginPath(); c.arc(cx,44,14,0,7); c.fill();
+      const ex=cx-3,ey=40; c.fillStyle='rgba(0,0,0,.5)'; c.fillRect(ex,ey,6,8);
+      px(c,cx+20,40,5,8,bodySh); // crown
+      break; }
+  }
+  c.restore();
+}
+
+/* ===================================================================== */
+/*  COLOUR WHEEL (HSV)                                                    */
+/* ===================================================================== */
+function hsv2rgb(h,s,v){ h/=60; const i=Math.floor(h)%6, f=h-Math.floor(h);
+  const p=v*(1-s), q=v*(1-s*f), t=v*(1-s*(1-f)); let r,g,b;
+  [[v,t,p],[q,v,p],[p,v,t],[p,q,v],[t,p,v],[v,p,q]][i].forEach((x,j)=>{ if(j===0)r=x; if(j===1)g=x; if(j===2)b=x; });
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function rgb2hex(r,g,b){ return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function hex2hsv(hex){
+  const n=parseInt(hex.slice(1),16); let r=(n>>16)/255,g=((n>>8)&255)/255,b=(n&255)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn; let h=0;
+  if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
+  return [h, mx?d/mx:0, mx];
+}
+const wheelCv=document.getElementById('wheelCv'), wheelCtx=wheelCv.getContext('2d');
+let wheelState={h:210,s:.6,v:1,onApply:null};
+function renderWheel(v){
+  const w=wheelCv.width,h=wheelCv.height,cx=w/2,cy=h/2,R=cx-2;
+  const img=wheelCtx.createImageData(w,h),d=img.data;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const dx=x-cx,dy=y-cy,r=Math.sqrt(dx*dx+dy*dy),i=(y*w+x)*4;
+    if(r>R){ d[i+3]=0; continue; }
+    let hue=(Math.atan2(dy,dx)*180/Math.PI+360)%360, sat=Math.min(1,r/R);
+    const [rr,gg,bb]=hsv2rgb(hue,sat,v);
+    d[i]=rr;d[i+1]=gg;d[i+2]=bb;d[i+3]=255;
+  }
+  wheelCtx.putImageData(img,0,0);
+}
+function placeCursor(){
+  const R=wheelCv.width/2-2, cx=wheelCv.width/2, cy=wheelCv.height/2;
+  const ang=wheelState.h*Math.PI/180, rad=wheelState.s*R;
+  const cur=document.getElementById('wheelCur');
+  const rect=110; // display px radius (canvas shown at 220)
+  const scale=220/wheelCv.width;
+  cur.style.left=(cx+Math.cos(ang)*rad)*scale+'px';
+  cur.style.top=(cy+Math.sin(ang)*rad)*scale+'px';
+}
+function wheelHex(){ const [r,g,b]=hsv2rgb(wheelState.h,wheelState.s,wheelState.v); return rgb2hex(r,g,b); }
+function updateWheelChip(){ const hex=wheelHex();
+  document.getElementById('wheelChip').style.background=hex;
+  if(wheelState.live) wheelState.live(hex);
+}
+function openWheel(title, startHex, onLive, onApply){
+  const [h,s,v]=hex2hsv(startHex);
+  wheelState={h,s,v,live:onLive,onApply};
+  document.getElementById('wheelTitle').textContent=title;
+  document.getElementById('brightSlider').value=Math.round(v*100);
+  renderWheel(v); placeCursor(); updateWheelChip();
+  document.getElementById('wheelModal').classList.remove('hidden');
+}
+function pickFromEvent(e){
+  const r=wheelCv.getBoundingClientRect();
+  const sx=wheelCv.width/r.width;
+  const x=(e.clientX-r.left)*sx, y=(e.clientY-r.top)*sx;
+  const cx=wheelCv.width/2,cy=wheelCv.height/2,R=cx-2;
+  const dx=x-cx,dy=y-cy; let rr=Math.sqrt(dx*dx+dy*dy);
+  wheelState.h=(Math.atan2(dy,dx)*180/Math.PI+360)%360;
+  wheelState.s=Math.min(1,rr/R);
+  placeCursor(); updateWheelChip();
+}
+let wheelDrag=false;
+wheelCv.addEventListener('pointerdown',e=>{wheelDrag=true;pickFromEvent(e);wheelCv.setPointerCapture(e.pointerId);});
+wheelCv.addEventListener('pointermove',e=>{ if(wheelDrag)pickFromEvent(e); });
+wheelCv.addEventListener('pointerup',()=>wheelDrag=false);
+document.getElementById('brightSlider').addEventListener('input',e=>{
+  wheelState.v=e.target.value/100; renderWheel(wheelState.v); updateWheelChip();
+});
+document.getElementById('wheelApply').addEventListener('click',()=>{
+  if(wheelState.onApply) wheelState.onApply(wheelHex());
+  document.getElementById('wheelModal').classList.add('hidden');
+});
+document.getElementById('wheelCancel').addEventListener('click',()=>{
+  if(wheelState.cancel) wheelState.cancel();
+  document.getElementById('wheelModal').classList.add('hidden');
 });
 
-/* ---------- boot --------------------------------------------------------- */
-load();
-buildIcons();
-// catch up offline time immediately
-(function init(){
-  const now=Date.now();
-  let elapsed=Math.floor((now-S.lastTick)/1000);
-  if(elapsed>0){ if(elapsed>CFG.offlineCap) elapsed=CFG.offlineCap; simulate(elapsed); }
-  S.lastTick=now;
-  if(!S.alive) view='dead';
-  refreshIcons(); save();
-  document.getElementById('soundBtn').textContent='♪ Sound: '+(sound?'On':'Off');
-  if(S.species==='egg') hint('Tap the egg to hatch your DigiPet!');
-  else hint('');
+/* ===================================================================== */
+/*  CREATION UI WIRING                                                    */
+/* ===================================================================== */
+const avCanvas=document.getElementById('avCanvas');
+const devCanvas=document.getElementById('devCanvas');
+let animFrame=0;
+function renderCreator(){
+  drawAvatar(avCanvas, T, animFrame);
+  drawDevice(devCanvas, T.devIdx, T.devColor, animFrame);
+  document.getElementById('hairName').textContent = HAIR_STYLES[T.gender][T.hairIdx].n;
+  document.getElementById('outfitName').textContent = OUTFITS[T.outfitIdx].n;
+  document.getElementById('hairColor').style.background = T.hairColor;
+  document.getElementById('outfitColor').style.background = T.outfitColor;
+  document.getElementById('devColor').style.background = T.devColor;
+  document.getElementById('devName').textContent = DEVICES[T.devIdx].n;
+  document.getElementById('devSeries').textContent = DEVICES[T.devIdx].series;
+  document.getElementById('devHex').textContent = T.devColor;
+  // device dots
+  const dd=document.getElementById('devDots'); dd.innerHTML='';
+  DEVICES.forEach((d,i)=>{ const e=document.createElement('i'); if(i===T.devIdx)e.className='on'; dd.appendChild(e); });
+  // goggle switch
+  document.getElementById('goggleSwitch').classList.toggle('on', T.goggles);
+}
+// skin row
+(function buildSkins(){
+  const row=document.getElementById('skinRow');
+  SKINS.forEach(s=>{ const b=document.createElement('div'); b.className='swatch'; b.style.background=s;
+    b.addEventListener('click',()=>{ T.skin=s; renderCreator(); markSkins(); }); row.appendChild(b); });
+  markSkins();
+  function _(){}
 })();
-setInterval(tick,1000);
-requestAnimationFrame(draw);
+function markSkins(){ [...document.querySelectorAll('#skinRow .swatch')].forEach((b,i)=>{
+  b.style.outline = SKINS[i]===T.skin ? '3px solid var(--acc)' : 'none'; b.style.outlineOffset='1px'; }); }
+
+// steppers
+document.querySelectorAll('.arrow[data-step]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const d=parseInt(btn.dataset.d), step=btn.dataset.step;
+    if(step==='hair'){ const L=HAIR_STYLES[T.gender].length; T.hairIdx=(T.hairIdx+d+L)%L; }
+    if(step==='outfit'){ const L=OUTFITS.length; T.outfitIdx=(T.outfitIdx+d+L)%L; }
+    if(step==='device'){ const L=DEVICES.length; T.devIdx=(T.devIdx+d+L)%L; T.devColor=DEVICES[T.devIdx].def; }
+    renderCreator();
+  });
+});
+// gender
+document.querySelectorAll('#genderSeg button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    T.gender=b.dataset.g;
+    document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.toggle('on',x===b));
+    T.hairIdx=Math.min(T.hairIdx,HAIR_STYLES[T.gender].length-1);
+    renderCreator();
+  });
+});
+// goggles
+document.getElementById('goggleSwitch').addEventListener('click',()=>{ T.goggles=!T.goggles; renderCreator(); });
+// colour wheels
+document.getElementById('hairColor').addEventListener('click',()=>{
+  const prev=T.hairColor;
+  openWheel('Hair colour', T.hairColor, hex=>{T.hairColor=hex;renderCreator();}, hex=>{T.hairColor=hex;renderCreator();});
+  wheelState.cancel=()=>{T.hairColor=prev;renderCreator();};
+});
+document.getElementById('outfitColor').addEventListener('click',()=>{
+  const prev=T.outfitColor;
+  openWheel('Outfit colour', T.outfitColor, hex=>{T.outfitColor=hex;renderCreator();}, hex=>{T.outfitColor=hex;renderCreator();});
+  wheelState.cancel=()=>{T.outfitColor=prev;renderCreator();};
+});
+document.getElementById('devColor').addEventListener('click',()=>{
+  const prev=T.devColor;
+  openWheel('Device colour', T.devColor, hex=>{T.devColor=hex;renderCreator();}, hex=>{T.devColor=hex;renderCreator();});
+  wheelState.cancel=()=>{T.devColor=prev;renderCreator();};
+});
+// name + begin
+const nameInput=document.getElementById('nameInput'), beginBtn=document.getElementById('beginBtn');
+nameInput.addEventListener('input',()=>{ T.name=nameInput.value.trim(); beginBtn.disabled=T.name.length<1; });
+beginBtn.addEventListener('click',()=>{ saveTamer(); showHome(); toast('Welcome, '+T.name+'!'); });
+
+/* ===================================================================== */
+/*  HOME DASHBOARD                                                        */
+/* ===================================================================== */
+const DASH=[
+  {id:'partner',n:'My Partner',d:'Raise your Digimon',ic:'<path d="M12 21s-7-4.3-9.3-8.6C1.2 9.6 2.7 6 6 6c2 0 3 1.2 4 2.5C11 7.2 12 6 14 6c3.3 0 4.8 3.6 3.3 6.4C19 16.7 12 21 12 21z"/>',col:'var(--pink)',soon:true},
+  {id:'battle',n:'Battle',d:'Fight wild Digimon',ic:'<path d="M4 20l8-8M14 6l4-4 2 2-4 4M14 6l4 4M20 20l-8-8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',col:'var(--bad)',soon:true},
+  {id:'adventure',n:'Adventure',d:'Explore the Digital World',ic:'<path d="M12 2l2.5 7H22l-6 4.5 2.3 7L12 16l-6.3 4.5L8 13.5 2 9h7.5z" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/>',col:'var(--teal)',soon:true},
+  {id:'items',n:'Items',d:'Bag & supplies',ic:'<path d="M6 8h12l-1 12H7L6 8zM9 8V6a3 3 0 016 0v2" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',col:'var(--acc2)',soon:true},
+  {id:'card',n:'Tamer Card',d:'View your profile',ic:'<path d="M3 6h18v12H3zM7 10h4M7 14h8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',col:'var(--blue)',soon:false},
+  {id:'settings',n:'Settings',d:'Edit tamer / reset',ic:'<path d="M12 9a3 3 0 100 6 3 3 0 000-6zM19 12a7 7 0 00-.1-1l2-1.5-2-3.4-2.3 1a7 7 0 00-1.7-1L16.5 2h-4l-.4 2.6a7 7 0 00-1.7 1l-2.3-1-2 3.4L8 11a7 7 0 000 2l-2 1.5 2 3.4 2.3-1a7 7 0 001.7 1l.4 2.6h4l.4-2.6a7 7 0 001.7-1l2.3 1 2-3.4L19 13z" stroke="currentColor" stroke-width="1.6" fill="none"/>',col:'var(--ink-soft)',soon:false},
+];
+function buildDash(){
+  const d=document.getElementById('dash'); d.innerHTML='';
+  DASH.forEach(t=>{
+    const el=document.createElement('div'); el.className='tile';
+    el.innerHTML=`<div class="ic" style="background:color-mix(in srgb, ${t.col} 18%, transparent);color:${t.col}">
+      <svg viewBox="0 0 24 24" fill="${t.id==='partner'?t.col:'none'}">${t.ic}</svg></div>
+      <div class="tn">${t.n}</div><div class="td">${t.d}</div>
+      ${t.soon?'<div class="soon">COMING SOON</div>':''}`;
+    el.addEventListener('click',()=>handleTile(t.id));
+    d.appendChild(el);
+  });
+}
+function handleTile(id){
+  if(id==='settings'){ if(confirm('Edit your tamer? (Your current look will load into the creator.)')){ showCreator(); } return; }
+  if(id==='card'){ toast(T.name+' · '+DEVICES[T.devIdx].n+' tamer'); return; }
+  toast('"'+DASH.find(x=>x.id===id).n+'" arrives in the next update!');
+}
+function showHome(){
+  document.getElementById('creator').classList.add('hidden');
+  document.getElementById('home').classList.remove('hidden');
+  document.getElementById('homeName').textContent=T.name;
+  document.getElementById('homeDev').textContent=DEVICES[T.devIdx].n+' · '+DEVICES[T.devIdx].series;
+  drawAvatar(document.getElementById('homeAv'), T, animFrame);
+  drawDevice(document.getElementById('homeDev2'), T.devIdx, T.devColor, 0);
+  buildDash();
+}
+function showCreator(){
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('creator').classList.remove('hidden');
+  nameInput.value=T.name||''; beginBtn.disabled=!(T.name&&T.name.length);
+  document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.toggle('on',x.dataset.g===T.gender));
+  markSkins(); renderCreator();
+}
+document.getElementById('editBtn').addEventListener('click',showCreator);
+
+/* ---------- persistence ---------- */
+function saveTamer(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(T)); }catch(e){} }
+function loadTamer(){ try{ const r=localStorage.getItem(SAVE_KEY); if(r){ T=Object.assign(T,JSON.parse(r)); return true; } }catch(e){} return false; }
+
+/* ---------- toast ---------- */
+let toastT=null;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ---------- boot + idle animation ---------- */
+function loop(){ animFrame++;
+  if(!document.getElementById('creator').classList.contains('hidden')){ renderCreatorLight(); }
+  else { drawAvatar(document.getElementById('homeAv'), T, animFrame); }
+  requestAnimationFrame(loop);
+}
+function renderCreatorLight(){ drawAvatar(avCanvas,T,animFrame); } // only animate avatar each frame
+(function boot(){
+  const had=loadTamer();
+  buildSkinsMark();
+  renderCreator();
+  if(had && T.name){ showHome(); } else { showCreator(); }
+  requestAnimationFrame(loop);
+})();
+function buildSkinsMark(){ markSkins(); }
 </script>
 </body>
 </html>
