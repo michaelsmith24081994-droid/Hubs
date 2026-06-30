@@ -316,6 +316,10 @@ function shade(hex,amt){ // darken (amt<0) / lighten (amt>0) a #rrggbb by amt (-
 function rr(c,x,y,w,h,r,col){ c.fillStyle=col; c.beginPath();
   c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
   c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); c.fill(); }
+function tri(c,x1,y1,x2,y2,x3,y3,col){ c.fillStyle=col; c.beginPath();
+  c.moveTo(x1,y1); c.lineTo(x2,y2); c.lineTo(x3,y3); c.closePath(); c.fill(); }
+function poly(c,pts,col){ c.fillStyle=col; c.beginPath(); c.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++) c.lineTo(pts[i][0],pts[i][1]); c.closePath(); c.fill(); }
 function hexToRgb(h){ const n=parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
 // returns a new canvas: a 1px dark outline around every opaque region of src, src on top
 function outlineCanvas(src,color,t){
@@ -357,25 +361,26 @@ function paintAvatar(c,W,H,opts,frame){
   const out=opts.outfitColor, oSh=shade(out,-0.28), oLt=shade(out,0.24);
   const pants='#39425f', pSh='#2a3150', shoe='#222a3e', shoeLt='#aab4d8';
   const cx=Math.floor(W/2), oy=bob;
-  const hx=cx-14, hy=4+oy, hw=28, hh=30;
+  const hw=22, hx=cx-11, hy=4+oy, hh=28;
   const torsoTop=hy+hh-2;
-  const sw=fem?24:30, sx=cx-sw/2;
+  const sw=fem?13:15, sx=cx-Math.floor(sw/2), L=sx, R=sx+sw;
 
-  // legs + shoes
-  const legY=torsoTop+24;
-  px(c,cx-9,legY,7,18,pants); px(c,cx-9,legY,2,18,pSh);
-  px(c,cx+2,legY,7,18,pants); px(c,cx+6,legY,3,18,pSh);
-  px(c,cx-11,legY+16,10,6,shoe); px(c,cx+1,legY+16,10,6,shoe);
-  px(c,cx-11,legY+20,10,2,shoeLt); px(c,cx+1,legY+20,10,2,shoeLt);
+  // legs + shoes (slim, close together)
+  const legY=torsoTop+22;
+  px(c,cx-5,legY,4,15,pants); px(c,cx-5,legY,2,15,pSh);
+  px(c,cx+1,legY,4,15,pants); px(c,cx+3,legY,2,15,pSh);
+  px(c,cx-6,legY+13,6,5,shoe); px(c,cx,legY+13,6,5,shoe);
+  px(c,cx-6,legY+16,6,2,shoeLt); px(c,cx,legY+16,6,2,shoeLt);
 
-  // arms (sleeves + hands)
-  const armY=torsoTop+3;
-  px(c,sx-5,armY,6,18,out); px(c,sx-5,armY,2,18,oSh);
-  px(c,sx+sw-1,armY,6,18,out); px(c,sx+sw+3,armY,2,18,oSh);
-  px(c,sx-5,armY+16,6,6,skin); px(c,sx+sw-1,armY+16,6,6,skin);
-  px(c,sx-5,armY+20,6,2,sSh); px(c,sx+sw-1,armY+20,6,2,sSh);
+  // arms (thin, hanging, separated from torso by a shade line)
+  const armY=torsoTop+4;
+  rr(c,L-4,armY,4,15,2,out); rr(c,R,armY,4,15,2,out);          // sleeves
+  px(c,L-4,armY,1,15,oLt); px(c,R+3,armY,1,15,oSh);            // arm edge shading
+  px(c,L,armY,1,14,oSh); px(c,R-1,armY,1,14,oSh);              // shoulder separation
+  rr(c,L-4,armY+14,4,5,1,skin); rr(c,R,armY+14,4,5,1,skin);    // hands
+  px(c,L-4,armY+17,4,1,sSh); px(c,R,armY+17,4,1,sSh);
 
-  // torso / outfit
+  // torso / outfit (tapered silhouette drawn inside drawOutfit)
   drawOutfit(c,cx,torsoTop,sw,opts.outfitIdx,out,oSh,oLt,skin,fem);
 
   // neck
@@ -411,90 +416,106 @@ function paintAvatar(c,W,H,opts,frame){
 }
 
 function drawOutfit(c, cx, top, w, idx, out, oSh, oLt, skin, fem){
-  const x=cx-w/2, h=26, id=OUTFITS[idx].id;
-  px(c,x,top,w,h,out);
-  px(c,x,top,w,3,oLt);                 // shoulder highlight
-  px(c,x,top+h-4,w,4,oSh);             // hem shade
-  px(c,x,top,3,h,oLt); px(c,x+w-3,top,3,h,oSh);   // side shading
+  const id=OUTFITS[idx].id, M=cx;
+  const L=cx-Math.floor(w/2), R=cx+Math.ceil(w/2), botY=top+22;
+  // tapered torso silhouette: rounded shoulders, slight waist
+  poly(c,[[L+1,top],[R-1,top],[R,top+4],[R-1,botY],[L+1,botY],[L,top+4]],out);
+  px(c,L+1,top,w-2,3,oLt);                          // shoulder highlight
+  px(c,L+1,botY-3,w-2,3,oSh);                        // hem shade
+  px(c,L,top+4,2,botY-top-4,oLt); px(c,R-2,top+4,2,botY-top-4,oSh); // side shading
   if(id==='jacket'){
-    px(c,cx-6,top,12,7,'#eef3ff');                // open collar inner shirt
-    px(c,x,top,6,h,oSh); px(c,x+w-6,top,6,h,out); // lapels
-    px(c,cx-1,top+6,2,h-6,oSh);                   // zipper
+    tri(c,M-4,top,M,top+6,M+4,top,'#eef3ff');        // open collar V
+    px(c,M-1,top+5,2,botY-top-7,oSh);                // zipper
+    px(c,L+1,top+3,3,botY-top-3,oSh);                // lapel shade
   } else if(id==='hoodie'){
-    px(c,cx-8,top-2,16,5,oSh);                    // hood roll
-    px(c,cx-1,top+4,2,12,oSh);
-    px(c,cx-7,top+14,14,8,oLt);                   // pocket
-    px(c,cx-5,top+2,3,2,'#eef3ff'); px(c,cx+2,top+2,3,2,'#eef3ff'); // draw-strings
+    px(c,M-5,top-1,10,4,oSh);                        // hood roll
+    px(c,M-1,top+3,2,9,oSh);
+    px(c,M-5,top+12,10,7,oLt);                       // pocket
+    px(c,M-4,top+1,2,2,'#eef3ff'); px(c,M+2,top+1,2,2,'#eef3ff'); // strings
   } else if(id==='tee'){
-    px(c,cx-5,top,10,4,'#eef3ff');                // collar
-    px(c,cx-4,top+9,8,9,oLt); px(c,cx-2,top+11,4,5,oSh);  // print
+    px(c,M-3,top,6,3,'#eef3ff');                     // collar
+    px(c,M-3,top+7,6,8,oLt); px(c,M-1,top+9,2,4,oSh);// print
   } else if(id==='vest'){
-    px(c,x+4,top,w-8,h,'#eef3ff');                // shirt
-    px(c,x,top,5,h,out); px(c,x+w-5,top,5,h,out);
-    px(c,x,top,3,h,oLt); px(c,x+w-3,top,3,h,oSh);
-    px(c,cx-1,top+2,2,h-4,'#c9d4ee');             // shirt seam
+    px(c,L+3,top+1,w-6,botY-top-1,'#eef3ff');        // shirt panel
+    px(c,L,top,3,botY-top,out); px(c,R-3,top,3,botY-top,out);
+    px(c,M-1,top+1,1,botY-top-2,'#c9d4ee');          // shirt seam
   } else if(id==='uniform'){
-    px(c,cx-7,top,14,5,oLt);                      // collar
-    px(c,cx-1,top,2,h,oSh);
-    for(let i=0;i<4;i++) px(c,cx-1,top+5+i*5,2,2,'#ffd23f'); // buttons
+    px(c,M-4,top,8,4,oLt);                           // collar
+    px(c,M-1,top,2,botY-top,oSh);
+    for(let i=0;i<3;i++) px(c,M,top+6+i*5,1,2,'#ffd23f'); // buttons
   } else if(id==='dress'){
-    px(c,cx-w/2-3,top+14,w+6,12,out);             // skirt flare
-    px(c,cx-w/2-3,top+22,w+6,4,oSh);
-    px(c,cx-6,top,12,4,'#eef3ff');                // collar
-    px(c,cx-1,top+4,2,10,oSh);
+    poly(c,[[L-2,top+11],[R+2,top+11],[R+4,botY+4],[L-4,botY+4]],out);  // skirt flare
+    px(c,L-3,botY+1,w+7,3,oSh);
+    px(c,M-3,top,6,3,'#eef3ff');                     // collar
   }
 }
 
 function drawHair(c, cx, hy, hw, idx, gender, hair, hSh, hLt){
   const id = HAIR_STYLES[gender][idx].id;
-  const hx = cx-hw/2;
-  function cap(){ // main hair mass on the crown, fringe ending above the eyes
-    rr(c,hx-1,hy-4,hw+2,16,9,hair);
-    px(c,hx-1,hy-4,hw+2,3,hLt);                        // top highlight
-    px(c,hx+1,hy+9,hw-2,3,hSh);                        // under-fringe shadow
-    px(c,cx-9,hy+10,3,3,hSh); px(c,cx-1,hy+10,3,3,hSh); px(c,cx+6,hy+10,3,3,hSh); // bang tips
-    px(c,hx-1,hy+8,4,8,hair); px(c,hx+hw-3,hy+8,4,8,hair);   // sideburns
+  const hx = cx-hw/2, hr=hx+hw;
+  // soft rounded base mass over the crown (fringe stops above the eyes)
+  function base(){
+    rr(c,hx-1,hy+1,hw+2,11,6,hair);
+    px(c,hx,hy+2,hw,2,hLt);
+    px(c,hx-1,hy+8,3,8,hair); px(c,hr-2,hy+8,3,8,hair);    // sideburns hugging face
+  }
+  // a pointed fringe across the forehead made of downward triangles
+  function fringe(n,depth){
+    for(let i=0;i<n;i++){ const x=hx + i*(hw/(n-0.0)); const w=hw/n;
+      tri(c, x, hy+4, x+w, hy+4, x+w*0.5, hy+4+depth, hair); }
+    px(c,hx,hy+4,hw,1,hLt);
+  }
+  // a cluster of upward spikes from y0 with given peak heights
+  function spikes(list){
+    list.forEach(s=>{ tri(c, s[0]-s[2], hy+5, s[0], hy-s[1], s[0]+s[2], hy+5, hair);
+      tri(c, s[0]-s[2], hy+5, s[0], hy-s[1], s[0]-1, hy+5, hLt); });
   }
   switch(id){
-    case 'short': cap(); break;
-    case 'buzz':
-      rr(c,hx,hy-2,hw,12,8,hair); px(c,hx,hy-2,hw,3,hLt); break;
     case 'spiky': case 'spikyf':
-      cap();
-      for(let i=0;i<7;i++){ const sxp=hx+1+i*4, hgt=6+(i%2?3:0);
-        px(c,sxp,hy-4-hgt,3,hgt+5,hair); px(c,sxp,hy-4-hgt,1,hgt+5,hLt); }
+      base(); fringe(4,7);
+      spikes([[hx+3,11,4],[hx+9,15,5],[cx+1,17,5],[hr-9,15,5],[hr-3,11,4]]);
+      px(c,hx,hy+10,hw,2,hSh);
       break;
+    case 'short':
+      base(); fringe(5,6);
+      spikes([[hx+5,7,4],[cx,9,5],[hr-5,7,4]]);
+      break;
+    case 'buzz':
+      rr(c,hx,hy+2,hw,10,7,hair); px(c,hx,hy+3,hw,2,hLt); break;
     case 'mohawk':
-      px(c,hx+2,hy+2,hw-4,9,hSh);
-      px(c,cx-3,hy-9,6,18,hair); px(c,cx-3,hy-9,2,18,hLt);
-      px(c,cx-6,hy-3,3,7,hair); px(c,cx+3,hy-3,3,7,hair);
+      px(c,hx+3,hy+5,hw-6,7,hSh);
+      poly(c,[[cx-4,hy+8],[cx-3,hy-13],[cx,hy-16],[cx+3,hy-13],[cx+4,hy+8]],hair);
+      px(c,cx-3,hy-13,2,21,hLt);
       break;
     case 'bowl':
-      rr(c,hx-1,hy-4,hw+2,18,9,hair); px(c,hx-1,hy-4,hw+2,3,hLt);
-      px(c,hx,hy+11,hw,3,hSh);
+      rr(c,hx-1,hy,hw+2,15,8,hair); px(c,hx,hy+1,hw,3,hLt);
+      px(c,hx,hy+12,hw,3,hSh);                              // straight heavy fringe
+      px(c,hx-1,hy+8,3,8,hair); px(c,hr-2,hy+8,3,8,hair);
       break;
     case 'long': case 'longf':
-      cap();
-      px(c,hx-2,hy+6,5,34,hair); px(c,hx+hw-3,hy+6,5,34,hair);
-      px(c,hx-2,hy+6,2,34,hSh); px(c,hx+hw,hy+6,3,34,hSh);
+      base(); fringe(4,8);
+      poly(c,[[hx-2,hy+4],[hx+3,hy+4],[hx+2,hy+38],[hx-3,hy+34]],hair);   // left lock
+      poly(c,[[hr+2,hy+4],[hr-3,hy+4],[hr-2,hy+38],[hr+3,hy+34]],hair);   // right lock
+      px(c,hx-2,hy+6,2,30,hSh); px(c,hr,hy+6,2,30,hSh);
       break;
     case 'bob':
-      rr(c,hx-2,hy-4,hw+4,20,9,hair); px(c,hx-2,hy-4,hw+4,3,hLt);
-      px(c,hx-2,hy+10,6,10,hair); px(c,hx+hw-4,hy+10,6,10,hair);
-      px(c,cx-8,hy+12,16,2,hSh);
+      rr(c,hx-2,hy,hw+4,16,8,hair); px(c,hx-1,hy+1,hw+2,3,hLt);
+      poly(c,[[hx-2,hy+10],[hx+4,hy+10],[hx,hy+24],[hx-3,hy+20]],hair);   // left chin point
+      poly(c,[[hr+2,hy+10],[hr-4,hy+10],[hr,hy+24],[hr+3,hy+20]],hair);   // right chin point
+      px(c,cx-7,hy+12,14,2,hSh);
       break;
     case 'pony':
-      cap();
-      px(c,hx+hw-1,hy+2,6,26,hair); px(c,hx+hw+3,hy+2,2,26,hSh);
-      px(c,hx+hw-1,hy+24,7,5,hair);
+      base(); fringe(4,7); spikes([[hx+5,9,4],[cx,11,5]]);
+      poly(c,[[hr-2,hy+4],[hr+6,hy+8],[hr+8,hy+22],[hr+2,hy+26],[hr-1,hy+12]],hair); // ponytail
+      px(c,hr+4,hy+9,2,16,hSh);
       break;
     case 'twin':
-      cap();
-      px(c,hx-5,hy+6,6,20,hair); px(c,hx+hw-1,hy+6,6,20,hair);
-      px(c,hx-5,hy+6,2,20,hSh); px(c,hx+hw+3,hy+6,2,20,hSh);
-      px(c,hx-5,hy+22,6,5,hair); px(c,hx+hw-1,hy+22,6,5,hair);
+      base(); fringe(5,7);
+      poly(c,[[hx,hy+5],[hx-7,hy+9],[hx-6,hy+24],[hx,hy+20]],hair);       // left tail
+      poly(c,[[hr,hy+5],[hr+7,hy+9],[hr+6,hy+24],[hr,hy+20]],hair);       // right tail
+      px(c,hx-6,hy+10,2,13,hSh); px(c,hr+4,hy+10,2,13,hSh);
       break;
-    default: cap();
+    default: base(); fringe(5,6);
   }
 }
 
