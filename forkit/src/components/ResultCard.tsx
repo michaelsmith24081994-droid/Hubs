@@ -13,15 +13,17 @@ type Props = {
 export function ResultCard({ restaurant, onTryAgain, onClose }: Props) {
   return (
     <View style={styles.overlay}>
-      <Pressable
-        style={({ hovered }) => [styles.closeButton, hovered && styles.closeButtonHover]}
-        onPress={onClose}
-        hitSlop={12}
-      >
-        <Feather name="x" size={26} color={colors.textPrimary} />
-      </Pressable>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-      <View style={styles.card}>
+      <View style={styles.popup}>
+        <Pressable
+          style={({ hovered }) => [styles.closeButton, hovered && styles.closeButtonHover]}
+          onPress={onClose}
+          hitSlop={12}
+        >
+          <Feather name="x" size={20} color={colors.textPrimary} />
+        </Pressable>
+
         <Image source={{ uri: restaurant.photoUrl }} style={styles.photo} />
         <View style={styles.info}>
           <Text style={styles.name}>{restaurant.name}</Text>
@@ -54,16 +56,16 @@ export function ResultCard({ restaurant, onTryAgain, onClose }: Props) {
               <Text style={styles.actionOutlineText}>Directions</Text>
             </Pressable>
           </View>
+
+          <Pressable
+            style={({ hovered }) => [styles.tryAgainButton, hovered && styles.tryAgainButtonHover]}
+            onPress={onTryAgain}
+          >
+            <Feather name="refresh-cw" size={18} color={colors.textOnAccent} />
+            <Text style={styles.tryAgainText}>Try Again</Text>
+          </Pressable>
         </View>
       </View>
-
-      <Pressable
-        style={({ hovered }) => [styles.tryAgainButton, hovered && styles.tryAgainButtonHover]}
-        onPress={onTryAgain}
-      >
-        <Feather name="refresh-cw" size={18} color={colors.textOnAccent} />
-        <Text style={styles.tryAgainText}>Try Again</Text>
-      </Pressable>
     </View>
   );
 }
@@ -75,38 +77,45 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: colors.background,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-  closeButton: {
-    position: 'absolute',
-    top: spacing.xxl,
-    right: spacing.lg,
-    zIndex: 1,
-    transitionProperty: 'opacity',
-    transitionDuration: '150ms',
-  },
-  closeButtonHover: {
-    opacity: 0.6,
-  },
-  card: {
+  popup: {
     width: '100%',
+    maxWidth: 380,
     backgroundColor: colors.surface,
     borderRadius: radii.card,
     overflow: 'hidden',
   },
+  closeButton: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    zIndex: 1,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  closeButtonHover: {
+    opacity: 0.7,
+  },
   photo: {
     width: '100%',
-    height: 220,
+    height: 180,
   },
   info: {
     padding: spacing.lg,
   },
   name: {
     fontFamily: fonts.display,
-    fontSize: 26,
+    fontSize: 24,
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },

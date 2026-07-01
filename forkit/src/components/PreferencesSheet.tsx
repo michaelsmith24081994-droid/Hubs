@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
-import Slider from '@react-native-community/slider';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radii, fonts } from '../theme/theme';
 import { cuisineOptions } from '../data/mockRestaurants';
 import { SidePanel } from './SidePanel';
+import { CustomSlider } from './CustomSlider';
 
 export type Preferences = {
   distanceMiles: number;
@@ -48,15 +48,11 @@ export function PreferencesSheet({ visible, preferences, onChange, onClose }: Pr
         <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.label}>DISTANCE</Text>
             <Text style={styles.valueLarge}>{preferences.distanceMiles} miles</Text>
-            <Slider
-              style={styles.slider}
+            <CustomSlider
               minimumValue={2}
               maximumValue={20}
               step={1}
               value={preferences.distanceMiles}
-              minimumTrackTintColor={colors.accent}
-              maximumTrackTintColor={colors.border}
-              thumbTintColor={colors.accent}
               onValueChange={(value) => onChange({ ...preferences, distanceMiles: value })}
             />
             <View style={styles.sliderLabels}>
@@ -66,20 +62,16 @@ export function PreferencesSheet({ visible, preferences, onChange, onClose }: Pr
 
             <Text style={styles.label}>MIN RATING</Text>
             <Text style={styles.valueLarge}>{preferences.minRating.toFixed(1)}+ stars</Text>
-            <Slider
-              style={styles.slider}
+            <CustomSlider
               minimumValue={0}
-              maximumValue={5}
+              maximumValue={4}
               step={0.5}
               value={preferences.minRating}
-              minimumTrackTintColor={colors.accent}
-              maximumTrackTintColor={colors.border}
-              thumbTintColor={colors.accent}
               onValueChange={(value) => onChange({ ...preferences, minRating: value })}
             />
             <View style={styles.sliderLabels}>
               <Text style={styles.sliderLabelText}>Any</Text>
-              <Text style={styles.sliderLabelText}>5.0</Text>
+              <Text style={styles.sliderLabelText}>4.0+</Text>
             </View>
 
             <View style={styles.rowBetween}>
@@ -175,10 +167,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: colors.textPrimary,
     marginBottom: spacing.sm,
-  },
-  slider: {
-    width: '100%',
-    height: 32,
   },
   sliderLabels: {
     flexDirection: 'row',

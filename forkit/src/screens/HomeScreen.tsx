@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +6,7 @@ import { colors, spacing, radii, fonts } from '../theme/theme';
 import { PreferencesSheet, Preferences } from '../components/PreferencesSheet';
 import { ProfileSheet } from '../components/ProfileSheet';
 import { ResultCard } from '../components/ResultCard';
+import { LoadingScreen } from '../components/LoadingScreen';
 import { ZipSearch } from '../components/ZipSearch';
 import { mockRestaurants, Restaurant } from '../data/mockRestaurants';
 
@@ -16,27 +17,33 @@ const defaultPreferences: Preferences = {
   minRating: 0,
 };
 
+const SEARCH_DURATION_MS = 5000;
+
 export function HomeScreen() {
   const [preferencesVisible, setPreferencesVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const [zipVisible, setZipVisible] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>(defaultPreferences);
   const [result, setResult] = useState<Restaurant | null>(null);
+  const [loading, setLoading] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const pickRandomRestaurant = () => {
-    const pick = mockRestaurants[Math.floor(Math.random() * mockRestaurants.length)];
-    setResult(pick);
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const findRestaurant = () => {
+    setLoading(true);
+    timeoutRef.current = setTimeout(() => {
+      const pick = mockRestaurants[Math.floor(Math.random() * mockRestaurants.length)];
+      setResult(pick);
+      setLoading(false);
+    }, SEARCH_DURATION_MS);
   };
-
-  if (result) {
-    return (
-      <ResultCard
-        restaurant={result}
-        onTryAgain={pickRandomRestaurant}
-        onClose={() => setResult(null)}
-      />
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -66,7 +73,7 @@ export function HomeScreen() {
 
         <Pressable
           style={({ hovered }) => [styles.ctaButton, hovered && styles.ctaButtonHover]}
-          onPress={pickRandomRestaurant}
+          onPress={findRestaurant}
         >
           <Text style={styles.ctaText}>Find Something Good</Text>
         </Pressable>
@@ -92,6 +99,15 @@ export function HomeScreen() {
         onClose={() => setPreferencesVisible(false)}
       />
       <ProfileSheet visible={profileVisible} onClose={() => setProfileVisible(false)} />
+
+      {loading && <LoadingScreen />}
+      {result && !loading && (
+        <ResultCard
+          restaurant={result}
+          onTryAgain={findRestaurant}
+          onClose={() => setResult(null)}
+        />
+      )}
     </View>
   );
 }
