@@ -51,12 +51,8 @@
   .card .ttl b{color:var(--acc2);}
 
   /* ---------- creation layout ---------- */
-  #creator .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media (max-width:760px){ #creator .grid{grid-template-columns:1fr;} }
 
   .preview{display:grid;place-items:center;padding:18px 10px 6px;}
-  canvas.avatar{width:168px;height:196px;image-rendering:pixelated;
-    background:radial-gradient(60% 55% at 50% 42%,rgba(91,140,255,.16),transparent 70%);}
   canvas.device{width:150px;height:206px;image-rendering:pixelated;}
 
   .rowctrl{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 14px;}
@@ -70,23 +66,9 @@
     box-shadow:inset 0 0 0 2px rgba(0,0,0,.25);}
   .swatch.wheelbtn{background:conic-gradient(#ff5168,#ffb15c,#37d67a,#27e0c4,#5b8cff,#b06bff,#ff5d92,#ff5168);}
 
-  .seg{display:flex;background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:3px;gap:3px;}
-  .seg button{flex:1;border:none;background:transparent;color:var(--ink-soft);font-family:inherit;font-weight:700;
-    font-size:13px;padding:8px 6px;border-radius:9px;cursor:pointer;}
-  .seg button.on{background:linear-gradient(135deg,var(--blue),#3f6fe0);color:#fff;}
-
-  .skins{display:flex;gap:8px;padding:4px 14px 12px;flex-wrap:wrap;}
   .dots{display:flex;gap:6px;justify-content:center;padding:6px 0 12px;}
   .dots i{width:8px;height:8px;border-radius:50%;background:var(--line2);transition:.2s;}
   .dots i.on{background:var(--acc);width:20px;border-radius:5px;}
-
-  .toggle{display:flex;align-items:center;gap:10px;padding:6px 14px 14px;}
-  .switch{width:46px;height:26px;border-radius:20px;background:var(--bg);border:1px solid var(--line2);
-    position:relative;cursor:pointer;transition:.2s;}
-  .switch::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
-    background:var(--ink-faint);transition:.2s;}
-  .switch.on{background:linear-gradient(135deg,var(--teal),#1fb9a3);}
-  .switch.on::after{left:22px;background:#fff;}
 
   .namebar{margin-top:16px;display:flex;gap:12px;align-items:center;}
   .namebar input{flex:1;background:var(--panel);border:1px solid var(--line2);border-radius:14px;
@@ -119,7 +101,6 @@
 
   /* ---------- home dashboard ---------- */
   #home .tamerbar{display:flex;align-items:center;gap:14px;padding:14px;}
-  #home canvas.avatarMini{width:84px;height:98px;image-rendering:pixelated;flex:0 0 auto;}
   #home .who{flex:1;}
   #home .who .nm{font-size:20px;font-weight:800;}
   #home .who .rk{color:var(--acc2);font-size:13px;font-weight:700;letter-spacing:.5px;}
@@ -149,74 +130,40 @@
   <section id="creator">
     <div class="head">
       <div>
-        <h1 class="title">Create Your Tamer</h1>
-        <div class="sub">Design your avatar, choose a Digivice, then begin your adventure.</div>
+        <h1 class="title">Begin Your Journey</h1>
+        <div class="sub">Choose your name and Digivice model to start.</div>
       </div>
       <div class="logo"><span class="dot">◆</span> DIGI·PET</div>
     </div>
 
-    <div class="grid">
-      <!-- TAMER CARD -->
-      <div class="card">
-        <div class="ttl"><b>◆</b> Tamer</div>
-        <div class="preview"><canvas class="avatar" id="avCanvas" width="84" height="98"></canvas></div>
-        <div style="padding:0 14px 6px">
-          <div class="seg" id="genderSeg">
-            <button data-g="m" class="on">Male</button>
-            <button data-g="f">Female</button>
-          </div>
-        </div>
-        <div class="rowctrl">
-          <span class="lab">Hair</span>
-          <div class="stepper">
-            <button class="arrow" data-step="hair" data-d="-1">‹</button>
-            <span class="name" id="hairName">Short</span>
-            <button class="arrow" data-step="hair" data-d="1">›</button>
-          </div>
-          <div class="swatch wheelbtn" id="hairColor" title="Hair colour"></div>
-        </div>
-        <div class="rowctrl">
-          <span class="lab">Outfit</span>
-          <div class="stepper">
-            <button class="arrow" data-step="outfit" data-d="-1">‹</button>
-            <span class="name" id="outfitName">Jacket</span>
-            <button class="arrow" data-step="outfit" data-d="1">›</button>
-          </div>
-          <div class="swatch wheelbtn" id="outfitColor" title="Outfit colour"></div>
-        </div>
-        <div class="rowctrl" style="padding-bottom:2px">
-          <span class="lab">Skin</span>
-          <div class="skins" id="skinRow" style="padding:0;flex:1"></div>
-        </div>
-        <div class="toggle">
-          <div class="switch on" id="goggleSwitch"></div>
-          <span style="font-weight:600;font-size:14px;color:var(--ink-soft)">Goggles (Tamer's mark)</span>
-        </div>
+    <div class="card" style="max-width:500px;margin:0 auto;">
+      <div class="ttl"><b>◆</b> Setup</div>
+
+      <div style="padding:16px 14px">
+        <label style="display:block;font-size:13px;color:var(--ink-soft);font-weight:600;margin-bottom:8px;letter-spacing:.5px">Your Name</label>
+        <input id="nameInput" maxlength="12" placeholder="Enter your name…" autocomplete="off" style="width:100%">
       </div>
 
-      <!-- DIGIVICE CARD -->
-      <div class="card">
-        <div class="ttl"><b>◆</b> Digivice</div>
-        <div class="preview"><canvas class="device" id="devCanvas" width="64" height="88"></canvas></div>
-        <div class="devname" id="devName">Digivice</div>
-        <div class="devseries" id="devSeries">Adventure</div>
-        <div class="dots" id="devDots"></div>
-        <div class="rowctrl">
-          <button class="arrow" data-step="device" data-d="-1">‹</button>
-          <div class="stepper"><span class="name" style="min-width:120px">Model</span></div>
-          <button class="arrow" data-step="device" data-d="1">›</button>
-        </div>
-        <div class="rowctrl" style="justify-content:center;gap:12px;padding-bottom:16px">
-          <span class="lab" style="min-width:auto">Colour</span>
-          <div class="swatch wheelbtn" id="devColor" title="Device colour" style="width:34px;height:34px"></div>
-          <span id="devHex" style="font-size:12px;color:var(--ink-faint);font-weight:700">#5b8cff</span>
-        </div>
-      </div>
-    </div>
+      <div class="preview"><canvas class="device" id="devCanvas" width="64" height="88"></canvas></div>
+      <div class="devname" id="devName">Digivice</div>
+      <div class="devseries" id="devSeries">Adventure</div>
+      <div class="dots" id="devDots"></div>
 
-    <div class="namebar">
-      <input id="nameInput" maxlength="12" placeholder="Enter tamer name…" autocomplete="off">
-      <button class="btn primary" id="beginBtn" disabled>Begin Adventure ›</button>
+      <div class="rowctrl">
+        <button class="arrow" data-step="device" data-d="-1">‹</button>
+        <div class="stepper"><span class="name" style="min-width:120px">Model</span></div>
+        <button class="arrow" data-step="device" data-d="1">›</button>
+      </div>
+
+      <div class="rowctrl" style="justify-content:center;gap:12px;padding-bottom:16px">
+        <span class="lab" style="min-width:auto">Colour</span>
+        <div class="swatch wheelbtn" id="devColor" title="Device colour" style="width:34px;height:34px"></div>
+        <span id="devHex" style="font-size:12px;color:var(--ink-faint);font-weight:700">#5b8cff</span>
+      </div>
+
+      <div style="padding:0 14px 14px">
+        <button class="btn primary" id="beginBtn" disabled style="width:100%">Begin Adventure ›</button>
+      </div>
     </div>
   </section>
 
@@ -224,10 +171,9 @@
   <section id="home" class="hidden">
     <div class="head">
       <div class="logo"><span class="dot">◆</span> DIGI·PET</div>
-      <button class="btn ghost sm" id="editBtn">Edit Tamer</button>
+      <button class="btn ghost sm" id="editBtn">Edit Setup</button>
     </div>
     <div class="card tamerbar">
-      <canvas class="avatarMini" id="homeAv" width="84" height="98"></canvas>
       <div class="who">
         <div class="nm" id="homeName">—</div>
         <div class="rk" id="homeRank">Rookie Tamer · Lv.1</div>
@@ -264,23 +210,12 @@
 <script>
 "use strict";
 /* ========================================================================
-   DigiPet — Tamer creation + home dashboard.
-   Modern flat UI; chibi pixel-sprite avatars (recolorable); selectable
-   Digivice models with an HSV colour wheel. Saves to localStorage.
+   DigiPet — Setup + home dashboard.
+   Simplified name entry + Digivice model selection with HSV colour wheel.
+   Saves to localStorage.
    ====================================================================== */
 
 /* ---------- option data ---------- */
-const HAIR_STYLES = {
-  m:[ {id:'short',n:'Short'},{id:'spiky',n:'Spiky'},{id:'mohawk',n:'Punk'},
-      {id:'bowl',n:'Bowl'},{id:'long',n:'Long'},{id:'buzz',n:'Buzz'} ],
-  f:[ {id:'bob',n:'Bob'},{id:'pony',n:'Ponytail'},{id:'twin',n:'Twin-tail'},
-      {id:'longf',n:'Long'},{id:'spikyf',n:'Spiky'},{id:'short',n:'Short'} ],
-};
-const OUTFITS = [
-  {id:'jacket',n:'Jacket'},{id:'hoodie',n:'Hoodie'},{id:'tee',n:'T-Shirt'},
-  {id:'vest',n:'Vest'},{id:'uniform',n:'Uniform'},{id:'dress',n:'Dress'},
-];
-const SKINS = ['#ffd9b3','#f1c197','#e0a878','#c8895c','#a06a43','#7c4f30'];
 const DEVICES = [
   {id:'classic', n:'D-1 Classic',  series:'Adventure', def:'#e8eef7', screen:'#9bbc0f'},
   {id:'d3',      n:'D-3',          series:'Adventure 02', def:'#ffffff', screen:'#79d2ff'},
@@ -292,11 +227,9 @@ const DEVICES = [
 
 /* ---------- creation state ---------- */
 let T = {
-  gender:'m', hairIdx:0, hairColor:'#5a3a22',
-  outfitIdx:0, outfitColor:'#3f6fe0', skin:SKINS[0],
-  goggles:true, devIdx:0, devColor:DEVICES[0].def, name:'',
+  name:'', devIdx:0, devColor:DEVICES[0].def,
 };
-const SAVE_KEY = 'digipet.tamer.v2';
+const SAVE_KEY = 'digipet.tamer.v3';
 
 /* ===================================================================== */
 /*  PIXEL HELPERS                                                         */
@@ -310,222 +243,14 @@ function shade(hex,amt){ // darken (amt<0) / lighten (amt>0) a #rrggbb by amt (-
 }
 
 /* ===================================================================== */
-/*  CHIBI AVATAR  — painted to an offscreen buffer, then auto-outlined    */
-/*  to give it a crisp overworld-sprite silhouette.                       */
+/*  UTILITY FUNCTIONS                                                     */
 /* ===================================================================== */
-function rr(c,x,y,w,h,r,col){ c.fillStyle=col; c.beginPath();
-  c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
-  c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); c.fill(); }
-function tri(c,x1,y1,x2,y2,x3,y3,col){ c.fillStyle=col; c.beginPath();
-  c.moveTo(x1,y1); c.lineTo(x2,y2); c.lineTo(x3,y3); c.closePath(); c.fill(); }
-function poly(c,pts,col){ c.fillStyle=col; c.beginPath(); c.moveTo(pts[0][0],pts[0][1]);
-  for(let i=1;i<pts.length;i++) c.lineTo(pts[i][0],pts[i][1]); c.closePath(); c.fill(); }
-function hexToRgb(h){ const n=parseInt(h.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
-// returns a new canvas: a 1px dark outline around every opaque region of src, src on top
-function outlineCanvas(src,color,t){
-  const W=src.width,H=src.height;
-  const d=src.getContext('2d').getImageData(0,0,W,H).data;
-  const out=document.createElement('canvas'); out.width=W; out.height=H;
-  const o=out.getContext('2d'); o.imageSmoothingEnabled=false;
-  const id=o.createImageData(W,H), p=id.data, col=hexToRgb(color);
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    const i=(y*W+x)*4;
-    if(d[i+3]>40) continue;
-    let near=false;
-    for(let dy=-t;dy<=t&&!near;dy++)for(let dx=-t;dx<=t;dx++){
-      const nx=x+dx,ny=y+dy; if(nx<0||ny<0||nx>=W||ny>=H)continue;
-      if(d[(ny*W+nx)*4+3]>40){ near=true; break; }
-    }
-    if(near){ p[i]=col[0];p[i+1]=col[1];p[i+2]=col[2];p[i+3]=255; }
-  }
-  o.putImageData(id,0,0); o.drawImage(src,0,0);
-  return out;
-}
-let _avOff=null;
-function drawAvatar(canvas, opts, frame){
-  const c=canvas.getContext('2d'); c.imageSmoothingEnabled=false;
-  const W=canvas.width,H=canvas.height;
-  if(!_avOff||_avOff.width!==W||_avOff.height!==H){ _avOff=document.createElement('canvas'); _avOff.width=W; _avOff.height=H; }
-  const o=_avOff.getContext('2d'); o.imageSmoothingEnabled=false; o.clearRect(0,0,W,H);
-  paintAvatar(o,W,H,opts,frame||0);
-  c.clearRect(0,0,W,H);
-  c.fillStyle='rgba(0,0,0,.20)'; c.beginPath(); c.ellipse(W/2,91,13,3,0,0,7); c.fill();
-  c.drawImage(outlineCanvas(_avOff,'#0d0f17',1),0,0);
-}
-
-function paintAvatar(c,W,H,opts,frame){
-  const bob=(frame&&Math.floor(frame/45)%2)?1:0;
-  const fem=opts.gender==='f';
-  const skin=opts.skin, sSh=shade(skin,-0.16), sLt=shade(skin,0.14);
-  const hair=opts.hairColor, hSh=shade(hair,-0.32), hLt=shade(hair,0.28);
-  const out=opts.outfitColor, oSh=shade(out,-0.28), oLt=shade(out,0.24);
-  const pants='#39425f', pSh='#2a3150', shoe='#222a3e', shoeLt='#aab4d8';
-  const cx=Math.floor(W/2), oy=bob;
-  const hw=22, hx=cx-11, hy=4+oy, hh=28;
-  const torsoTop=hy+hh-2;
-  const sw=fem?13:15, sx=cx-Math.floor(sw/2), L=sx, R=sx+sw;
-
-  // legs + shoes (slim, close together)
-  const legY=torsoTop+22;
-  px(c,cx-5,legY,4,15,pants); px(c,cx-5,legY,2,15,pSh);
-  px(c,cx+1,legY,4,15,pants); px(c,cx+3,legY,2,15,pSh);
-  px(c,cx-6,legY+13,6,5,shoe); px(c,cx,legY+13,6,5,shoe);
-  px(c,cx-6,legY+16,6,2,shoeLt); px(c,cx,legY+16,6,2,shoeLt);
-
-  // arms (thin, hanging, separated from torso by a shade line)
-  const armY=torsoTop+4;
-  rr(c,L-4,armY,4,15,2,out); rr(c,R,armY,4,15,2,out);          // sleeves
-  px(c,L-4,armY,1,15,oLt); px(c,R+3,armY,1,15,oSh);            // arm edge shading
-  px(c,L,armY,1,14,oSh); px(c,R-1,armY,1,14,oSh);              // shoulder separation
-  rr(c,L-4,armY+14,4,5,1,skin); rr(c,R,armY+14,4,5,1,skin);    // hands
-  px(c,L-4,armY+17,4,1,sSh); px(c,R,armY+17,4,1,sSh);
-
-  // torso / outfit (tapered silhouette drawn inside drawOutfit)
-  drawOutfit(c,cx,torsoTop,sw,opts.outfitIdx,out,oSh,oLt,skin,fem);
-
-  // neck
-  px(c,cx-4,hy+hh-4,8,6,skin); px(c,cx-4,hy+hh-2,8,2,sSh);
-
-  // head
-  rr(c,hx,hy,hw,hh,10,skin);
-  px(c,hx+hw-5,hy+5,4,hh-13,sSh);        // right-side shade
-  px(c,hx+4,hy+hh-5,hw-8,3,sSh);         // chin shade
-  px(c,hx-2,hy+15,3,7,skin); px(c,hx+hw-1,hy+15,3,7,skin);   // ears
-  px(c,hx-2,hy+18,3,4,sSh); px(c,hx+hw-1,hy+18,3,4,sSh);
-
-  // face: eyes
-  const eY=hy+16;
-  px(c,cx-8,eY,6,8,'#ffffff'); px(c,cx+2,eY,6,8,'#ffffff');
-  px(c,cx-8,eY-1,6,2,'#222a40'); px(c,cx+2,eY-1,6,2,'#222a40');   // lash line
-  const blink=frame&&(Math.floor(frame/8)%34===0);
-  if(blink){ px(c,cx-8,eY+3,6,2,'#222a40'); px(c,cx+2,eY+3,6,2,'#222a40'); }
-  else{
-    px(c,cx-7,eY+2,4,5,'#2c3e6b'); px(c,cx+3,eY+2,4,5,'#2c3e6b');   // iris
-    px(c,cx-6,eY+5,2,2,'#101830'); px(c,cx+4,eY+5,2,2,'#101830');   // pupil
-    px(c,cx-7,eY+2,2,2,'#dce8ff'); px(c,cx+3,eY+2,2,2,'#dce8ff');   // shine
-  }
-  // brows / nose / mouth / blush
-  px(c,cx-8,eY-3,6,2,hSh); px(c,cx+2,eY-3,6,2,hSh);
-  px(c,cx-1,eY+7,2,2,sSh);
-  px(c,cx-2,eY+10,5,1,shade(skin,-0.4));
-  px(c,cx-11,eY+6,3,2,'rgba(255,120,120,.30)'); px(c,cx+8,eY+6,3,2,'rgba(255,120,120,.30)');
-
-  // hair + goggles
-  drawHair(c,cx,hy,hw,opts.hairIdx,opts.gender,hair,hSh,hLt);
-  if(opts.goggles) drawGoggles(c,cx,hy,hw);
-}
-
-function drawOutfit(c, cx, top, w, idx, out, oSh, oLt, skin, fem){
-  const id=OUTFITS[idx].id, M=cx;
-  const L=cx-Math.floor(w/2), R=cx+Math.ceil(w/2), botY=top+22;
-  // tapered torso silhouette: rounded shoulders, slight waist
-  poly(c,[[L+1,top],[R-1,top],[R,top+4],[R-1,botY],[L+1,botY],[L,top+4]],out);
-  px(c,L+1,top,w-2,3,oLt);                          // shoulder highlight
-  px(c,L+1,botY-3,w-2,3,oSh);                        // hem shade
-  px(c,L,top+4,2,botY-top-4,oLt); px(c,R-2,top+4,2,botY-top-4,oSh); // side shading
-  if(id==='jacket'){
-    tri(c,M-4,top,M,top+6,M+4,top,'#eef3ff');        // open collar V
-    px(c,M-1,top+5,2,botY-top-7,oSh);                // zipper
-    px(c,L+1,top+3,3,botY-top-3,oSh);                // lapel shade
-  } else if(id==='hoodie'){
-    px(c,M-5,top-1,10,4,oSh);                        // hood roll
-    px(c,M-1,top+3,2,9,oSh);
-    px(c,M-5,top+12,10,7,oLt);                       // pocket
-    px(c,M-4,top+1,2,2,'#eef3ff'); px(c,M+2,top+1,2,2,'#eef3ff'); // strings
-  } else if(id==='tee'){
-    px(c,M-3,top,6,3,'#eef3ff');                     // collar
-    px(c,M-3,top+7,6,8,oLt); px(c,M-1,top+9,2,4,oSh);// print
-  } else if(id==='vest'){
-    px(c,L+3,top+1,w-6,botY-top-1,'#eef3ff');        // shirt panel
-    px(c,L,top,3,botY-top,out); px(c,R-3,top,3,botY-top,out);
-    px(c,M-1,top+1,1,botY-top-2,'#c9d4ee');          // shirt seam
-  } else if(id==='uniform'){
-    px(c,M-4,top,8,4,oLt);                           // collar
-    px(c,M-1,top,2,botY-top,oSh);
-    for(let i=0;i<3;i++) px(c,M,top+6+i*5,1,2,'#ffd23f'); // buttons
-  } else if(id==='dress'){
-    poly(c,[[L-2,top+11],[R+2,top+11],[R+4,botY+4],[L-4,botY+4]],out);  // skirt flare
-    px(c,L-3,botY+1,w+7,3,oSh);
-    px(c,M-3,top,6,3,'#eef3ff');                     // collar
-  }
-}
-
-function drawHair(c, cx, hy, hw, idx, gender, hair, hSh, hLt){
-  const id = HAIR_STYLES[gender][idx].id;
-  const hx = cx-hw/2, hr=hx+hw;
-  // soft rounded base mass over the crown (fringe stops above the eyes)
-  function base(){
-    rr(c,hx-1,hy+1,hw+2,11,6,hair);
-    px(c,hx,hy+2,hw,2,hLt);
-    px(c,hx-1,hy+8,3,8,hair); px(c,hr-2,hy+8,3,8,hair);    // sideburns hugging face
-  }
-  // a pointed fringe across the forehead made of downward triangles
-  function fringe(n,depth){
-    for(let i=0;i<n;i++){ const x=hx + i*(hw/(n-0.0)); const w=hw/n;
-      tri(c, x, hy+4, x+w, hy+4, x+w*0.5, hy+4+depth, hair); }
-    px(c,hx,hy+4,hw,1,hLt);
-  }
-  // a cluster of upward spikes from y0 with given peak heights
-  function spikes(list){
-    list.forEach(s=>{ tri(c, s[0]-s[2], hy+5, s[0], hy-s[1], s[0]+s[2], hy+5, hair);
-      tri(c, s[0]-s[2], hy+5, s[0], hy-s[1], s[0]-1, hy+5, hLt); });
-  }
-  switch(id){
-    case 'spiky': case 'spikyf':
-      base(); fringe(4,7);
-      spikes([[hx+3,11,4],[hx+9,15,5],[cx+1,17,5],[hr-9,15,5],[hr-3,11,4]]);
-      px(c,hx,hy+10,hw,2,hSh);
-      break;
-    case 'short':
-      base(); fringe(5,6);
-      spikes([[hx+5,7,4],[cx,9,5],[hr-5,7,4]]);
-      break;
-    case 'buzz':
-      rr(c,hx,hy+2,hw,10,7,hair); px(c,hx,hy+3,hw,2,hLt); break;
-    case 'mohawk':
-      px(c,hx+3,hy+5,hw-6,7,hSh);
-      poly(c,[[cx-4,hy+8],[cx-3,hy-13],[cx,hy-16],[cx+3,hy-13],[cx+4,hy+8]],hair);
-      px(c,cx-3,hy-13,2,21,hLt);
-      break;
-    case 'bowl':
-      rr(c,hx-1,hy,hw+2,15,8,hair); px(c,hx,hy+1,hw,3,hLt);
-      px(c,hx,hy+12,hw,3,hSh);                              // straight heavy fringe
-      px(c,hx-1,hy+8,3,8,hair); px(c,hr-2,hy+8,3,8,hair);
-      break;
-    case 'long': case 'longf':
-      base(); fringe(4,8);
-      poly(c,[[hx-2,hy+4],[hx+3,hy+4],[hx+2,hy+38],[hx-3,hy+34]],hair);   // left lock
-      poly(c,[[hr+2,hy+4],[hr-3,hy+4],[hr-2,hy+38],[hr+3,hy+34]],hair);   // right lock
-      px(c,hx-2,hy+6,2,30,hSh); px(c,hr,hy+6,2,30,hSh);
-      break;
-    case 'bob':
-      rr(c,hx-2,hy,hw+4,16,8,hair); px(c,hx-1,hy+1,hw+2,3,hLt);
-      poly(c,[[hx-2,hy+10],[hx+4,hy+10],[hx,hy+24],[hx-3,hy+20]],hair);   // left chin point
-      poly(c,[[hr+2,hy+10],[hr-4,hy+10],[hr,hy+24],[hr+3,hy+20]],hair);   // right chin point
-      px(c,cx-7,hy+12,14,2,hSh);
-      break;
-    case 'pony':
-      base(); fringe(4,7); spikes([[hx+5,9,4],[cx,11,5]]);
-      poly(c,[[hr-2,hy+4],[hr+6,hy+8],[hr+8,hy+22],[hr+2,hy+26],[hr-1,hy+12]],hair); // ponytail
-      px(c,hr+4,hy+9,2,16,hSh);
-      break;
-    case 'twin':
-      base(); fringe(5,7);
-      poly(c,[[hx,hy+5],[hx-7,hy+9],[hx-6,hy+24],[hx,hy+20]],hair);       // left tail
-      poly(c,[[hr,hy+5],[hr+7,hy+9],[hr+6,hy+24],[hr,hy+20]],hair);       // right tail
-      px(c,hx-6,hy+10,2,13,hSh); px(c,hr+4,hy+10,2,13,hSh);
-      break;
-    default: base(); fringe(5,6);
-  }
-}
-
-function drawGoggles(c, cx, hy, hw){
-  const gy=hy+3, frame='#37343f', frameLt='#56525f', strap='#caa23c';
-  px(c,cx-hw/2,gy+2,hw,4,strap); px(c,cx-hw/2,gy+2,hw,1,'#e2c061');   // forehead strap
-  px(c,cx-11,gy,9,8,frame); px(c,cx+2,gy,9,8,frame);                  // lens frames
-  px(c,cx-11,gy,9,2,frameLt); px(c,cx+2,gy,9,2,frameLt);
-  px(c,cx-9,gy+2,5,4,'rgba(120,200,255,.9)'); px(c,cx+4,gy+2,5,4,'rgba(120,200,255,.9)');
-  px(c,cx-9,gy+2,2,2,'#ffffff'); px(c,cx+4,gy+2,2,2,'#ffffff');       // lens shine
+function px(c,x,y,w,h,col){ c.fillStyle=col; c.fillRect(x,y,w,h); }
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  const R=(n>>16)&255, G=(n>>8)&255, B=n&255;
+  const ch=v => amt<0 ? Math.round(v*(1+amt)) : Math.round(v+(255-v)*amt);
+  return 'rgb('+ch(R)+','+ch(G)+','+ch(B)+')';
 }
 
 /* ===================================================================== */
@@ -681,16 +406,10 @@ document.getElementById('wheelCancel').addEventListener('click',()=>{
 /* ===================================================================== */
 /*  CREATION UI WIRING                                                    */
 /* ===================================================================== */
-const avCanvas=document.getElementById('avCanvas');
 const devCanvas=document.getElementById('devCanvas');
 let animFrame=0;
 function renderCreator(){
-  drawAvatar(avCanvas, T, animFrame);
   drawDevice(devCanvas, T.devIdx, T.devColor, animFrame);
-  document.getElementById('hairName').textContent = HAIR_STYLES[T.gender][T.hairIdx].n;
-  document.getElementById('outfitName').textContent = OUTFITS[T.outfitIdx].n;
-  document.getElementById('hairColor').style.background = T.hairColor;
-  document.getElementById('outfitColor').style.background = T.outfitColor;
   document.getElementById('devColor').style.background = T.devColor;
   document.getElementById('devName').textContent = DEVICES[T.devIdx].n;
   document.getElementById('devSeries').textContent = DEVICES[T.devIdx].series;
@@ -698,57 +417,24 @@ function renderCreator(){
   // device dots
   const dd=document.getElementById('devDots'); dd.innerHTML='';
   DEVICES.forEach((d,i)=>{ const e=document.createElement('i'); if(i===T.devIdx)e.className='on'; dd.appendChild(e); });
-  // goggle switch
-  document.getElementById('goggleSwitch').classList.toggle('on', T.goggles);
 }
-// skin row
-(function buildSkins(){
-  const row=document.getElementById('skinRow');
-  SKINS.forEach(s=>{ const b=document.createElement('div'); b.className='swatch'; b.style.background=s;
-    b.addEventListener('click',()=>{ T.skin=s; renderCreator(); markSkins(); }); row.appendChild(b); });
-  markSkins();
-  function _(){}
-})();
-function markSkins(){ [...document.querySelectorAll('#skinRow .swatch')].forEach((b,i)=>{
-  b.style.outline = SKINS[i]===T.skin ? '3px solid var(--acc)' : 'none'; b.style.outlineOffset='1px'; }); }
 
-// steppers
+// device stepper
 document.querySelectorAll('.arrow[data-step]').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const d=parseInt(btn.dataset.d), step=btn.dataset.step;
-    if(step==='hair'){ const L=HAIR_STYLES[T.gender].length; T.hairIdx=(T.hairIdx+d+L)%L; }
-    if(step==='outfit'){ const L=OUTFITS.length; T.outfitIdx=(T.outfitIdx+d+L)%L; }
     if(step==='device'){ const L=DEVICES.length; T.devIdx=(T.devIdx+d+L)%L; T.devColor=DEVICES[T.devIdx].def; }
     renderCreator();
   });
 });
-// gender
-document.querySelectorAll('#genderSeg button').forEach(b=>{
-  b.addEventListener('click',()=>{
-    T.gender=b.dataset.g;
-    document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.toggle('on',x===b));
-    T.hairIdx=Math.min(T.hairIdx,HAIR_STYLES[T.gender].length-1);
-    renderCreator();
-  });
-});
-// goggles
-document.getElementById('goggleSwitch').addEventListener('click',()=>{ T.goggles=!T.goggles; renderCreator(); });
-// colour wheels
-document.getElementById('hairColor').addEventListener('click',()=>{
-  const prev=T.hairColor;
-  openWheel('Hair colour', T.hairColor, hex=>{T.hairColor=hex;renderCreator();}, hex=>{T.hairColor=hex;renderCreator();});
-  wheelState.cancel=()=>{T.hairColor=prev;renderCreator();};
-});
-document.getElementById('outfitColor').addEventListener('click',()=>{
-  const prev=T.outfitColor;
-  openWheel('Outfit colour', T.outfitColor, hex=>{T.outfitColor=hex;renderCreator();}, hex=>{T.outfitColor=hex;renderCreator();});
-  wheelState.cancel=()=>{T.outfitColor=prev;renderCreator();};
-});
+
+// device color wheel
 document.getElementById('devColor').addEventListener('click',()=>{
   const prev=T.devColor;
   openWheel('Device colour', T.devColor, hex=>{T.devColor=hex;renderCreator();}, hex=>{T.devColor=hex;renderCreator();});
   wheelState.cancel=()=>{T.devColor=prev;renderCreator();};
 });
+
 // name + begin
 const nameInput=document.getElementById('nameInput'), beginBtn=document.getElementById('beginBtn');
 nameInput.addEventListener('input',()=>{ T.name=nameInput.value.trim(); beginBtn.disabled=T.name.length<1; });
@@ -787,7 +473,6 @@ function showHome(){
   document.getElementById('home').classList.remove('hidden');
   document.getElementById('homeName').textContent=T.name;
   document.getElementById('homeDev').textContent=DEVICES[T.devIdx].n+' · '+DEVICES[T.devIdx].series;
-  drawAvatar(document.getElementById('homeAv'), T, animFrame);
   drawDevice(document.getElementById('homeDev2'), T.devIdx, T.devColor, 0);
   buildDash();
 }
@@ -795,8 +480,7 @@ function showCreator(){
   document.getElementById('home').classList.add('hidden');
   document.getElementById('creator').classList.remove('hidden');
   nameInput.value=T.name||''; beginBtn.disabled=!(T.name&&T.name.length);
-  document.querySelectorAll('#genderSeg button').forEach(x=>x.classList.toggle('on',x.dataset.g===T.gender));
-  markSkins(); renderCreator();
+  renderCreator();
 }
 document.getElementById('editBtn').addEventListener('click',showCreator);
 
@@ -811,19 +495,14 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 
 /* ---------- boot + idle animation ---------- */
 function loop(){ animFrame++;
-  if(!document.getElementById('creator').classList.contains('hidden')){ renderCreatorLight(); }
-  else { drawAvatar(document.getElementById('homeAv'), T, animFrame); }
   requestAnimationFrame(loop);
 }
-function renderCreatorLight(){ drawAvatar(avCanvas,T,animFrame); } // only animate avatar each frame
 (function boot(){
   const had=loadTamer();
-  buildSkinsMark();
   renderCreator();
   if(had && T.name){ showHome(); } else { showCreator(); }
   requestAnimationFrame(loop);
 })();
-function buildSkinsMark(){ markSkins(); }
 </script>
 </body>
 </html>
