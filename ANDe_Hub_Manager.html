@@ -1225,9 +1225,27 @@
   renderers.kb=function(){
     var sec=document.getElementById("sec-kb");
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Your reference</div><h2>Knowledge Base</h2><p class="lede">Processes, canned replies and system notes. Each entry has a Copy button.</p></div><div class="actions"><button class="btn primary" id="addKb">+ New entry</button></div></div><div class="filters addline"><input class="in grow" id="kbSearch" placeholder="Search the knowledge base…"><select class="in" id="kbCat" style="max-width:220px"></select></div><div id="kbList"></div>';
+    kbStyle();
     document.getElementById("addKb").onclick=function(){ openKb(null); };
     document.getElementById("kbSearch").oninput=drawKb; document.getElementById("kbCat").oninput=drawKb; drawKb();
   };
+  function kbStyle(){ if(document.getElementById("kbStyle")) return; var s=document.createElement("style"); s.id="kbStyle";
+    s.textContent=".kb-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}"
+      +".kb-tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:border-color .15s,transform .15s;box-shadow:var(--sh-sm)}"
+      +".kb-tile:hover{border-color:rgba(var(--a1-rgb),.5);transform:translateY(-2px)}"
+      +".kb-tile.expanded{grid-column:1/-1;cursor:default;transform:none}"
+      +".kb-tile-head{display:flex;align-items:flex-start;gap:8px}"
+      +".kb-tile-title{font-family:var(--disp);font-weight:700;font-size:14.5px;line-height:1.25;flex:1;word-break:break-word}"
+      +".kb-tile:not(.expanded) .kb-tile-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}"
+      +".kb-pin{background:none;border:0;cursor:pointer;color:var(--ink-faint);font-size:15px;line-height:1;flex:0 0 auto;padding:0}"
+      +".kb-pin.on{color:var(--amber)}"
+      +".kb-tile-snip{font-size:12px;color:var(--ink-soft);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}"
+      +".kb-tile.expanded .kb-tile-snip{display:none}"
+      +".kb-tile-full{display:none;margin-top:8px}"
+      +".kb-tile.expanded .kb-tile-full{display:block}"
+      +".kb-tile-actions{display:flex;gap:8px;margin-top:12px}";
+    document.head.appendChild(s); }
+  var kbExpanded={};
   function drawKb(){
     var cSel=document.getElementById("kbCat"); if(!cSel) return; var cc=cSel.value; var cats={}; state.kb.forEach(function(e){ if(e.category) cats[e.category]=true; });
     cSel.innerHTML='<option value="">All categories</option>'+Object.keys(cats).sort().map(function(c){return '<option'+(c===cc?' selected':'')+'>'+esc(c)+'</option>';}).join("");
@@ -1242,12 +1260,23 @@
     var keys=Object.keys(g).sort(function(a,b){ var ap=a.indexOf("Pinned")>=0, bp=b.indexOf("Pinned")>=0; if(ap!==bp) return ap?-1:1; return a.localeCompare(b); });
     keys.forEach(function(c){
       var w=document.createElement("div"); w.className="qgroup"; var h=document.createElement("div"); h.className="qhead"; h.innerHTML=esc(c)+'<span class="cnt">'+g[c].length+'</span>'; w.appendChild(h);
-      g[c].forEach(function(e){ var d=document.createElement("div"); d.className="item"; var tags=(e.tags||[]).map(function(t){return '<span class="tg">'+esc(t)+'</span>';}).join(""); var link=e.link?'<div class="ref"><a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(e.link)+'</a></div>':'';
-        d.innerHTML='<div class="top"><h4 style="margin:0">'+esc(e.title||"Untitled")+'</h4><button class="pinbtn'+(e.pinned?' on':'')+'" style="margin-left:auto" data-pin="1" title="'+(e.pinned?'Unpin':'Pin to top')+'">'+(e.pinned?'\u2605':'\u2606')+'</button><button class="copybtn" data-copy="1">Copy</button></div>'+(e.body?'<div class="detail">'+mdToHtml(e.body)+'</div>':'')+(tags?'<div class="tags">'+tags+'</div>':'')+link+attDisplay(e.attachments);
+      var grid=document.createElement("div"); grid.className="kb-tiles";
+      g[c].forEach(function(e){
+        var d=document.createElement("div"); d.className="kb-tile"+(kbExpanded[e.id]?" expanded":"");
+        var tags=(e.tags||[]).map(function(t){return '<span class="tg">'+esc(t)+'</span>';}).join("");
+        var link=e.link?'<div class="ref"><a href="'+esc(e.link)+'" target="_blank" rel="noopener">'+esc(e.link)+'</a></div>':'';
+        var snip=esc(String(e.body||"").replace(/[#>*`_~\-]+/g," ").replace(/\s+/g," ").trim().slice(0,110));
+        d.innerHTML='<div class="kb-tile-head"><span class="kb-tile-title">'+esc(e.title||"Untitled")+'</span><button class="kb-pin'+(e.pinned?' on':'')+'" data-pin="1" title="'+(e.pinned?'Unpin':'Pin to top')+'">'+(e.pinned?'\u2605':'\u2606')+'</button></div>'
+          +(snip?'<div class="kb-tile-snip">'+snip+'</div>':'')
+          +'<div class="kb-tile-full">'+(e.body?'<div class="detail">'+mdToHtml(e.body)+'</div>':'')+(tags?'<div class="tags">'+tags+'</div>':'')+link+attDisplay(e.attachments)
+            +'<div class="kb-tile-actions"><button class="btn sm primary" data-copy="1">Copy</button><button class="btn sm" data-edit="1">Edit</button></div></div>';
         d.querySelector("[data-copy]").onclick=function(ev){ ev.stopPropagation(); copySnippet(e.body||""); };
+        d.querySelector("[data-edit]").onclick=function(ev){ ev.stopPropagation(); openKb(e.id); };
         d.querySelector("[data-pin]").onclick=function(ev){ ev.stopPropagation(); e.pinned=!e.pinned; save(); drawKb(); toast(e.pinned?"Pinned to top.":"Unpinned."); };
-        d.onclick=function(ev){ if(ev.target.closest("[data-copy]")||ev.target.closest("[data-pin]")||ev.target.closest("[data-lb]")||ev.target.closest("a")) return; openKb(e.id); }; w.appendChild(d); });
-      list.appendChild(w);
+        d.onclick=function(ev){ if(ev.target.closest("button")||ev.target.closest("a")||ev.target.closest("[data-lb]")) return; kbExpanded[e.id]=!kbExpanded[e.id]; d.classList.toggle("expanded",!!kbExpanded[e.id]); };
+        grid.appendChild(d);
+      });
+      w.appendChild(grid); list.appendChild(w);
     });
     wireLightbox(list);
   }
@@ -2727,6 +2756,7 @@
     return fsRead("links.json").then(function(d){ var o={links:(d&&d.links)||[],contacts:(d&&d.contacts)||[]}; fn(o); LK_LINKS=o.links; LK_CONTACTS=o.contacts; return fsWrite("links.json",{kind:"links",updatedAt:nowISO(),links:o.links,contacts:o.contacts}); });
   }
   renderers.links=function(){
+    if(!isManager() && TEAM.dir && !renderers.links._pull){ renderers.links._pull=true; var wasAdmin=lkCanEdit(); Promise.resolve(pullFeedback(true)).then(function(){ renderers.links._pull=false; if(lkCanEdit()!==wasAdmin && current==="links") renderers.links(); }).catch(function(){ renderers.links._pull=false; }); }
     var sec=document.getElementById("sec-links"); var shared=!!TEAM.dir, canEdit=lkCanEdit(), editable=(canEdit||!shared);
     var lede = shared ? ("Shared across your team \u2014 everyone sees the same portals and numbers."+(canEdit?" You maintain them here.":" Maintained by your manager.")) : "Your go-to portals and key contact numbers. Connect the shared folder in Settings to share these with your team.";
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Quick access</div><h2>Links &amp; Contacts</h2><p class="lede">'+esc(lede)+'</p></div>'+(shared?'<div class="actions"><button class="btn sm" id="lkRefresh">\u21bb Refresh</button></div>':'')+'</div>'
