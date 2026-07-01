@@ -9,6 +9,7 @@ import { ResultCard } from '../components/ResultCard';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { ZipSearch } from '../components/ZipSearch';
 import { mockRestaurants, Restaurant } from '../data/mockRestaurants';
+import { useLocation } from '../hooks/useLocation';
 
 const defaultPreferences: Preferences = {
   distanceMiles: 5,
@@ -27,16 +28,22 @@ export function HomeScreen() {
   const [result, setResult] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { coords, requestLocation, setManualLocation } = useLocation();
 
   useEffect(() => {
+    requestLocation();
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, []);
+  }, [requestLocation]);
 
   const findRestaurant = () => {
+    if (!coords) {
+      setZipVisible(true);
+      return;
+    }
     setLoading(true);
     timeoutRef.current = setTimeout(() => {
       const pick = mockRestaurants[Math.floor(Math.random() * mockRestaurants.length)];
@@ -81,7 +88,12 @@ export function HomeScreen() {
 
       {zipVisible && (
         <View style={styles.zipContainer}>
-          <ZipSearch onSubmit={() => setZipVisible(false)} />
+          <ZipSearch
+            onResolved={(next) => {
+              setManualLocation(next);
+              setZipVisible(false);
+            }}
+          />
         </View>
       )}
 

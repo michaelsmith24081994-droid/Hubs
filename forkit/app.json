@@ -23,7 +23,13 @@
     },
     "plugins": [
       "expo-font",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Forkit uses your location to find restaurants near you."
+        }
+      ]
     ],
     "experiments": {
       "baseUrl": "/Hubs"
