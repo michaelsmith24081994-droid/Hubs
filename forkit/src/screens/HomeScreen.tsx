@@ -43,11 +43,19 @@ export function HomeScreen() {
       <StatusBar style="light" />
 
       <View style={styles.topBar}>
-        <Pressable onPress={() => setPreferencesVisible(true)} hitSlop={12}>
+        <Pressable
+          onPress={() => setPreferencesVisible(true)}
+          hitSlop={12}
+          style={({ hovered }) => [styles.iconButton, hovered && styles.iconButtonHover]}
+        >
           <Feather name="sliders" size={22} color={colors.textSecondary} />
         </Pressable>
         <Text style={styles.logo}>forkit</Text>
-        <Pressable onPress={() => setProfileVisible(true)} hitSlop={12}>
+        <Pressable
+          onPress={() => setProfileVisible(true)}
+          hitSlop={12}
+          style={({ hovered }) => [styles.iconButton, hovered && styles.iconButtonHover]}
+        >
           <Feather name="user" size={22} color={colors.textSecondary} />
         </Pressable>
       </View>
@@ -56,7 +64,10 @@ export function HomeScreen() {
         <Text style={styles.headline}>Where should{'\n'}we eat?</Text>
         <Text style={styles.subtext}>One tap. One restaurant. No overthinking.</Text>
 
-        <Pressable style={styles.ctaButton} onPress={pickRandomRestaurant}>
+        <Pressable
+          style={({ hovered }) => [styles.ctaButton, hovered && styles.ctaButtonHover]}
+          onPress={pickRandomRestaurant}
+        >
           <Text style={styles.ctaText}>Find Something Good</Text>
         </Pressable>
       </View>
@@ -67,7 +78,10 @@ export function HomeScreen() {
         </View>
       )}
 
-      <Pressable style={styles.locationFab} onPress={() => setZipVisible((prev) => !prev)}>
+      <Pressable
+        style={({ hovered }) => [styles.locationFab, hovered && styles.locationFabHover]}
+        onPress={() => setZipVisible((prev) => !prev)}
+      >
         <Feather name="map-pin" size={20} color={colors.textPrimary} />
       </Pressable>
 
@@ -99,6 +113,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.accent,
   },
+  iconButton: {
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  iconButtonHover: {
+    opacity: 0.6,
+  },
   center: {
     flex: 1,
     alignItems: 'center',
@@ -124,6 +145,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xl,
+    transitionProperty: 'opacity, transform',
+    transitionDuration: '150ms',
+  },
+  ctaButtonHover: {
+    opacity: 0.85,
+    transform: [{ scale: 1.03 }],
   },
   ctaText: {
     fontFamily: fonts.bodyBold,
@@ -148,5 +175,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.border,
+    transitionProperty: 'border-color, background-color',
+    transitionDuration: '150ms',
+  },
+  locationFabHover: {
+    borderColor: colors.accent,
+    backgroundColor: colors.chipBackground,
   },
 });

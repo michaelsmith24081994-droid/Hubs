@@ -1,7 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, fonts } from '../theme/theme';
+import { SidePanel } from './SidePanel';
 
 type Props = {
   visible: boolean;
@@ -10,41 +11,35 @@ type Props = {
 
 export function ProfileSheet({ visible, onClose }: Props) {
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Your Profile</Text>
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Feather name="x" size={24} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-
-          <Text style={styles.sectionTitle}>Saved Places</Text>
-          <Text style={styles.emptyText}>No saved restaurants yet</Text>
-          <Text style={styles.emptySubtext}>
-            Start exploring restaurants to build your taste profile!
-          </Text>
+    <SidePanel visible={visible} onClose={onClose} side="right">
+      <View style={styles.sheet}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Your Profile</Text>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={({ hovered }) => [styles.closeButton, hovered && styles.closeButtonHover]}
+          >
+            <Feather name="x" size={24} color={colors.textSecondary} />
+          </Pressable>
         </View>
+
+        <Text style={styles.sectionTitle}>Saved Places</Text>
+        <Text style={styles.emptyText}>No saved restaurants yet</Text>
+        <Text style={styles.emptySubtext}>
+          Start exploring restaurants to build your taste profile!
+        </Text>
       </View>
-    </Modal>
+    </SidePanel>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
   sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xxl,
     paddingBottom: spacing.xxl,
-    minHeight: '45%',
   },
   header: {
     flexDirection: 'row',
@@ -56,6 +51,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.accent,
+  },
+  closeButton: {
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  closeButtonHover: {
+    opacity: 0.6,
   },
   sectionTitle: {
     fontFamily: fonts.bodyBold,

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Modal, View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radii, fonts } from '../theme/theme';
 import { cuisineOptions } from '../data/mockRestaurants';
+import { SidePanel } from './SidePanel';
 
 export type Preferences = {
   distanceMiles: number;
@@ -31,17 +32,20 @@ export function PreferencesSheet({ visible, preferences, onChange, onClose }: Pr
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.sheet}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Preferences</Text>
-            <Pressable onPress={onClose} hitSlop={12}>
-              <Feather name="x" size={24} color={colors.textSecondary} />
-            </Pressable>
-          </View>
+    <SidePanel visible={visible} onClose={onClose} side="left">
+      <View style={styles.sheet}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Preferences</Text>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={({ hovered }) => [styles.closeButton, hovered && styles.closeButtonHover]}
+          >
+            <Feather name="x" size={24} color={colors.textSecondary} />
+          </Pressable>
+        </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false}>
             <Text style={styles.label}>DISTANCE</Text>
             <Text style={styles.valueLarge}>{preferences.distanceMiles} miles</Text>
             <Slider
@@ -84,7 +88,11 @@ export function PreferencesSheet({ visible, preferences, onChange, onClose }: Pr
                 <Text style={styles.helperText}>Hide restaurants that are currently closed</Text>
               </View>
               <Pressable
-                style={[styles.toggle, preferences.openNow && styles.toggleOn]}
+                style={({ hovered }) => [
+                  styles.toggle,
+                  preferences.openNow && styles.toggleOn,
+                  hovered && !preferences.openNow && styles.toggleHover,
+                ]}
                 onPress={() => onChange({ ...preferences, openNow: !preferences.openNow })}
               >
                 <View style={[styles.toggleKnob, preferences.openNow && styles.toggleKnobOn]} />
@@ -103,7 +111,11 @@ export function PreferencesSheet({ visible, preferences, onChange, onClose }: Pr
                 return (
                   <Pressable
                     key={cuisine}
-                    style={[styles.chip, selected && styles.chipSelected]}
+                    style={({ hovered }) => [
+                      styles.chip,
+                      selected && styles.chipSelected,
+                      hovered && !selected && styles.chipHover,
+                    ]}
                     onPress={() => toggleCuisine(cuisine)}
                   >
                     <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
@@ -113,31 +125,25 @@ export function PreferencesSheet({ visible, preferences, onChange, onClose }: Pr
                 );
               })}
             </View>
-          </ScrollView>
+        </ScrollView>
 
-          <Pressable style={styles.doneButton} onPress={onClose}>
-            <Text style={styles.doneButtonText}>Done</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          style={({ hovered }) => [styles.doneButton, hovered && styles.doneButtonHover]}
+          onPress={onClose}
+        >
+          <Text style={styles.doneButtonText}>Done</Text>
+        </Pressable>
       </View>
-    </Modal>
+    </SidePanel>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
   sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radii.card,
-    borderTopRightRadius: radii.card,
+    flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xxl,
     paddingBottom: spacing.xl,
-    maxHeight: '85%',
   },
   header: {
     flexDirection: 'row',
@@ -149,6 +155,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.accent,
+  },
+  closeButton: {
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  closeButtonHover: {
+    opacity: 0.6,
   },
   label: {
     fontFamily: fonts.bodySemiBold,
@@ -196,9 +209,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     padding: 2,
     justifyContent: 'center',
+    transitionProperty: 'background-color',
+    transitionDuration: '150ms',
   },
   toggleOn: {
     backgroundColor: colors.accent,
+  },
+  toggleHover: {
+    backgroundColor: colors.textSecondary,
   },
   toggleKnob: {
     width: 24,
@@ -223,9 +241,14 @@ const styles = StyleSheet.create({
     borderRadius: radii.chip,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
+    transitionProperty: 'border-color',
+    transitionDuration: '150ms',
   },
   chipSelected: {
     backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  chipHover: {
     borderColor: colors.accent,
   },
   chipText: {
@@ -242,6 +265,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: 'center',
     marginTop: spacing.md,
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  doneButtonHover: {
+    opacity: 0.85,
   },
   doneButtonText: {
     fontFamily: fonts.bodyBold,

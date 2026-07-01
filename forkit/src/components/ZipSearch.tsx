@@ -7,22 +7,25 @@ type Props = {
 };
 
 export function ZipSearch({ onSubmit }: Props) {
-  const [zip, setZip] = useState('');
+  const [postcode, setPostcode] = useState('');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>SEARCH BY ZIP CODE</Text>
+      <Text style={styles.label}>SEARCH BY POSTCODE</Text>
       <View style={styles.row}>
         <TextInput
           style={styles.input}
-          placeholder="e.g. 90210"
+          placeholder="e.g. SW1A 1AA"
           placeholderTextColor={colors.textSecondary}
-          value={zip}
-          onChangeText={setZip}
-          keyboardType="number-pad"
-          maxLength={5}
+          value={postcode}
+          onChangeText={setPostcode}
+          autoCapitalize="characters"
+          maxLength={8}
         />
-        <Pressable style={styles.goButton} onPress={() => onSubmit(zip)}>
+        <Pressable
+          style={({ hovered }) => [styles.goButton, hovered && styles.goButtonHover]}
+          onPress={() => onSubmit(postcode)}
+        >
           <Text style={styles.goButtonText}>Go</Text>
         </Pressable>
       </View>
@@ -49,6 +52,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: colors.accent,
     borderRadius: radii.chip,
@@ -59,10 +63,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   goButton: {
+    flexShrink: 0,
     backgroundColor: colors.accent,
     borderRadius: radii.chip,
     paddingHorizontal: spacing.lg,
     justifyContent: 'center',
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  goButtonHover: {
+    opacity: 0.85,
   },
   goButtonText: {
     fontFamily: fonts.bodyBold,

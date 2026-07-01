@@ -13,7 +13,11 @@ type Props = {
 export function ResultCard({ restaurant, onTryAgain, onClose }: Props) {
   return (
     <View style={styles.overlay}>
-      <Pressable style={styles.closeButton} onPress={onClose} hitSlop={12}>
+      <Pressable
+        style={({ hovered }) => [styles.closeButton, hovered && styles.closeButtonHover]}
+        onPress={onClose}
+        hitSlop={12}
+      >
         <Feather name="x" size={26} color={colors.textPrimary} />
       </Pressable>
 
@@ -31,11 +35,21 @@ export function ResultCard({ restaurant, onTryAgain, onClose }: Props) {
           <Text style={styles.address}>{restaurant.address}</Text>
 
           <View style={styles.actionsRow}>
-            <Pressable style={styles.actionButtonOutline}>
+            <Pressable
+              style={({ hovered }) => [
+                styles.actionButtonOutline,
+                hovered && styles.actionButtonOutlineHover,
+              ]}
+            >
               <Feather name="phone" size={16} color={colors.textPrimary} />
               <Text style={styles.actionOutlineText}>Call</Text>
             </Pressable>
-            <Pressable style={styles.actionButtonOutline}>
+            <Pressable
+              style={({ hovered }) => [
+                styles.actionButtonOutline,
+                hovered && styles.actionButtonOutlineHover,
+              ]}
+            >
               <Feather name="map" size={16} color={colors.textPrimary} />
               <Text style={styles.actionOutlineText}>Directions</Text>
             </Pressable>
@@ -43,7 +57,10 @@ export function ResultCard({ restaurant, onTryAgain, onClose }: Props) {
         </View>
       </View>
 
-      <Pressable style={styles.tryAgainButton} onPress={onTryAgain}>
+      <Pressable
+        style={({ hovered }) => [styles.tryAgainButton, hovered && styles.tryAgainButtonHover]}
+        onPress={onTryAgain}
+      >
         <Feather name="refresh-cw" size={18} color={colors.textOnAccent} />
         <Text style={styles.tryAgainText}>Try Again</Text>
       </Pressable>
@@ -68,6 +85,11 @@ const styles = StyleSheet.create({
     top: spacing.xxl,
     right: spacing.lg,
     zIndex: 1,
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  closeButtonHover: {
+    opacity: 0.6,
   },
   card: {
     width: '100%',
@@ -125,6 +147,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radii.pill,
     paddingVertical: spacing.sm,
+    transitionProperty: 'border-color, background-color',
+    transitionDuration: '150ms',
+  },
+  actionButtonOutlineHover: {
+    borderColor: colors.accent,
+    backgroundColor: colors.chipBackground,
   },
   actionOutlineText: {
     fontFamily: fonts.bodySemiBold,
@@ -142,6 +170,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     marginTop: spacing.lg,
     width: '100%',
+    transitionProperty: 'opacity',
+    transitionDuration: '150ms',
+  },
+  tryAgainButtonHover: {
+    opacity: 0.85,
   },
   tryAgainText: {
     fontFamily: fonts.bodyBold,
