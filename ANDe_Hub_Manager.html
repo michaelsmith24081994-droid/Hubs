@@ -2711,40 +2711,61 @@
   function start(){ applyTheme(); applyAccent(); applyRole(); if(hasLock()) showLock(); buildContours(); teamRestore().then(function(){ if(!isManager()&&state.config.autoPull&&TEAM.dir) pullFeedback(true); updateFbDot(""); }); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||state.config.role||"Live chat agent"; go("dash"); requestAnimationFrame(positionNavInd); setTimeout(positionNavInd,260); try{ enhInit(); }catch(e){} if(!document.body.classList.contains("locked")){ try{ playIntro(); }catch(e){} } }
 
   /* ================= LINKS ================= */
+  /* ---- Links & Contacts: shared across the team via links.json ---- */
+  var LK_LINKS=[], LK_CONTACTS=[];
+  function lkCanEdit(){ return isManager() || !!(state.teamInbox&&state.teamInbox.admin); }
+  function lkLoad(){
+    if(!TEAM.dir){ LK_LINKS=state.links||[]; LK_CONTACTS=state.contacts||[]; return Promise.resolve(); }
+    return fsRead("links.json").then(function(d){
+      if(d && (Array.isArray(d.links)||Array.isArray(d.contacts))){ LK_LINKS=d.links||[]; LK_CONTACTS=d.contacts||[]; return; }
+      LK_LINKS=lkCanEdit()?(state.links||[]).slice():[]; LK_CONTACTS=lkCanEdit()?(state.contacts||[]).slice():[];
+      if(lkCanEdit() && (LK_LINKS.length||LK_CONTACTS.length)){ return fsWrite("links.json",{kind:"links",updatedAt:nowISO(),links:LK_LINKS,contacts:LK_CONTACTS}); }
+    }).catch(function(){ LK_LINKS=state.links||[]; LK_CONTACTS=state.contacts||[]; });
+  }
+  function lkMutate(fn){
+    if(!TEAM.dir){ var o={links:(state.links||[]).slice(),contacts:(state.contacts||[]).slice()}; fn(o); state.links=o.links; state.contacts=o.contacts; LK_LINKS=o.links; LK_CONTACTS=o.contacts; save(); return Promise.resolve(); }
+    return fsRead("links.json").then(function(d){ var o={links:(d&&d.links)||[],contacts:(d&&d.contacts)||[]}; fn(o); LK_LINKS=o.links; LK_CONTACTS=o.contacts; return fsWrite("links.json",{kind:"links",updatedAt:nowISO(),links:o.links,contacts:o.contacts}); });
+  }
   renderers.links=function(){
-    var sec=document.getElementById("sec-links"); var links=state.links||[], contacts=state.contacts||[];
-    sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Quick access</div><h2>Links &amp; Contacts</h2><p class="lede">Your go-to portals and key contact numbers — one click or copy away. Stored on this device.</p></div></div>'
+    var sec=document.getElementById("sec-links"); var shared=!!TEAM.dir, canEdit=lkCanEdit(), editable=(canEdit||!shared);
+    var lede = shared ? ("Shared across your team \u2014 everyone sees the same portals and numbers."+(canEdit?" You maintain them here.":" Maintained by your manager.")) : "Your go-to portals and key contact numbers. Connect the shared folder in Settings to share these with your team.";
+    sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Quick access</div><h2>Links &amp; Contacts</h2><p class="lede">'+esc(lede)+'</p></div>'+(shared?'<div class="actions"><button class="btn sm" id="lkRefresh">\u21bb Refresh</button></div>':'')+'</div>'
       +'<div class="grid2" style="align-items:start">'
-        +'<div class="panel"><div class="panel-h"><h3>Links</h3><button class="btn sm primary" id="linkAdd">+ Add link</button></div><div class="panel-b" id="linkList"></div></div>'
-        +'<div class="panel"><div class="panel-h"><h3>Contacts</h3><button class="btn sm primary" id="contactAdd">+ Add contact</button></div><div class="panel-b" id="contactList"></div></div>'
+        +'<div class="panel"><div class="panel-h"><h3>Links</h3>'+(editable?'<button class="btn sm primary" id="linkAdd">+ Add link</button>':'')+'</div><div class="panel-b" id="linkList"><div class="vhint">Loading\u2026</div></div></div>'
+        +'<div class="panel"><div class="panel-h"><h3>Contacts</h3>'+(editable?'<button class="btn sm primary" id="contactAdd">+ Add contact</button>':'')+'</div><div class="panel-b" id="contactList"></div></div>'
       +'</div>';
-    var ll=document.getElementById("linkList");
-    ll.innerHTML=links.length? links.map(function(l){ var u=(/^https?:\/\//i.test(l.url||"")||/^\//.test(l.url||""))?l.url:("https://"+(l.url||"")); var ini=((l.title||l.url||"?").replace(/^https?:\/\//i,"").charAt(0)||"?").toUpperCase(); return '<div class="link-card"><a class="link-main" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer"><span class="link-ico">'+esc(ini)+'</span><span class="link-text"><span class="link-title">'+esc(l.title||l.url)+'</span><span class="link-url">'+esc(l.url||"")+'</span></span></a><div class="link-actions"><button class="btn sm" data-ledit="'+esc(l.id)+'">Edit</button><button class="rm" data-ldel="'+esc(l.id)+'">✕</button></div></div>'; }).join("") : '<div class="empty">No links yet — add the pages you open all day.</div>';
-    var cl=document.getElementById("contactList");
-    cl.innerHTML=contacts.length? contacts.map(function(c){ return '<div class="contact-card"><div class="contact-top"><div class="contact-title">'+esc(c.title||"Contact")+'</div><div class="contact-actions"><button class="btn sm" data-cedit="'+esc(c.id)+'">Edit</button><button class="rm" data-cdel="'+esc(c.id)+'">✕</button></div></div><button class="contact-num" data-copy="'+esc(c.number||"")+'" title="Click to copy"><span>'+esc(c.number||"")+'</span><span class="cc">⧉ copy</span></button></div>'; }).join("") : '<div class="empty">No contacts yet — add numbers you call often.</div>';
-    document.getElementById("linkAdd").onclick=function(){ openLinkEditor(null); };
-    document.getElementById("contactAdd").onclick=function(){ openContactEditor(null); };
-    ll.querySelectorAll("[data-ledit]").forEach(function(b){ b.onclick=function(){ var l=(state.links||[]).filter(function(x){return x.id===b.getAttribute("data-ledit");})[0]; if(l) openLinkEditor(l); }; });
-    ll.querySelectorAll("[data-ldel]").forEach(function(b){ b.onclick=function(){ deleteWithUndo("links",b.getAttribute("data-ldel"),"Link"); }; });
-    cl.querySelectorAll("[data-cedit]").forEach(function(b){ b.onclick=function(){ var c=(state.contacts||[]).filter(function(x){return x.id===b.getAttribute("data-cedit");})[0]; if(c) openContactEditor(c); }; });
-    cl.querySelectorAll("[data-cdel]").forEach(function(b){ b.onclick=function(){ deleteWithUndo("contacts",b.getAttribute("data-cdel"),"Contact"); }; });
-    cl.querySelectorAll("[data-copy]").forEach(function(b){ b.onclick=function(){ var v=b.getAttribute("data-copy"); function ok(){ toast("Copied "+v); } if(navigator.clipboard){ navigator.clipboard.writeText(v).then(ok).catch(ok); } else ok(); }; });
+    var rf=document.getElementById("lkRefresh"); if(rf) rf.onclick=function(){ renderers.links(); };
+    var la=document.getElementById("linkAdd"); if(la) la.onclick=function(){ openLinkEditor(null); };
+    var ca=document.getElementById("contactAdd"); if(ca) ca.onclick=function(){ openContactEditor(null); };
+    lkLoad().then(function(){ lkDraw(editable); });
   };
-  function openLinkEditor(l){ var editing=!!l; l=l||{};
-    openModal('<div class="modal-h"><h3>'+(editing?"Edit":"Add")+' link</h3><button class="x" id="mX">✕</button></div>'
-      +'<div class="modal-b"><label class="fld"><span class="lab">Title</span><input class="in" id="lkTitle" value="'+esc(l.title||"")+'" placeholder="e.g. Admin portal"></label>'
-      +'<label class="fld"><span class="lab">URL</span><input class="in" id="lkUrl" value="'+esc(l.url||"")+'" placeholder="https://…"></label></div>'
+  function lkDraw(editable){
+    var links=LK_LINKS, contacts=LK_CONTACTS;
+    var ll=document.getElementById("linkList"); if(!ll) return;
+    ll.innerHTML=links.length? links.map(function(l){ var u=(/^https?:\/\//i.test(l.url||"")||/^\//.test(l.url||""))?l.url:("https://"+(l.url||"")); var ini=((l.title||l.url||"?").replace(/^https?:\/\//i,"").charAt(0)||"?").toUpperCase(); return '<div class="link-card"><a class="link-main" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer"><span class="link-ico">'+esc(ini)+'</span><span class="link-text"><span class="link-title">'+esc(l.title||l.url)+'</span><span class="link-url">'+esc(l.url||"")+'</span></span></a>'+(editable?'<div class="link-actions"><button class="btn sm" data-ledit="'+esc(l.id)+'">Edit</button><button class="rm" data-ldel="'+esc(l.id)+'">\u2715</button></div>':'')+'</div>'; }).join("") : '<div class="empty">No links yet'+(editable?" \u2014 add the pages the team opens all day.":".")+'</div>';
+    var cl=document.getElementById("contactList"); if(!cl) return;
+    cl.innerHTML=contacts.length? contacts.map(function(c){ return '<div class="contact-card"><div class="contact-top"><div class="contact-title">'+esc(c.title||"Contact")+'</div>'+(editable?'<div class="contact-actions"><button class="btn sm" data-cedit="'+esc(c.id)+'">Edit</button><button class="rm" data-cdel="'+esc(c.id)+'">\u2715</button></div>':'')+'</div><button class="contact-num" data-copy="'+esc(c.number||"")+'" title="Click to copy"><span>'+esc(c.number||"")+'</span><span class="cc">\u29c9 copy</span></button></div>'; }).join("") : '<div class="empty">No contacts yet'+(editable?" \u2014 add numbers the team calls often.":".")+'</div>';
+    ll.querySelectorAll("[data-ledit]").forEach(function(b){ b.onclick=function(){ var l=LK_LINKS.filter(function(x){return x.id===b.getAttribute("data-ledit");})[0]; if(l) openLinkEditor(l); }; });
+    ll.querySelectorAll("[data-ldel]").forEach(function(b){ b.onclick=function(){ var id=b.getAttribute("data-ldel"); lkMutate(function(o){ o.links=o.links.filter(function(x){return x.id!==id;}); }).then(function(){ lkDraw(editable); toast("Link removed."); }); }; });
+    cl.querySelectorAll("[data-cedit]").forEach(function(b){ b.onclick=function(){ var c=LK_CONTACTS.filter(function(x){return x.id===b.getAttribute("data-cedit");})[0]; if(c) openContactEditor(c); }; });
+    cl.querySelectorAll("[data-cdel]").forEach(function(b){ b.onclick=function(){ var id=b.getAttribute("data-cdel"); lkMutate(function(o){ o.contacts=o.contacts.filter(function(x){return x.id!==id;}); }).then(function(){ lkDraw(editable); toast("Contact removed."); }); }; });
+    cl.querySelectorAll("[data-copy]").forEach(function(b){ b.onclick=function(){ var v=b.getAttribute("data-copy"); function ok(){ toast("Copied "+v); } if(navigator.clipboard){ navigator.clipboard.writeText(v).then(ok).catch(ok); } else ok(); }; });
+  }
+  function openLinkEditor(l){ var editing=!!l, cur=l||{};
+    openModal('<div class="modal-h"><h3>'+(editing?"Edit":"Add")+' link</h3><button class="x" id="mX">\u2715</button></div>'
+      +'<div class="modal-b"><label class="fld"><span class="lab">Title</span><input class="in" id="lkTitle" value="'+esc(cur.title||"")+'" placeholder="e.g. Admin portal"></label>'
+      +'<label class="fld"><span class="lab">URL</span><input class="in" id="lkUrl" value="'+esc(cur.url||"")+'" placeholder="https://\u2026"></label></div>'
       +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="lkSave">'+(editing?"Save":"Add link")+'</button></div>');
     document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
-    document.getElementById("lkSave").onclick=function(){ var t=document.getElementById("lkTitle").value.trim(), u=document.getElementById("lkUrl").value.trim(); if(!u){ toast("Add a URL."); return; } if(!/^https?:\/\//i.test(u)&&!/^\//.test(u)) u="https://"+u; state.links=state.links||[]; if(editing){ l.title=t; l.url=u; } else { state.links.push({id:uid("lk"),title:t,url:u}); } save(); closeModal(); renderers.links(); toast(editing?"Saved.":"Added."); };
+    document.getElementById("lkSave").onclick=function(){ var t=document.getElementById("lkTitle").value.trim(), u=document.getElementById("lkUrl").value.trim(); if(!u){ toast("Add a URL."); return; } if(!/^https?:\/\//i.test(u)&&!/^\//.test(u)) u="https://"+u; lkMutate(function(o){ if(editing){ var x=o.links.filter(function(y){return y.id===cur.id;})[0]; if(x){ x.title=t; x.url=u; } } else { o.links.push({id:uid("lk"),title:t,url:u}); } }).then(function(){ closeModal(); if(current==="links") renderers.links(); toast(editing?"Saved.":"Added."); }); };
   }
-  function openContactEditor(c){ var editing=!!c; c=c||{};
-    openModal('<div class="modal-h"><h3>'+(editing?"Edit":"Add")+' contact</h3><button class="x" id="mX">✕</button></div>'
-      +'<div class="modal-b"><label class="fld"><span class="lab">Title / name</span><input class="in" id="ctTitle" value="'+esc(c.title||"")+'" placeholder="e.g. IT Helpdesk"></label>'
-      +'<label class="fld"><span class="lab">Number</span><input class="in" id="ctNum" value="'+esc(c.number||"")+'" placeholder="e.g. 0800 123 456 or ext 2204"></label></div>'
+  function openContactEditor(c){ var editing=!!c, cur=c||{};
+    openModal('<div class="modal-h"><h3>'+(editing?"Edit":"Add")+' contact</h3><button class="x" id="mX">\u2715</button></div>'
+      +'<div class="modal-b"><label class="fld"><span class="lab">Title / name</span><input class="in" id="ctTitle" value="'+esc(cur.title||"")+'" placeholder="e.g. IT Helpdesk"></label>'
+      +'<label class="fld"><span class="lab">Number</span><input class="in" id="ctNum" value="'+esc(cur.number||"")+'" placeholder="e.g. 0800 123 456 or ext 2204"></label></div>'
       +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="ctSave">'+(editing?"Save":"Add")+'</button></div>');
     document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
-    document.getElementById("ctSave").onclick=function(){ var t=document.getElementById("ctTitle").value.trim(), n=document.getElementById("ctNum").value.trim(); if(!n){ toast("Add a number."); return; } state.contacts=state.contacts||[]; if(editing){ c.title=t; c.number=n; } else { state.contacts.push({id:uid("ct"),title:t,number:n}); } save(); closeModal(); renderers.links(); toast(editing?"Saved.":"Added."); };
+    document.getElementById("ctSave").onclick=function(){ var t=document.getElementById("ctTitle").value.trim(), n=document.getElementById("ctNum").value.trim(); if(!n){ toast("Add a number."); return; } lkMutate(function(o){ if(editing){ var x=o.contacts.filter(function(y){return y.id===cur.id;})[0]; if(x){ x.title=t; x.number=n; } } else { o.contacts.push({id:uid("ct"),title:t,number:n}); } }).then(function(){ closeModal(); if(current==="links") renderers.links(); toast(editing?"Saved.":"Added."); }); };
   }
 
   /* ================= TD ISSUES (shared systems issue log) ================= */
