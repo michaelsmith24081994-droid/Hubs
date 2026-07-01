@@ -603,7 +603,6 @@
       <button class="navi" data-section="dev"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></span><span class="lbl">Development</span></button>
       <button class="navi" data-section="evidence"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h11l-1.6 3.5L16 11H5"/></svg></span><span class="lbl">Checkpoint</span></button>
       <button class="navi" data-section="kb"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4a2 2 0 0 1 2-2h12v16H7a2 2 0 0 0-2 2z"/><path d="M5 20a2 2 0 0 1 2-2h12"/><line x1="9" y1="7" x2="15" y2="7"/></svg></span><span class="lbl">Knowledge</span></button>
-      <button class="navi" data-section="meet"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2h8l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v5h5"/><line x1="9" y1="13" x2="16" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg></span><span class="lbl">Meetings</span></button>
       <button class="navi" data-section="buzz"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.7L3 21l1.9-5.8A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 11h7M8.5 14h4"/></svg></span><span class="lbl">Buzz Session</span></button>
       <button class="navi" data-section="links"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg></span><span class="lbl">Links &amp; Contacts</span></button>
       <button class="navi" data-section="tdissues"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a1.7 1.7 0 0 0 1.5 2.6h17.4A1.7 1.7 0 0 0 22.2 18L13.7 3.9a1.7 1.7 0 0 0-3 0z"/><path d="M12 9v4M12 17h.01"/></svg></span><span class="lbl">TD Issues</span></button>
@@ -633,7 +632,6 @@
     <section id="sec-stats" style="display:none"></section>
     <section id="sec-audits" style="display:none"></section>
     <section id="sec-kb" style="display:none"></section>
-    <section id="sec-meet" style="display:none"></section>
     <section id="sec-buzz" style="display:none"></section>
     <section id="sec-dev" style="display:none"></section>
     <section id="sec-links" style="display:none"></section>
@@ -798,7 +796,7 @@
   function wireLightbox(scope){ (scope||document).querySelectorAll("[data-lb]").forEach(function(im){ im.onclick=function(e){ e.stopPropagation(); openLightbox(im.getAttribute("data-lb")); }; }); }
 
   /* ---------- routing ---------- */
-  var SECTIONS=["dash","team","evidence","stats","audits","kb","meet","buzz","dev","coaching","recognition","links","tdissues","yourweek","customise"], renderers={};
+  var SECTIONS=["dash","team","evidence","stats","audits","kb","buzz","dev","coaching","recognition","links","tdissues","yourweek","customise"], renderers={};
   var current="dash";
   function go(sec){ current=sec; SECTIONS.forEach(function(id){ document.getElementById("sec-"+id).style.display=(id===sec)?"":"none"; }); [].forEach.call(document.getElementById("menu").children,function(b){ b.classList.toggle("active", b.getAttribute("data-section")===sec); }); if(renderers[sec]) renderers[sec](); try{window.scrollTo({top:0,behavior:"smooth"});}catch(e){window.scrollTo(0,0);} runReveal(); positionNavInd(); var g=document.getElementById("gearBtn"); if(g) g.classList.toggle("on",sec==="customise"); }
   document.getElementById("menu").addEventListener("click",function(e){ var b=e.target.closest(".navi"); if(b) go(b.getAttribute("data-section")); });
@@ -867,9 +865,6 @@
     var passes=au.filter(function(a){return a.result==="pass";}).length, fails=au.filter(function(a){return a.result==="fail";}).length;
     var passRate=(passes+fails)?Math.round(passes/(passes+fails)*100):null;
     var today=todayISO();
-    var upMeetings=state.events.filter(function(e){return e.type==="meeting" && e.date>=today;}).sort(function(a,b){return (a.date+(a.start||"")).localeCompare(b.date+(b.start||""));});
-    var nextM=upMeetings[0];
-    var meetingsToday=state.events.filter(function(e){return e.type==="meeting" && e.date===today;}).sort(function(a,b){return (a.start||"").localeCompare(b.start||"");});
     var fuToday=state.tasks.filter(function(t){return !t.done && t.due===today;}).length;
     var overdueCount=state.tasks.filter(function(t){return !t.done && t.due && t.due<today;}).length;
     // next checkpoint countdown
@@ -897,8 +892,7 @@
         '<div class="panel"><div class="panel-h"><h3>Today \u00b7 '+new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+'</h3></div><div class="panel-b"><div class="today-list" id="todayList"></div></div></div>'+
         '<div class="cards hero-row">'+
         '<div class="scard fill fill-b click" data-go="evidence"><div class="k">Next checkpoint</div><div class="v big">'+chkDays+'<span class="vu">days</span></div><div class="sub">'+chk.name+' \u00b7 '+fmtShort(chk.date)+'</div>'+icoWm("flag")+'</div>'+
-        '<div class="scard fill fill-a click" data-go="meet"><div class="k">Meetings today</div><div class="v big">'+meetingsToday.length+'</div><div class="sub">'+(meetingsToday.length?("next: "+esc(meetingsToday[0].start||meetingsToday[0].title||"meeting")):"none today")+'</div>'+icoWm("calendar")+'</div>'+
-        '<div class="scard fill"><div class="k">Follow-ups today</div><div class="v big">'+fuToday+'</div><div class="sub">'+(overdueCount?(overdueCount+" overdue too"):(fuToday?"due today":"all clear"))+'</div>'+icoWm("checklist")+'</div>'+
+        '<div class="scard fill fill-a click" data-go="dash"><div class="k">Follow-ups today</div><div class="v big">'+fuToday+'</div><div class="sub">'+(overdueCount?(overdueCount+" overdue too"):(fuToday?"due today":"all clear"))+'</div>'+icoWm("checklist")+'</div>'+
         '</div>'+
         '<div class="cards">'+
         '<div class="scard click" data-go="audits">'+ico("target")+'<div class="k">Average audit score</div><div class="v">'+(avgAudit!=null?avgAudit+"%":"\u2014")+'</div><div class="sub">'+(asc.length?("across "+asc.length+" audit"+(asc.length===1?"":"s")):"no audits yet")+'</div></div>'+
@@ -909,7 +903,6 @@
       '<div class="dash-side">'+
         '<div class="panel"><div class="panel-h"><h3>Calendar</h3><button class="btn sm" id="calExpand" title="Expand calendar">\u2922 Expand</button></div><div class="panel-b" id="calWrap"></div></div>'+
         '<div class="panel"><div class="panel-h"><h3>Follow-ups</h3></div><div class="panel-b"><div class="addline"><input class="in grow" id="taskText" placeholder="Add a follow-up…"><input class="in" type="date" id="taskDue" style="max-width:150px"><button class="btn primary sm" id="taskAdd">Add</button></div><div id="taskList"></div></div></div>'+
-        '<div class="panel"><div class="panel-h"><h3>Upcoming meetings</h3><button class="btn sm" id="goMeet">Open →</button></div><div class="panel-b" id="dashMeet"></div></div>'+
       '</div>'+
       '</div>';
     [].forEach.call(sec.querySelectorAll(".scard.click"),function(c){ c.onclick=function(){ go(c.getAttribute("data-go")); }; });
@@ -940,12 +933,7 @@
       var rd=new FileReader(); rd.onload=function(){ var img=new Image(); img.onload=function(){ var cv=document.createElement("canvas"),S=256; cv.width=S; cv.height=S; var ctx=cv.getContext("2d"); var sc=Math.max(S/img.width,S/img.height),w=img.width*sc,h=img.height*sc; ctx.drawImage(img,(S-w)/2,(S-h)/2,w,h); try{ state.config.avatar=cv.toDataURL("image/jpeg",0.82); }catch(e){ state.config.avatar=rd.result; } save(); avBtn.style.backgroundImage="url("+state.config.avatar+")"; var ph=avBtn.querySelector(".ph"); if(ph) ph.remove(); }; img.src=rd.result; }; rd.readAsDataURL(f); }; }
     var pfName=document.getElementById("pfName"); if(pfName) pfName.oninput=function(){ state.config.name=this.value; save(); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=this.value||state.config.role||"Live chat agent"; };
     var pfRole=document.getElementById("pfRole"); if(pfRole) pfRole.oninput=function(){ state.config.role=this.value; save(); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||this.value; };
-    var gm=document.getElementById("goMeet"); if(gm) gm.onclick=function(){ go("meet"); };
     var cx=document.getElementById("calExpand"); if(cx) cx.onclick=openCalPop;
-    var dm=document.getElementById("dashMeet");
-    if(dm){ if(!upMeetings.length){ dm.innerHTML='<div class="empty">No meetings booked. Add one in Meetings.</div>'; }
-      else { dm.innerHTML=upMeetings.slice(0,5).map(function(m){ return '<div class="today-row click" data-mid="'+m.id+'"><span class="tt">'+esc(fmtShort(m.date))+(m.start?" "+esc(m.start):"")+'</span><span>'+esc(m.title||"Meeting")+'</span></div>'; }).join("");
-        dm.querySelectorAll("[data-mid]").forEach(function(el){ el.onclick=function(){ openEvent(el.getAttribute("data-mid")); }; }); } }
   };
   function drawToday(){
     var wrap=document.getElementById("todayList"); if(!wrap) return;
@@ -1048,7 +1036,7 @@
       if(ed.id){ for(var i=0;i<state.events.length;i++){ if(state.events[i].id===ed.id){ state.events[i]=ed; break; } } } else { ed.id=uid("ev"); state.events.push(ed); }
       save(); closeModal(); afterEvent(); toast("Saved to calendar."); };
   }
-  function afterEvent(){ if(document.getElementById("sec-dash").style.display!=="none") renderCalendar(); if(document.getElementById("sec-meet").style.display!=="none") renderers.meet(); var cp=document.getElementById("calPop"); if(cp&&cp.classList.contains("show")) renderCalendar("calPopBody"); }
+  function afterEvent(){ if(document.getElementById("sec-dash").style.display!=="none") renderCalendar(); var cp=document.getElementById("calPop"); if(cp&&cp.classList.contains("show")) renderCalendar("calPopBody"); }
 
   /* ================= CHECKPOINT EVIDENCE ================= */
   var evPeriod=4;
@@ -1319,7 +1307,7 @@
 
   /* ================= MEETINGS & NOTES ================= */
   renderers.meet=function(){
-    var sec=document.getElementById("sec-meet");
+    var sec=document.getElementById("sec-meet"); if(!sec) return;
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Organise</div><h2>Meetings &amp; Notes</h2><p class="lede">Meetings sync straight to your dashboard calendar. Notes keep a dated record of how things are going.</p></div><div class="actions"><button class="btn warm" id="addMeet">+ New meeting</button><button class="btn primary" id="addNote">+ New note</button></div></div><div class="panel"><div class="panel-h"><h3>Upcoming &amp; recent meetings</h3></div><div class="panel-b" id="meetList"></div></div><div class="panel"><div class="panel-h"><h3>Notes</h3></div><div class="panel-b" id="noteList"></div></div>';
     document.getElementById("addMeet").onclick=function(){ openEvent(null,todayISO(),"meeting"); };
     document.getElementById("addNote").onclick=function(){ openNote(null); };
@@ -2550,8 +2538,6 @@
     add("action","New week of stats","","new week stats figures add",function(){ go("stats"); openWeek(null); });
     add("action","New audit","log an evaluation","new audit evaluation score add",function(){ go("audits"); openAudit(null); });
     add("action","New KB entry","note or canned reply","new kb knowledge canned reply snippet add",function(){ go("kb"); openKb(null); });
-    add("action","New meeting","","new meeting add calendar",function(){ go("meet"); openEvent(null,todayISO(),"meeting"); });
-    add("action","New note","","new note add",function(){ go("meet"); openNote(null); });
     add("action","New goal","","new goal development add",function(){ go("dev"); openGoal(null); });
     add("action","Mid-Year write-up","generate & download","mid year checkpoint write up generate download",function(){ generateCheckpoint("mid"); });
     add("action","EOY write-up","generate & download","eoy end of year checkpoint write up generate download",function(){ generateCheckpoint("eoy"); });
@@ -2562,7 +2548,6 @@
     state.kb.forEach(function(e){ add("kb",e.title,(e.category||"")+(e.body?" \u00b7 "+String(e.body).slice(0,70):""),(e.title||"")+" "+(e.body||"")+" "+(e.category||"")+" "+(e.tags||[]).join(" "),function(){ go("kb"); openKb(e.id); },e.body||""); });
     state.evidence.forEach(function(e){ add("evidence",e.title,fmtShort(e.date)+(e.category?" \u00b7 "+e.category:""),(e.title||"")+" "+(e.detail||"")+" "+(e.category||"")+" "+(e.ref||"")+" "+(e.tags||[]).join(" "),function(){ go("evidence"); openEvidence(e.id); }); });
     state.audits.forEach(function(a){ var s=auScore(a); add("audit",(a.form||"Audit")+(s!=null?" \u00b7 "+Math.round(s)+"%":""),fmtShort(a.date)+" \u00b7 "+(a.result||"")+((a.mistakes||[]).length?" \u00b7 "+a.mistakes.join(", "):""),(a.form||"")+" "+(a.notes||"")+" "+(a.mistakes||[]).join(" ")+" "+(a.result||""),function(){ go("audits"); openAudit(a.id); }); });
-    state.notes.forEach(function(n){ add("note",n.title||String(n.text||"").slice(0,50),fmtShort(n.date),(n.title||"")+" "+(n.text||""),function(){ go("meet"); openNote(n.id); }); });
     state.events.forEach(function(ev){ add(ev.type==="shift"?"shift":ev.type==="desk"?"desk":"meeting",ev.title||ev.type,fmtShort(ev.date)+(ev.start?" \u00b7 "+ev.start:""),(ev.title||"")+" "+(ev.note||"")+" "+ev.type+" "+ev.date,function(){ openEvent(ev.id); }); });
     state.goals.forEach(function(g){ add("goal",g.title,STATUS[g.status]||"",(g.title||"")+" "+(g.detail||""),function(){ go("dev"); openGoal(g.id); }); });
     state.learning.forEach(function(l){ add("learning",l.title,fmtShort(l.date),(l.title||"")+" "+(l.note||""),function(){ go("dev"); openLearn(l.id); }); });
