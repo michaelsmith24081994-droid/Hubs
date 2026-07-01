@@ -654,6 +654,7 @@
   /* ---------- helpers ---------- */
   function pad(n){ return (n<10?"0":"")+n; }
   function todayISO(off){ var d=new Date(); if(off) d.setDate(d.getDate()+off); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function greetingText(){ var g=new Date().getHours()<12?"Good morning":(new Date().getHours()<18?"Good afternoon":"Good evening"); var fn=(state.config.name||"").trim().split(/\s+/)[0]; return fn?(g+", "+fn):g; }
   function mondayOf(iso){ var d=iso?new Date(iso+"T00:00:00"):new Date(); if(isNaN(d.getTime())) d=new Date(); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function mdToHtml(s){ s=esc(s); s=s.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>"); s=s.replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>"); s=s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); return s.replace(/\n/g,"<br>"); }
@@ -872,7 +873,7 @@
     var bannerH=needBackup?('<div class="banner"><span>\u26a0\ufe0f <b>'+(lastB?("It\u2019s been "+staleDays+" days since your last backup"):"No backup taken yet")+'</b> \u2014 everything lives only on this device.</span><button class="btn sm" id="bannerBackup">\u2193 Back up now</button></div>'):"";
     var sec=document.getElementById("sec-dash");
     sec.innerHTML=
-      '<div class="vhead"><div><div class="eyebrow">My Hub</div><h2>Welcome back</h2>'+
+      '<div class="vhead"><div><div class="eyebrow">My Hub</div><h2>'+esc(greetingText())+'</h2>'+
       '<p class="lede">Everything in one place, stored privately on this device. Press <b>Ctrl K</b> (or /) to search everything.</p></div>'+
       '</div>'+
       bannerH+
