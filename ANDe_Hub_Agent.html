@@ -140,6 +140,7 @@
   .scard.fill .v .vu{font-size:.36em;font-weight:600;opacity:.85;letter-spacing:0;margin-left:2px}
   .scard.fill-a{background-color:var(--a1);background-image:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 22px 54px -22px rgba(var(--a1-rgb),.75)}
   .scard.fill-b{background-color:var(--a2);background-image:linear-gradient(135deg,var(--a2),var(--a1));box-shadow:0 22px 54px -22px rgba(var(--a2-rgb),.6)}
+  .scard.fill-c{background-color:#ff7a3c;background-image:var(--grad-warm);box-shadow:0 22px 54px -22px rgba(255,122,60,.55)}
   .scard.fill[data-wm]::before{content:attr(data-wm);position:absolute;right:2px;bottom:-30px;font-size:150px;line-height:1;opacity:.14;font-family:var(--disp);pointer-events:none}
   .scard.fill.click:hover{transform:translateY(-3px);filter:brightness(1.05)}
 
@@ -443,6 +444,7 @@
   .scard.fill{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
   .scard.fill-a{background-color:var(--a1)}
   .scard.fill-b{background-color:var(--a2)}
+  .scard.fill-c{background-color:#ff7a3c}
 
 
   /* ===== calendar pop-out ===== */
@@ -611,7 +613,7 @@
     <div class="topactions">
       <button class="iconbtn syncbtn" id="syncBtn" title="Refresh from the shared folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
       <button class="iconbtn" id="searchBtn" title="Search everything (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-      <button class="iconbtn gearbtn" id="gearBtn" title="Customise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V2a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="iconbtn gearbtn" id="gearBtn" title="Customise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 6.6l1.7 1.7M17.7 15.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 17.4l1.7-1.7M17.7 8.3l1.7-1.7"/></svg></button>
       <div class="moreWrap">
         <button class="iconbtn" id="moreBtn" title="More" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
         <div class="moremenu" id="moreMenu">
@@ -656,6 +658,7 @@
   /* ---------- helpers ---------- */
   function pad(n){ return (n<10?"0":"")+n; }
   function todayISO(off){ var d=new Date(); if(off) d.setDate(d.getDate()+off); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function greetingText(){ var h=new Date().getHours(); var g=h<12?"Good morning":(h<18?"Good afternoon":"Good evening"); var fn=(state.config.name||"").trim().split(/\s+/)[0]; return fn?(g+", "+fn):g; }
   function mondayOf(iso){ var d=iso?new Date(iso+"T00:00:00"):new Date(); if(isNaN(d.getTime())) d=new Date(); var day=(d.getDay()+6)%7; d.setDate(d.getDate()-day); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function mdToHtml(s){ s=esc(s); s=s.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>"); s=s.replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>"); s=s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>'); return s.replace(/\n/g,"<br>"); }
@@ -876,7 +879,7 @@
     var bannerH=needBackup?('<div class="banner"><span>\u26a0\ufe0f <b>'+(lastB?("It\u2019s been "+staleDays+" days since your last backup"):"No backup taken yet")+'</b> \u2014 everything lives only on this device.</span><button class="btn sm" id="bannerBackup">\u2193 Back up now</button></div>'):"";
     var sec=document.getElementById("sec-dash");
     sec.innerHTML=
-      '<div class="vhead"><div><div class="eyebrow">My Hub</div><h2>Welcome back</h2>'+
+      '<div class="vhead"><div><div class="eyebrow">My Hub</div><h2>'+esc(greetingText())+'</h2>'+
       '<p class="lede">Everything in one place, stored privately on this device. Press <b>Ctrl K</b> (or /) to search everything.</p></div>'+
       '</div>'+
       bannerH+
@@ -891,7 +894,7 @@
         '<div class="cards hero-row">'+
         '<div class="scard fill fill-b click" data-go="evidence"><div class="k">Next checkpoint</div><div class="v big">'+chkDays+'<span class="vu">days</span></div><div class="sub">'+chk.name+' \u00b7 '+fmtShort(chk.date)+'</div>'+icoWm("flag")+'</div>'+
         '<div class="scard fill fill-a click" data-go="meet"><div class="k">Meetings today</div><div class="v big">'+meetingsToday.length+'</div><div class="sub">'+(meetingsToday.length?("next: "+esc(meetingsToday[0].start||meetingsToday[0].title||"meeting")):"none today")+'</div>'+icoWm("calendar")+'</div>'+
-        '<div class="scard fill"><div class="k">Follow-ups today</div><div class="v big">'+fuToday+'</div><div class="sub">'+(overdueCount?(overdueCount+" overdue too"):(fuToday?"due today":"all clear"))+'</div>'+icoWm("checklist")+'</div>'+
+        '<div class="scard fill fill-c click" data-go="dash"><div class="k">Follow-ups today</div><div class="v big">'+fuToday+'</div><div class="sub">'+(overdueCount?(overdueCount+" overdue too"):(fuToday?"due today":"all clear"))+'</div>'+icoWm("checklist")+'</div>'+
         '</div>'+
         '<div class="cards">'+
         '<div class="scard click" data-go="audits">'+ico("target")+'<div class="k">Average audit score</div><div class="v">'+(avgAudit!=null?avgAudit+"%":"\u2014")+'</div><div class="sub">'+(asc.length?("across "+asc.length+" audit"+(asc.length===1?"":"s")):"no audits yet")+'</div></div>'+
@@ -1134,76 +1137,129 @@
   }
 
   /* ================= WEEKLY STATS ================= */
-  var chartKpi=null, showHistory=false;
+  var chartKpi=null, showHistory=false, stRange=12;
+  function stCSS(){ if(document.getElementById("stRedesign")) return; var s=document.createElement("style"); s.id="stRedesign";
+    s.textContent=".st-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:20px}"
+      +".st-tile{text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px;cursor:pointer;transition:.15s;box-shadow:var(--sh-sm)}"
+      +".st-tile:hover{border-color:rgba(var(--a1-rgb),.5);transform:translateY(-2px)}"
+      +".st-tile.on{border-color:var(--a2);background:var(--teal-wash,rgba(var(--a2-rgb),.1))}"
+      +".st-tile .lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"
+      +".st-tile .val{font-family:var(--disp);font-weight:700;font-size:24px;margin:5px 0 2px;letter-spacing:-.02em}"
+      +".st-tile .spark{height:26px;margin:4px 0}"
+      +".st-tile .trend{font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:3px}"
+      +".st-tile .trend.up{color:var(--a2)}.st-tile .trend.down{color:#ff5d7a}.st-tile .trend.flat{color:var(--ink-faint)}"
+      +".st-focus{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:var(--sh-sm);margin-bottom:20px}"
+      +".st-focus-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:6px}"
+      +".st-focus-val{font-family:var(--disp);font-weight:700;font-size:36px;letter-spacing:-.02em;line-height:1.1}"
+      +".st-focus-status{font-size:13px;color:var(--ink-soft);margin-top:4px}"
+      +".st-focus-status b{color:var(--ink)}"
+      +".st-range{display:flex;gap:5px;background:var(--card-2);border:1px solid var(--line);padding:4px;border-radius:11px}"
+      +".st-range button{border:0;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-soft);padding:6px 11px;border-radius:8px}"
+      +".st-range button.active{background:var(--a2);color:#04201c}"
+      +".st-chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}"
+      +".st-chip{background:var(--card-2);border:1px solid var(--line);border-radius:11px;padding:8px 13px;font-size:12px;color:var(--ink-soft);display:flex;flex-direction:column;gap:2px;min-width:92px}"
+      +".st-chip b{color:var(--ink);font-size:14px;font-family:var(--disp)}"
+      +".st-chip.good b{color:var(--a2)}.st-chip.bad b{color:#ff5d7a}"
+      +".st-cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:14px}"
+      +".st-cmp-card{background:var(--card-2);border-radius:13px;padding:12px 14px}"
+      +".st-cmp-card .l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-faint)}"
+      +".st-cmp-card .v{font-family:var(--disp);font-weight:700;font-size:19px;margin-top:4px}"
+    document.head.appendChild(s); }
+  function stSparkline(pts,col){ if(!pts||pts.length<2) return "<div class=\"spark\"></div>"; var vals=pts.map(function(p){return p.num;}); var mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1,n=pts.length,W=100,H=26;
+    var xy=pts.map(function(p,i){ var x=(i/(n-1))*W; var y=H-((p.num-mn)/rng)*(H-5)-2.5; return [x,y]; });
+    var line=xy.map(function(p,i){return (i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join(" ");
+    var area="M0 "+H+" "+xy.map(function(p){return "L"+p[0].toFixed(1)+" "+p[1].toFixed(1);}).join(" ")+" L"+W+" "+H+" Z";
+    var last=xy[n-1];
+    return "<svg class=\"spark\" viewBox=\"0 0 100 26\" preserveAspectRatio=\"none\" style=\"width:100%;overflow:visible\">"
+      +"<path d=\""+area+"\" fill=\""+col+"\" opacity=\".14\"/>"
+      +"<path d=\""+line+"\" fill=\"none\" stroke=\""+col+"\" stroke-width=\"1.8\" stroke-linejoin=\"round\" stroke-linecap=\"round\" vector-effect=\"non-scaling-stroke\"/>"
+      +"<circle cx=\""+last[0].toFixed(1)+"\" cy=\""+last[1].toFixed(1)+"\" r=\"2.6\" fill=\""+col+"\"/></svg>"; }
   renderers.stats=function(){
+    stCSS();
     var sec=document.getElementById("sec-stats");
     sec.innerHTML=
       '<div class="vhead"><div><div class="eyebrow">At a glance</div><h2>Weekly Stats</h2>'+
-      '<p class="lede">Your latest week and the trend behind it. Pills turn red when you are over a target you set in Customise.</p></div>'+
+      '<p class="lede">Pick a metric to see the trend behind it — direction, target and how it compares to last period.</p></div>'+
       '<div class="actions"><button class="btn primary" id="addWk">+ Add week</button></div></div>'+
       '<div id="stEmpty"></div>'+
-      '<div class="chart-cap" style="margin:2px 2px 9px">Latest week</div>'+
-      '<div class="pillrow" id="stPills" style="margin-bottom:18px"></div>'+
-      '<div class="chart-cap" style="margin:2px 2px 9px">This month so far</div>'+
-      '<div class="pillrow" id="stMonthPills" style="margin-bottom:18px"></div>'+
-      '<div class="chart-cap" style="margin:2px 2px 9px">This year so far</div>'+
-      '<div class="pillrow" id="stYearPills" style="margin-bottom:20px"></div>'+
-      '<div class="chartbox"><div class="chart-head"><span class="chart-cap">Trend over weeks</span><div class="ksel" id="stKsel"></div></div><div class="donut-row" id="stGauge" style="margin-bottom:10px"></div><div class="bars" id="stBars"></div><div class="targetlbl" id="stTargetLbl"></div></div>'+
-      '<div class="panel" style="margin-top:20px"><div class="panel-h collapse-h" id="histToggle"><h3>Full history</h3><span class="btn sm" id="histBtn">'+(showHistory?"Hide":"Show")+'</span></div><div class="panel-b" id="histBody" style="display:'+(showHistory?"block":"none")+'"></div></div>';
+      '<div class="st-tiles" id="stTiles"></div>'+
+      '<div class="st-focus" id="stFocus"></div>'+
+      '<div class="panel"><div class="panel-h collapse-h" id="histToggle"><h3>Full history</h3><span class="btn sm" id="histBtn">'+(showHistory?"Hide":"Show")+'</span></div><div class="panel-b" id="histBody" style="display:'+(showHistory?"block":"none")+'"></div></div>';
     document.getElementById("addWk").onclick=function(){ openWeek(null); };
     document.getElementById("histToggle").onclick=function(){ showHistory=!showHistory; document.getElementById("histBody").style.display=showHistory?"block":"none"; document.getElementById("histBtn").textContent=showHistory?"Hide":"Show"; if(showHistory) drawHistory(); };
     drawStats();
   };
+  function stTrendOf(k,arr){ if(arr.length<2) return null; var n=arr.length; var sx=0,sy=0,sxy=0,sxx=0; arr.forEach(function(v,i){ sx+=i; sy+=v; sxy+=i*v; sxx+=i*i; }); var slope=(n*sxy-sx*sy)/((n*sxx-sx*sx)||1); var avg=sy/n; var rel=avg?Math.abs(slope*n/avg):Math.abs(slope); if(rel<0.03) return "steady"; var improving = k.lower ? slope<0 : slope>0; return improving?"improving":"declining"; }
   function drawStats(){
     if(!document.getElementById("stEmpty")) return;
     var ws=weeksSorted(), kpis=state.config.kpis;
-    if(!ws.length){ document.getElementById("stEmpty").innerHTML='<div class="empty"><div class="big">No weeks logged yet</div>Add your first week to start the trend.</div>'; document.getElementById("stPills").innerHTML=""; document.getElementById("stMonthPills").innerHTML=""; document.getElementById("stYearPills").innerHTML=""; document.getElementById("stBars").innerHTML=""; document.getElementById("stKsel").innerHTML=""; return; }
+    var tiles=document.getElementById("stTiles"), focus=document.getElementById("stFocus");
+    if(!ws.length){ document.getElementById("stEmpty").innerHTML='<div class="empty"><div class="big">No weeks logged yet</div>Add your first week to start the trend.</div>'; tiles.innerHTML=""; focus.innerHTML=""; return; }
     document.getElementById("stEmpty").innerHTML="";
     var latest=ws[ws.length-1], prev=ws[ws.length-2];
-    document.getElementById("stPills").innerHTML=kpis.map(function(k){
-      var lv=numericOf(k,(latest.vals||{})[k.id]); var pv=prev?numericOf(k,(prev.vals||{})[k.id]):null;
-      var tr=null; if(lv!=null&&pv!=null&&pv!==0) tr={dir:lv>pv?1:(lv<pv?-1:0),pct:((lv-pv)/pv)*100};
-      return pillHTML(k, lv, "latest wk", tr);
-    }).join("");
-    [].forEach.call(document.getElementById("stPills").querySelectorAll(".pill"),function(p){ p.onclick=function(){ chartKpi=p.getAttribute("data-kpi"); drawStats(); }; });
-    var nowD=new Date(), mStart=nowD.getFullYear()+"-"+pad(nowD.getMonth()+1)+"-01", todayS=todayISO();
-    var pmD=new Date(nowD.getFullYear(), nowD.getMonth()-1, 1), pStart=pmD.getFullYear()+"-"+pad(pmD.getMonth()+1)+"-01";
-    var thisMonth=ws.filter(function(w){ return w.weekOf>=mStart && w.weekOf<=todayS; });
-    var lastMonth=ws.filter(function(w){ return w.weekOf>=pStart && w.weekOf<mStart; });
-    var mp=document.getElementById("stMonthPills");
-    if(!thisMonth.length){ mp.innerHTML='<div class="empty">No weeks logged this month yet.</div>'; }
-    else { mp.innerHTML=kpis.map(function(k){ var recent=thisMonth.map(function(w){return numericOf(k,(w.vals||{})[k.id]);}); var prior=lastMonth.map(function(w){return numericOf(k,(w.vals||{})[k.id]);}); return pillHTML(k, aggVal(k,recent), "this month", trendBetween(k,recent,prior)); }).join("");
-      [].forEach.call(mp.querySelectorAll(".pill"),function(p){ p.onclick=function(){ chartKpi=p.getAttribute("data-kpi"); drawStats(); }; }); }
-    var yStart=nowD.getFullYear()+"-01-01", lyStart=(nowD.getFullYear()-1)+"-01-01";
-    var thisYear=ws.filter(function(w){ return w.weekOf>=yStart && w.weekOf<=todayS; });
-    var lastYear=ws.filter(function(w){ return w.weekOf>=lyStart && w.weekOf<yStart; });
-    var yp=document.getElementById("stYearPills");
-    if(!thisYear.length){ yp.innerHTML='<div class="empty">No weeks logged this year yet.</div>'; }
-    else { yp.innerHTML=kpis.map(function(k){ var recent=thisYear.map(function(w){return numericOf(k,(w.vals||{})[k.id]);}); var prior=lastYear.map(function(w){return numericOf(k,(w.vals||{})[k.id]);}); return pillHTML(k, aggVal(k,recent), "this year", trendBetween(k,recent,prior)); }).join("");
-      [].forEach.call(yp.querySelectorAll(".pill"),function(p){ p.onclick=function(){ chartKpi=p.getAttribute("data-kpi"); drawStats(); }; }); }
     if(!chartKpi||!kpis.some(function(k){return k.id===chartKpi;})) chartKpi=kpis[0]?kpis[0].id:null;
-    var ksel=document.getElementById("stKsel"); ksel.innerHTML="";
-    kpis.forEach(function(k){ var b=document.createElement("button"); b.textContent=k.label; if(k.id===chartKpi)b.className="active"; b.onclick=function(){ chartKpi=k.id; drawChart(); [].forEach.call(ksel.children,function(x){x.classList.remove("active");}); b.classList.add("active"); }; ksel.appendChild(b); });
-    drawChart(); if(showHistory) drawHistory();
+    var ac=accentList();
+    tiles.innerHTML=kpis.map(function(k){
+      var lv=numericOf(k,(latest.vals||{})[k.id]); var pv=prev?numericOf(k,(prev.vals||{})[k.id]):null;
+      var spk=weeksSorted().slice(-8).map(function(w){return {num:numericOf(k,(w.vals||{})[k.id])};}).filter(function(p){return p.num!=null;});
+      var tr="flat", arrow="\u2192", pct="";
+      if(lv!=null&&pv!=null&&pv!==0){ var d=((lv-pv)/pv)*100; var improving=k.lower?lv<pv:lv>pv; tr=(Math.abs(d)<1)?"flat":(improving?"up":"down"); arrow=(Math.abs(d)<1)?"\u2192":(lv>pv?"\u25b2":"\u25bc"); pct=(Math.abs(d)<1)?"no change":(Math.abs(Math.round(d))+"% vs last wk"); }
+      var col=tr==="up"?(ac[1]||"#2dd4bf"):(tr==="down"?"#ff5d7a":(ac[1]||"#2dd4bf"));
+      return '<button class="st-tile'+(k.id===chartKpi?" on":"")+'" data-kpi="'+k.id+'"><div class="lbl">'+esc(k.label)+'</div><div class="val">'+fmtKpi(k,lv)+'</div>'+stSparkline(spk,col)+'<div class="trend '+tr+'">'+arrow+" "+pct+"</div></button>";
+    }).join("");
+    tiles.querySelectorAll("[data-kpi]").forEach(function(b){ b.onclick=function(){ chartKpi=b.getAttribute("data-kpi"); drawStats(); }; });
+    drawFocus(); if(showHistory) drawHistory();
   }
-  function drawChart(){
-    var k=state.config.kpis.filter(function(x){return x.id===chartKpi;})[0], bars=document.getElementById("stBars"), lbl=document.getElementById("stTargetLbl");
-    var gw=document.getElementById("stGauge"); if(gw) gw.innerHTML="";
-    bars.innerHTML=""; lbl.textContent=""; if(!k) return;
-    var pts=weeksSorted().slice(-12).map(function(w){return {wk:w.weekOf,num:numericOf(k,(w.vals||{})[k.id])};}).filter(function(p){return p.num!=null;});
-    if(!pts.length){ bars.innerHTML='<div class="empty" style="padding:24px">No figures for '+esc(k.label)+' yet.</div>'; return; }
-    // gauge: latest value vs target (a pie where it genuinely fits)
-    if(gw && k.target!=null && k.target>0){ var ac=accentList(); var latest=pts[pts.length-1].num;
-      var attain = k.lower ? (latest>0?Math.min(200,Math.round(k.target/latest*100)):0) : Math.min(200,Math.round(latest/k.target*100));
-      var ok = k.lower ? (latest<=k.target) : (latest>=k.target);
-      var gcol = ok?ac[1]:"#ff5d7a"; var shown=Math.min(100,attain);
-      gw.innerHTML=donutSVG([{label:"v",value:shown,color:gcol},{label:"r",value:Math.max(0,100-shown),color:chartTrack()}],{size:128,stroke:13,centerV:attain+"%",centerL:"of target"})+
-        '<div class="donut-legend"><div class="lg"><span class="sw" style="background:'+gcol+'"></span><span class="lt">Latest week</span><span class="lv">'+fmtKpi(k,latest)+'</span></div><div class="lg"><span class="sw" style="background:'+chartTrack()+'"></span><span class="lt">Your target</span><span class="lv">'+fmtKpi(k,k.target)+'</span></div><div class="vhint" style="margin-top:2px">'+(ok?"On target — nice.":(k.lower?"Over target this week.":"Below target this week."))+'</div></div>';
-    }
+  function drawFocus(){
+    var focus=document.getElementById("stFocus"); if(!focus) return;
+    var k=state.config.kpis.filter(function(x){return x.id===chartKpi;})[0]; if(!k){ focus.innerHTML=""; return; }
+    var all=weeksSorted().map(function(w){return {wk:w.weekOf,num:numericOf(k,(w.vals||{})[k.id])};}).filter(function(p){return p.num!=null;});
+    if(!all.length){ focus.innerHTML='<div class="empty" style="padding:24px">No figures for '+esc(k.label)+' yet.</div>'; return; }
+    var rangeN = stRange==="half"? 26 : (stRange==="all"? all.length : stRange);
+    var pts = stRange==="all" ? all : all.slice(-rangeN);
+    var latest=all[all.length-1].num;
+    var dir=stTrendOf(k,pts.map(function(p){return p.num;}));
+    var first=pts[0].num, last=pts[pts.length-1].num;
+    var pctChange = (first&&pts.length>1) ? Math.round(((last-first)/Math.abs(first))*100) : null;
+    var avgV = pts.reduce(function(s,p){return s+p.num;},0)/pts.length;
+    var best = pts.reduce(function(b,p){ if(!b) return p; var better = k.lower? p.num<b.num : p.num>b.num; return better?p:b; }, null);
+    var worst = pts.reduce(function(w,p){ if(!w) return p; var worse = k.lower? p.num>w.num : p.num<w.num; return worse?p:w; }, null);
+    var streak=0; if(k.target!=null){ for(var i=all.length-1;i>=0;i--){ var ok=k.lower?all[i].num<=k.target:all[i].num>=k.target; if(ok) streak++; else break; } }
+    var onTarget = k.target!=null ? (k.lower? latest<=k.target : latest>=k.target) : null;
+    var statusBits=[]; if(onTarget!=null) statusBits.push(onTarget?"on target":"over target");
+    if(dir) statusBits.push(dir);
+    var statusLine = statusBits.length ? ("<b>"+esc(fmtKpi(k,latest))+"</b> avg &middot; "+statusBits.join(" &middot; ")) : ("<b>"+esc(fmtKpi(k,latest))+"</b> latest week");
+    var ac=accentList();
     var max=Math.max.apply(null,pts.map(function(p){return p.num;}).concat(k.target!=null?[k.target]:[]))*1.14||1;
     var H=132;
-    if(k.target!=null){ var line=document.createElement("div"); line.className="targetline"; line.style.bottom=(34+(k.target/max)*H)+"px"; bars.appendChild(line); lbl.textContent="Dashed line = your target ("+fmtKpi(k,k.target)+")."; }
-    pts.forEach(function(p){ var col=document.createElement("div"); col.className="bcol"; var v=document.createElement("div"); v.className="bv"; v.textContent=fmtKpi(k,p.num); var bar=document.createElement("div"); bar.className="bar"+(kpiBreach(k,p.num)?" bad":""); bar.style.height=Math.max(4,(p.num/max)*H)+"px"; var bl=document.createElement("div"); bl.className="bl"; bl.textContent=fmtShort(p.wk); col.appendChild(v); col.appendChild(bar); col.appendChild(bl); bars.appendChild(col); });
+    var barsHtml=pts.map(function(p){ var h=Math.max(4,(p.num/max)*H); var bad=kpiBreach(k,p.num); return '<div class="bcol"><div class="bv">'+fmtKpi(k,p.num)+'</div><div class="bar'+(bad?" bad":"")+'" style="height:'+h+'px" title="w/c '+esc(fmtShort(p.wk))+': '+esc(fmtKpi(k,p.num))+'"></div><div class="bl">'+esc(fmtShort(p.wk))+'</div></div>'; }).join("");
+    var targetLine = k.target!=null ? ('<div class="targetline" style="bottom:'+(34+(k.target/max)*H)+'px"></div>') : "";
+    function rbtn(id,label){ return '<button class="'+(stRange===id?"active":"")+'" data-range="'+id+'">'+label+"</button>"; }
+    var chips=[];
+    chips.push('<div class="st-chip '+(dir==="improving"?"good":(dir==="declining"?"bad":""))+'"><span>Trend</span><b>'+(dir?dir.charAt(0).toUpperCase()+dir.slice(1):"\u2014")+'</b></div>');
+    if(pctChange!=null) chips.push('<div class="st-chip '+((k.lower?pctChange<0:pctChange>0)?"good":(pctChange===0?"":"bad"))+'"><span>Change</span><b>'+(pctChange>0?"+":"")+pctChange+"%</b></div>");
+    chips.push('<div class="st-chip"><span>Average</span><b>'+esc(fmtKpi(k,avgV))+'</b></div>');
+    if(best) chips.push('<div class="st-chip good"><span>Best week</span><b>'+esc(fmtKpi(k,best.num))+'</b></div>');
+    if(worst) chips.push('<div class="st-chip '+(worst.num===best.num?"":"bad")+'"><span>Worst week</span><b>'+esc(fmtKpi(k,worst.num))+'</b></div>');
+    if(k.target!=null) chips.push('<div class="st-chip '+(streak>0?"good":"")+'"><span>On-target streak</span><b>'+streak+" wk</b></div>");
+    var cmp=stPeriodCompare(k);
+    focus.innerHTML='<div class="st-focus-head"><div><div class="st-focus-val">'+esc(k.label)+'</div><div class="st-focus-status">'+statusLine+'</div></div><div class="st-range">'+rbtn(6,"6 wk")+rbtn(12,"12 wk")+rbtn("half","This half")+rbtn("all","All")+'</div></div>'
+      +'<div class="chartbox" style="border:0;padding:0;background:transparent;box-shadow:none"><div class="bars" style="position:relative">'+targetLine+barsHtml+'</div>'+(k.target!=null?'<div class="targetlbl">Dashed line = your target ('+esc(fmtKpi(k,k.target))+').</div>':"")+'</div>'
+      +'<div class="st-chips">'+chips.join("")+'</div>'
+      +'<div class="st-cmp">'+cmp+'</div>';
+    focus.querySelectorAll("[data-range]").forEach(function(b){ b.onclick=function(){ var v=b.getAttribute("data-range"); stRange=(v==="half"||v==="all")?v:parseInt(v,10); drawFocus(); }; });
+  }
+  function stPeriodCompare(k){
+    var ws=weeksSorted(), nowD=new Date(), todayS=todayISO();
+    var mStart=nowD.getFullYear()+"-"+pad(nowD.getMonth()+1)+"-01"; var pmD=new Date(nowD.getFullYear(),nowD.getMonth()-1,1); var pStart=pmD.getFullYear()+"-"+pad(pmD.getMonth()+1)+"-01";
+    var thisMonth=ws.filter(function(w){return w.weekOf>=mStart&&w.weekOf<=todayS;}).map(function(w){return numericOf(k,(w.vals||{})[k.id]);}).filter(function(n){return n!=null;});
+    var lastMonth=ws.filter(function(w){return w.weekOf>=pStart&&w.weekOf<mStart;}).map(function(w){return numericOf(k,(w.vals||{})[k.id]);}).filter(function(n){return n!=null;});
+    var hf=nowD.getMonth()<6?1:2; var hStart=(new Date(nowD.getFullYear(), hf===1?0:6, 1)); var hStartS=hStart.getFullYear()+"-"+pad(hStart.getMonth()+1)+"-01";
+    var phStart,phEnd; if(hf===1){ phStart=(nowD.getFullYear()-1)+"-07-01"; phEnd=(nowD.getFullYear()-1)+"-12-31"; } else { phStart=nowD.getFullYear()+"-01-01"; phEnd=nowD.getFullYear()+"-06-30"; }
+    var thisHalf=ws.filter(function(w){return w.weekOf>=hStartS&&w.weekOf<=todayS;}).map(function(w){return numericOf(k,(w.vals||{})[k.id]);}).filter(function(n){return n!=null;});
+    var lastHalf=ws.filter(function(w){return w.weekOf>=phStart&&w.weekOf<=phEnd;}).map(function(w){return numericOf(k,(w.vals||{})[k.id]);}).filter(function(n){return n!=null;});
+    function card(label,cur,prior){ var cv=aggVal(k,cur); var pv=aggVal(k,prior); var d=""; if(cv!=null&&pv!=null&&pv!==0){ var pct=Math.round(((cv-pv)/Math.abs(pv))*100); var improving=k.lower?cv<pv:cv>pv; d=' <span style="color:'+(pct===0?"var(--ink-faint)":(improving?"var(--a2)":"#ff5d7a"))+'">('+(pct>0?"+":"")+pct+"%)</span>"; } return '<div class="st-cmp-card"><div class="l">'+label+'</div><div class="v">'+(cv==null?"\u2014":esc(fmtKpi(k,cv)))+d+"</div></div>"; }
+    return card("This month",thisMonth,lastMonth)+card("This half",thisHalf,lastHalf);
   }
   function drawHistory(){
     var body=document.getElementById("histBody"); var kpis=state.config.kpis, ws=weeksSorted().reverse();
