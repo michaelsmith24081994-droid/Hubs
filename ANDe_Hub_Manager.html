@@ -612,7 +612,7 @@
     <div class="topactions">
       <button class="iconbtn syncbtn" id="syncBtn" title="Refresh from the shared folder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
       <button class="iconbtn" id="searchBtn" title="Search everything (Ctrl K)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-      <button class="iconbtn gearbtn" id="gearBtn" title="Customise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H8a1.65 1.65 0 0 0 1-1.51V2a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V8a1.65 1.65 0 0 0 1.51 1H22a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <button class="iconbtn gearbtn" id="gearBtn" title="Customise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M4.06 6.9l2.6 1.5M17.34 15.6l2.6 1.5M4.06 17.1l2.6-1.5M17.34 8.4l2.6-1.5"/></svg></button>
       <div class="moreWrap">
         <button class="iconbtn" id="moreBtn" title="More" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
         <div class="moremenu" id="moreMenu">
@@ -688,7 +688,7 @@
   function toastAction(m,label,fn){ var t=document.getElementById("toast"); t.textContent=m; var b=document.createElement("button"); b.textContent=label; b.onclick=function(){ clearTimeout(toast._t); t.classList.remove("show"); fn(); }; t.appendChild(b); t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove("show"); },6500); }
   function numericOf(k,raw){ if(raw===undefined||raw===null||String(raw).trim()==="") return null; return k.type==="dur"?parseDur(raw):(isNaN(parseFloat(raw))?null:parseFloat(raw)); }
   function fmtKpi(k,num){ if(num===null||num===undefined||isNaN(num)) return "—"; return k.type==="dur"?fmtDur(num):String(Math.round(num)); }
-  function kpiBreach(k,num){ if(num===null||isNaN(num)||!k.lower||k.target===null||k.target===undefined) return false; return num>k.target; }
+  function kpiBreach(k,num){ if(num===null||isNaN(num)||k.target===null||k.target===undefined) return false; return k.lower? num>k.target : num<k.target; }
   function avg(arr){ var n=arr.filter(function(x){return x!=null;}); return n.length?n.reduce(function(a,b){return a+b;},0)/n.length:null; }
   function aggVal(k,nums){ var v=nums.filter(function(n){return n!=null;}); if(!v.length) return null; return k.type==="int"? v.reduce(function(a,b){return a+b;},0) : avg(v); }
   function weeksSorted(){ return state.stats.weeks.slice().sort(function(a,b){return (a.weekOf||"").localeCompare(b.weekOf||"");}); }
@@ -716,7 +716,7 @@
     teamRole:"agent", agentId:"", teamFolder:"", autoPull:true, managerName:"", managerId:"", lockHash:"", lockSalt:"", recoveryQ:"", recoveryHash:"", recoverySalt:"", lastResetTs:"",
     kpis:[
       {id:"chats",label:"Chats",type:"int",target:null,lower:false},
-      {id:"emails",label:"Emails",type:"int",target:null,lower:false},
+      {id:"emails",label:"Emails",type:"int",target:5,lower:false},
       {id:"resp",label:"Avg response",type:"dur",target:60,lower:true},
       {id:"handle",label:"Avg handle",type:"dur",target:900,lower:true},
       {id:"awol",label:"AWOL",type:"int",target:0,lower:true},
@@ -735,6 +735,7 @@
     if(!s.config.accent) s.config.accent="#ff2d8e";
     if(!s.config.accent2) s.config.accent2="#22e6c1";
     if(s.config.teamRole!=="manager") s.config.teamRole="agent";
+    if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && k.id==="emails"){ if(k.target==null) k.target=5; k.lower=false; } });
     if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && (k.id==="breaks" || /unsched|break/i.test(k.label||""))){ k.type="dur"; k.sumDur=true; if(k.target==null) k.target=600; k.lower=true; } });
     if(typeof s.config.agentId!=="string") s.config.agentId="";
     if(typeof s.config.autoPull!=="boolean") s.config.autoPull=true;
@@ -813,7 +814,7 @@
 
   /* ---------- shared pills ---------- */
   function pillHTML(kpi,valNum,sub,trend){
-    var stateCls = valNum==null?"neutral":(kpiBreach(kpi,valNum)?"bad":(kpi.lower&&kpi.target!=null?"good":"neutral"));
+    var stateCls = valNum==null?"neutral":(kpiBreach(kpi,valNum)?"bad":(kpi.target!=null?"good":"neutral"));
     var tH="";
     if(trend && trend.pct!=null && isFinite(trend.pct) && trend.dir!==0){ var improving = kpi.lower? trend.dir<0 : trend.dir>0; tH='<span class="trend '+(improving?"up":"down")+'">'+(trend.dir>0?"▲":"▼")+" "+Math.abs(Math.round(trend.pct))+"%</span>"; }
     else if(trend && trend.dir===0){ tH='<span class="trend flat">– 0%</span>'; }
@@ -1140,7 +1141,7 @@
   }
 
   /* ================= WEEKLY STATS ================= */
-  var chartKpi=null, showHistory=false;
+  var chartKpi=null, showHistory=false, showMonth=false, showYear=false;
   renderers.stats=function(){
     var sec=document.getElementById("sec-stats");
     sec.innerHTML=
@@ -1150,14 +1151,14 @@
       '<div id="stEmpty"></div>'+
       '<div class="chart-cap" style="margin:2px 2px 9px">Latest week</div>'+
       '<div class="pillrow" id="stPills" style="margin-bottom:18px"></div>'+
-      '<div class="chart-cap" style="margin:2px 2px 9px">This month so far</div>'+
-      '<div class="pillrow" id="stMonthPills" style="margin-bottom:18px"></div>'+
-      '<div class="chart-cap" style="margin:2px 2px 9px">This year so far</div>'+
-      '<div class="pillrow" id="stYearPills" style="margin-bottom:20px"></div>'+
+      '<div class="panel" style="margin-bottom:14px"><div class="panel-h collapse-h" id="monthToggle"><h3>This month so far</h3><span class="btn sm" id="monthBtn">'+(showMonth?"Hide":"Show")+'</span></div><div class="panel-b" id="monthBody" style="display:'+(showMonth?"block":"none")+'"><div class="pillrow" id="stMonthPills"></div></div></div>'+
+      '<div class="panel" style="margin-bottom:20px"><div class="panel-h collapse-h" id="yearToggle"><h3>This year so far</h3><span class="btn sm" id="yearBtn">'+(showYear?"Hide":"Show")+'</span></div><div class="panel-b" id="yearBody" style="display:'+(showYear?"block":"none")+'"><div class="pillrow" id="stYearPills"></div></div></div>'+
       '<div class="chartbox"><div class="chart-head"><span class="chart-cap">Trend over weeks</span><div class="ksel" id="stKsel"></div></div><div class="donut-row" id="stGauge" style="margin-bottom:10px"></div><div class="bars" id="stBars"></div><div class="targetlbl" id="stTargetLbl"></div></div>'+
       '<div class="panel" style="margin-top:20px"><div class="panel-h collapse-h" id="histToggle"><h3>Full history</h3><span class="btn sm" id="histBtn">'+(showHistory?"Hide":"Show")+'</span></div><div class="panel-b" id="histBody" style="display:'+(showHistory?"block":"none")+'"></div></div>';
     document.getElementById("addWk").onclick=function(){ openWeek(null); };
     document.getElementById("histToggle").onclick=function(){ showHistory=!showHistory; document.getElementById("histBody").style.display=showHistory?"block":"none"; document.getElementById("histBtn").textContent=showHistory?"Hide":"Show"; if(showHistory) drawHistory(); };
+    document.getElementById("monthToggle").onclick=function(){ showMonth=!showMonth; document.getElementById("monthBody").style.display=showMonth?"block":"none"; document.getElementById("monthBtn").textContent=showMonth?"Hide":"Show"; };
+    document.getElementById("yearToggle").onclick=function(){ showYear=!showYear; document.getElementById("yearBody").style.display=showYear?"block":"none"; document.getElementById("yearBtn").textContent=showYear?"Hide":"Show"; };
     drawStats();
   };
   function drawStats(){
@@ -2873,7 +2874,7 @@
   function ywRenderBoardNative(host, DATA){ if(!host) return; ywBoardCSS();
     var ORDER=['Mon','Tue','Wed','Thu','Fri'], FULL={Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday',Thu:'Thursday',Fri:'Friday'}, SECT=['Earlies','Mids','Lates','Flexi'];
     var CHIP={'MTA':'mta','UW Fee':'mta','Refunds':'refund','Cancellations':'cancel','Info':'info'};
-    var KPI=[{id:'chats',label:'Total Chats Completed',short:'Chats',type:'int',sum:true},{id:'emails',label:'Total Emails Completed',short:'Emails',type:'int',sum:true},{id:'resp',label:'Average Response Time',short:'Avg Resp',type:'dur',lower:true,target:60},{id:'handle',label:'Average Chat Handle Time',short:'Avg Handle',type:'dur',lower:true,target:900},{id:'awol',label:'AWOL Instances',short:'AWOL',type:'int',lower:true},{id:'breaks',label:'Unscheduled Breaks Time',short:'Unsch. Breaks',type:'dur',lower:true,sumDur:true,target:600}];
+    var KPI=[{id:'chats',label:'Total Chats Completed',short:'Chats',type:'int',sum:true},{id:'emails',label:'Total Emails Completed',short:'Emails',type:'int',sum:true,target:5},{id:'resp',label:'Average Response Time',short:'Avg Resp',type:'dur',lower:true,target:60},{id:'handle',label:'Average Chat Handle Time',short:'Avg Handle',type:'dur',lower:true,target:900},{id:'awol',label:'AWOL Instances',short:'AWOL',type:'int',lower:true},{id:'breaks',label:'Unscheduled Breaks Time',short:'Unsch. Breaks',type:'dur',lower:true,sumDur:true,target:600}];
     var cur='Mon', statsOpen=false, chartKPI='chats';
     function ini(n){ n=(n||'').trim(); if(!n) return '-'; var p=n.split(' ').filter(Boolean); return ((p[0]?p[0].charAt(0):'')+(p.length>1?p[p.length-1].charAt(0):'')).toUpperCase(); }
     function elc(t,c,tx){ var e=document.createElement(t); if(c)e.className=c; if(tx!=null)e.textContent=tx; return e; }
@@ -2881,7 +2882,7 @@
     function pDur(str){ if(str==null) return null; str=String(str).trim(); if(!str) return null; if(str.indexOf(':')>=0){ var p=str.split(':').map(function(x){return parseInt(x,10);}); if(p.some(function(n){return isNaN(n);})) return null; if(p.length===2) return p[0]*60+p[1]; if(p.length===3) return p[0]*3600+p[1]*60+p[2]; return p[0]*60; } var n=parseFloat(str); return isNaN(n)?null:n*60; }
     function fDur(sec){ sec=Math.round(sec); var h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; var z=function(n){return (n<10?'0':'')+n;}; return h>0?(h+':'+z(m)+':'+z(s)):(m+':'+z(s)); }
     function numOf(k,raw){ if(raw===undefined||String(raw).trim()==='') return null; return k.type==='int'?(isNaN(parseInt(raw,10))?null:parseInt(raw,10)):pDur(raw); }
-    function breach(id,num){ if(num===null||isNaN(num)) return false; switch(id){ case 'resp':return num>=60; case 'handle':return num>=900; case 'awol':return num>0; case 'breaks':return num>600; default:return false; } }
+    function breach(id,num){ if(num===null||isNaN(num)) return false; switch(id){ case 'resp':return num>=60; case 'handle':return num>=900; case 'awol':return num>0; case 'breaks':return num>600; case 'emails':return num<5; default:return false; } }
     function parseShift(str){ if(!str) return null; var s=String(str).toLowerCase().replace(/[\u2013\u2014]/g,'-'); var re=/(\d{1,2})(?::|\.)?(\d{2})?\s*(am|pm)?/g,m,t=[]; while((m=re.exec(s))&&t.length<2){ var h=parseInt(m[1],10); if(isNaN(h)) continue; if(m[3]==='pm'&&h<12)h+=12; if(m[3]==='am'&&h===12)h=0; t.push(h+(m[2]?parseInt(m[2],10)/60:0)); } if(t.length<2) return null; var st=t[0],en=t[1]; if(en<=st)en+=12; return {start:st,end:en}; }
     function secHours(r){ if(r.status&&r.status!=='On') return null; var s=r.section; if(s==='Earlies') return {start:8,end:16}; if(s==='Mids') return {start:10,end:18}; if(s==='Lates') return {start:12,end:20}; return parseShift(r.shift); }
     function coverAt(rows,tt){ var n=0; rows.forEach(function(r){ var p=secHours(r); if(p&&tt>=p.start&&tt<p.end)n++; }); return n; }
@@ -3933,7 +3934,7 @@
   // ---- Team Stats ----
   var KPI=[
     {id:"chats",label:"Total Chats Completed",short:"Chats",type:"int",sum:true},
-    {id:"emails",label:"Total Emails Completed",short:"Emails",type:"int",sum:true},
+    {id:"emails",label:"Total Emails Completed",short:"Emails",type:"int",sum:true,target:5},
     {id:"resp",label:"Average Response Time",short:"Avg Resp",type:"dur",lower:true,target:60},
     {id:"handle",label:"Average Chat Handle Time",short:"Avg Handle",type:"dur",lower:true,target:900},
     {id:"awol",label:"AWOL Instances",short:"AWOL",type:"int",lower:true},
@@ -3941,7 +3942,7 @@
   ];
   function kpiById(id){ for(var i=0;i<KPI.length;i++){ if(KPI[i].id===id) return KPI[i]; } return null; }
   function numericOf(k,raw){ if(raw===undefined||String(raw).trim()==="") return null; return k.type==="int"?(isNaN(parseInt(raw,10))?null:parseInt(raw,10)):parseDur(raw); }
-  function isBreach(id,num){ if(num===null||isNaN(num)) return false; switch(id){ case "resp": return num>=60; case "handle": return num>=900; case "awol": return num>0; case "breaks": return num>600; default: return false; } }
+  function isBreach(id,num){ if(num===null||isNaN(num)) return false; switch(id){ case "resp": return num>=60; case "handle": return num>=900; case "awol": return num>0; case "breaks": return num>600; case "emails": return num<5; default: return false; } }
   function parseDur(str){
     if(str===undefined||str===null) return null; str=String(str).trim(); if(!str) return null;
     if(str.indexOf(":")>=0){ var p=str.split(":").map(function(x){return parseInt(x,10);}); if(p.some(function(n){return isNaN(n);})) return null;
