@@ -1749,7 +1749,7 @@
     var lav=document.getElementById("lockAv"); if(lav){ if(state.config.avatar){ lav.style.backgroundImage="url("+state.config.avatar+")"; lav.textContent=""; } else { lav.textContent=(state.config.name||"e").split(/\s+/).map(function(w){return w[0];}).join("").slice(0,2).toUpperCase()||"e"; } }
     var inp=document.getElementById("lockInput"), err=document.getElementById("lockErr"), btn=document.getElementById("lockBtn");
     setTimeout(function(){ inp.focus(); },60);
-    function tryUnlock(){ err.textContent=""; hashPw(inp.value,state.config.lockSalt).then(function(h){ if(h&&h===state.config.lockHash){ ls.classList.remove("show"); document.body.classList.remove("locked"); inp.value=""; } else { err.textContent="Incorrect password."; inp.value=""; inp.focus(); } }); }
+    function tryUnlock(){ err.textContent=""; hashPw(inp.value,state.config.lockSalt).then(function(h){ if(h&&h===state.config.lockHash){ ls.classList.remove("show"); document.body.classList.remove("locked"); inp.value=""; try{ playIntro(); }catch(e){} } else { err.textContent="Incorrect password."; inp.value=""; inp.focus(); } }); }
     btn.onclick=tryUnlock;
     inp.onkeydown=function(e){ if(e.key==="Enter") tryUnlock(); };
     var fg=document.getElementById("lockForgot"); if(fg) fg.onclick=function(){ forgotFlow(ls); }; _fgAttempts=0; var lm=document.getElementById("lockMgr"); if(lm) lm.style.display="none"; var rqb=document.getElementById("lockReqReset"); if(rqb) rqb.onclick=function(){ requestManagerReset(); }; var ckb=document.getElementById("lockChkReset"); if(ckb) ckb.onclick=function(){ checkManagerReset(ls); };
@@ -2700,7 +2700,29 @@
     }
   })();
 
-  function start(){ applyTheme(); applyAccent(); applyRole(); if(hasLock()) showLock(); buildContours(); teamRestore().then(function(){ if(!isManager()&&state.config.autoPull&&TEAM.dir) pullFeedback(true); updateFbDot(""); }); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||state.config.role||"Live chat agent"; go("dash"); requestAnimationFrame(positionNavInd); setTimeout(positionNavInd,260); try{ enhInit(); }catch(e){} }
+  function playIntro(){
+    try{ if(sessionStorage.getItem("introShown")) return; sessionStorage.setItem("introShown","1"); }catch(e){}
+    var lightBg=document.body.classList.contains("light");
+    var logo=document.querySelector(".brand img.logo."+(lightBg?"lm-teal":"lm-white"))||document.querySelector(".brand img.logo");
+    var src=logo?logo.getAttribute("src"):""; if(!src) return;
+    if(!document.getElementById("introStyle")){ var st=document.createElement("style"); st.id="introStyle";
+      st.textContent="#introSplash{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:var(--bg);animation:introOut .55s ease 1.75s forwards}"
+        +"#introSplash .il-wrap{position:relative;display:inline-block;animation:introIn .6s cubic-bezier(.22,.7,.2,1) both}"
+        +"#introSplash .il{height:clamp(74px,17vh,150px);width:auto;display:block;filter:drop-shadow(0 8px 30px rgba(0,0,0,.45))}"
+        +"#introSplash .shine{position:absolute;inset:0;background:linear-gradient(105deg,transparent 34%,rgba(255,255,255,.9) 50%,transparent 64%);background-size:300% 100%;background-position:190% 0;-webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;mix-blend-mode:screen;pointer-events:none;animation:introShine 1.15s ease .45s 1 both}"
+        +"@keyframes introIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}"
+        +"@keyframes introShine{from{background-position:190% 0}to{background-position:-90% 0}}"
+        +"@keyframes introOut{to{opacity:0;visibility:hidden}}"
+        +"@media(prefers-reduced-motion:reduce){#introSplash .shine{animation:none;opacity:0}#introSplash{animation-delay:.6s}}";
+      document.head.appendChild(st); }
+    var ov=document.createElement("div"); ov.id="introSplash";
+    var wrap=document.createElement("div"); wrap.className="il-wrap";
+    var img=document.createElement("img"); img.className="il"; img.alt=""; img.src=src;
+    var shine=document.createElement("div"); shine.className="shine"; shine.style.setProperty("--logo","url('"+src+"')");
+    wrap.appendChild(img); wrap.appendChild(shine); ov.appendChild(wrap); document.body.appendChild(ov);
+    setTimeout(function(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }, 2450);
+  }
+  function start(){ applyTheme(); applyAccent(); applyRole(); if(hasLock()) showLock(); buildContours(); teamRestore().then(function(){ if(!isManager()&&state.config.autoPull&&TEAM.dir) pullFeedback(true); updateFbDot(""); }); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||state.config.role||"Live chat agent"; go("dash"); requestAnimationFrame(positionNavInd); setTimeout(positionNavInd,260); try{ enhInit(); }catch(e){} if(!document.body.classList.contains("locked")){ try{ playIntro(); }catch(e){} } }
 
   /* ================= LINKS ================= */
   renderers.links=function(){
