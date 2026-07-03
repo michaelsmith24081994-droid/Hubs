@@ -724,7 +724,7 @@
   };}
   function seed(){ return {
     v:3, config:defaultConfig(), meta:{}, teamInbox:{notes:[],stats:[],audits:[],updatedAt:""},
-    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], contacts:[], coachThread:[], timeOwedReq:[], toHandled:{}, admins:{}, assignedAgents:[], yourWeek:ywSeed()
+    evidence:[], stats:{weeks:[]}, kb:[], events:[], notes:[], brandRows:[], tasks:[], goals:[], learning:[], audits:[], recognitionsGiven:[], coaching:[], buzz:[], links:[], contacts:[], coachThread:[], timeOwedReq:[], toHandled:{}, admins:{}, assignedAgents:[], removedAgents:{}, yourWeek:ywSeed()
   };}
   function ensureAtt(arr){ (arr||[]).forEach(function(x){ if(!Array.isArray(x.attachments)) x.attachments=[]; }); return arr||[]; }
   function migrate(s){
@@ -737,6 +737,7 @@
     if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && k.id==="emails"){ if(k.target==null) k.target=5; k.lower=false; } });
     if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && (k.id==="breaks" || /unsched|break/i.test(k.label||""))){ k.type="dur"; k.sumDur=true; if(k.target==null) k.target=600; k.lower=true; } });
     if(typeof s.config.agentId!=="string") s.config.agentId="";
+    if(!s.config.agentId){ s.config.agentId=(typeof slug==="function"?slug(s.config.name):"")||("ag"+Math.random().toString(36).slice(2,8)); }
     if(typeof s.config.autoPull!=="boolean") s.config.autoPull=true;
     if(!s.teamInbox||typeof s.teamInbox!=="object") s.teamInbox={notes:[],stats:[],audits:[],recognitions:[],updatedAt:""};
     if(!Array.isArray(s.teamInbox.recognitions)) s.teamInbox.recognitions=[];
@@ -750,6 +751,7 @@
     if(!s.toHandled||typeof s.toHandled!=="object") s.toHandled={};
     if(!s.admins||typeof s.admins!=="object") s.admins={};
     if(!Array.isArray(s.assignedAgents)) s.assignedAgents=[];
+    if(!s.removedAgents||typeof s.removedAgents!=="object") s.removedAgents={};
     s.yourWeek=ywEnsure(s.yourWeek);
     if(s.teamInbox&&!Array.isArray(s.teamInbox.coachMsgs)) s.teamInbox.coachMsgs=[];
     if(s.teamInbox&&!Array.isArray(s.teamInbox.timeOwed)) s.teamInbox.timeOwed=[];
@@ -1889,7 +1891,7 @@
   function loadTeam(){
     if(!TEAM.dir) return Promise.resolve([]);
     return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); })
-      .then(function(arr){ var all=arr.filter(Boolean); var mine=myAgentId(); var asn=state.assignedAgents||[]; var fl=all.filter(function(s){ return (s.managerId&&s.managerId===mine) || asn.indexOf(s.agentId)>=0; }); TEAMROSTER=fl.sort(function(a,b){ return (a.agentName||"").localeCompare(b.agentName||""); }); return TEAMROSTER; });
+      .then(function(arr){ var all=arr.filter(Boolean); var mine=myAgentId(); var asn=state.assignedAgents||[]; var rm=state.removedAgents||{}; var fl=all.filter(function(s){ if(rm[s.agentId]) return false; return (s.managerId&&s.managerId===mine) || asn.indexOf(s.agentId)>=0; }); TEAMROSTER=fl.sort(function(a,b){ return (a.agentName||"").localeCompare(b.agentName||""); }); return TEAMROSTER; });
   }
   function getFeedback(id){ return TEAM.dir? fsRead("feedback-"+id+".json").then(function(f){ var fb=f||emptyFeedback(id); fb.agentId=id; return fb; }) : Promise.resolve(emptyFeedback(id)); }
   /* ---- Time owed: single shared ledger per agent (timeowed-<id>.json) ---- */
@@ -3251,16 +3253,17 @@
     if(isManager()){
       var sel=panel.querySelector("#asnAgentSel");
       listAgents().then(function(list){
-        var assigned=state.assignedAgents||[];
-        var avail=list.filter(function(a){ return a.agentId!==myAgentId() && assigned.indexOf(a.agentId)<0; });
-        sel.innerHTML='<option value="">'+(avail.length?"Choose an agent…":"No unassigned agents found")+'</option>'+avail.map(function(a){ return '<option value="'+esc(a.agentId)+'">'+esc(a.agentName||a.agentId)+((a.managerId&&a.managerId!==myAgentId())?" (assigned elsewhere)":"")+'</option>'; }).join("");
+        var assigned=state.assignedAgents||[]; var rm=state.removedAgents||{}; var mine=myAgentId();
+        var avail=list.filter(function(a){ return a.agentId!==mine && assigned.indexOf(a.agentId)<0; });
+        sel.innerHTML='<option value="">'+(avail.length?"Choose an agent…":"No unassigned agents found")+'</option>'+avail.map(function(a){ return '<option value="'+esc(a.agentId)+'">'+esc(a.agentName||a.agentId)+((a.managerId&&a.managerId!==mine)?" (assigned elsewhere)":"")+'</option>'; }).join("");
         var byId={}; list.forEach(function(a){ byId[a.agentId]=a; });
+        var roster=list.filter(function(a){ return a.agentId!==mine && !rm[a.agentId] && ((a.managerId&&a.managerId===mine) || assigned.indexOf(a.agentId)>=0); }).sort(function(x,y){ return (y.updatedAt||"").localeCompare(x.updatedAt||""); });
         var ab=panel.querySelector("#asnAssigned");
-        ab.innerHTML=assigned.length?('<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin-bottom:6px">Your team ('+assigned.length+')</div>'+assigned.map(function(id){ var a=byId[id]; return '<div class="listrow"><span style="flex:1">'+esc((a&&a.agentName)||id)+'</span><button class="btn sm" data-unassign="'+esc(id)+'">Remove</button></div>'; }).join("")):'';
-        ab.querySelectorAll("[data-unassign]").forEach(function(b){ b.onclick=function(){ var id=b.getAttribute("data-unassign"); state.assignedAgents=(state.assignedAgents||[]).filter(function(x){return x!==id;}); save(); if(typeof loadTeam==="function") loadTeam().then(function(){ if(current==="team") renderers.team(); }); enhAssign(sec); toast("Removed from your team."); }; });
+        ab.innerHTML=roster.length?('<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin-bottom:6px">Your team ('+roster.length+')</div>'+roster.map(function(a){ return '<div class="listrow"><span style="flex:1">'+esc(a.agentName||a.agentId)+' <span style="color:var(--ink-faint);font-size:11.5px">\u00b7 '+esc(a.agentId)+(a.updatedAt?(' \u00b7 updated '+esc(fmtAgo(a.updatedAt))):"")+'</span></span><button class="btn sm" data-unassign="'+esc(a.agentId)+'" data-nm="'+esc(a.agentName||a.agentId)+'">Remove</button></div>'; }).join("")):'<div class="vhint">No agents on your team yet.</div>';
+        ab.querySelectorAll("[data-unassign]").forEach(function(b){ b.onclick=function(){ var id=b.getAttribute("data-unassign"), nm=b.getAttribute("data-nm")||id; if(!confirm("Remove "+nm+" from your team?\n\nThis deletes their shared files (summary, feedback, time owed) from the folder. They won\u2019t reappear unless you assign them again \u2014 use this to clear stale or duplicate copies.")) return; state.assignedAgents=(state.assignedAgents||[]).filter(function(x){return x!==id;}); state.removedAgents=state.removedAgents||{}; state.removedAgents[id]=true; save(); var jobs=[]; if(TEAM.dir){ ["summary-","feedback-","timeowed-","resetreq-","reset-"].forEach(function(p){ jobs.push(fsDelete(p+id+".json")); }); } Promise.all(jobs).then(function(){ if(typeof loadTeam==="function") loadTeam().then(function(){ if(current==="team") renderers.team(); }); enhAssign(sec); toast("Removed "+nm+"."); }); }; });
       });
       panel.querySelector("#asnAgentBtn").onclick=function(){ if(!TEAM.dir){ toast("Connect the shared folder first."); return; } var v=sel.value; if(!v){ toast("Choose an agent."); return; } var name=sel.options[sel.selectedIndex].text;
-        state.assignedAgents=state.assignedAgents||[]; if(state.assignedAgents.indexOf(v)<0) state.assignedAgents.push(v); save();
+        state.assignedAgents=state.assignedAgents||[]; if(state.assignedAgents.indexOf(v)<0) state.assignedAgents.push(v); if(state.removedAgents) delete state.removedAgents[v]; save();
         getFeedback(v).then(function(fb){ fb.managerName=state.config.name||"Manager"; fb.managerId=myAgentId(); return saveFeedback(fb,{owns:[],silent:true}); }).then(function(){ if(typeof loadTeam==="function") loadTeam().then(function(){ if(current==="team") renderers.team(); }); enhAssign(sec); toast("Assigned "+name+" to your team."); });
       };
     } else {

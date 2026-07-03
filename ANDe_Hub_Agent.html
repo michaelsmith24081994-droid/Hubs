@@ -734,6 +734,7 @@
     if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && k.id==="emails"){ if(k.target==null) k.target=5; k.lower=false; } });
     if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && (k.id==="breaks" || /unsched|break/i.test(k.label||""))){ k.type="dur"; k.sumDur=true; if(k.target==null) k.target=600; k.lower=true; } });
     if(typeof s.config.agentId!=="string") s.config.agentId="";
+    if(!s.config.agentId){ s.config.agentId=(typeof slug==="function"?slug(s.config.name):"")||("ag"+Math.random().toString(36).slice(2,8)); }
     if(typeof s.config.autoPull!=="boolean") s.config.autoPull=true;
     if(!s.teamInbox||typeof s.teamInbox!=="object") s.teamInbox={notes:[],stats:[],audits:[],recognitions:[],updatedAt:""};
     if(!Array.isArray(s.teamInbox.recognitions)) s.teamInbox.recognitions=[];
