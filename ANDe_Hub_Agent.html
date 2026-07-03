@@ -2630,49 +2630,103 @@
   function tdWho(){ return state.config.name || state.config.role || (isManager()?"Manager":"Agent"); }
   function tdLoad(){ return TEAM.dir? fsRead("tdissues.json").then(function(d){ TD_LIST=(d&&d.issues)||[]; return TD_LIST; }).catch(function(){ return TD_LIST; }) : Promise.resolve(TD_LIST); }
   function tdMutate(fn){ if(!TEAM.dir){ fn(TD_LIST); return Promise.resolve(); } return fsRead("tdissues.json").then(function(d){ var list=(d&&d.issues)||[]; fn(list); TD_LIST=list; return fsWrite("tdissues.json",{kind:"tdissues",updatedAt:nowISO(),issues:list}); }); }
-  renderers.tdissues=function(){ var sec=document.getElementById("sec-tdissues");
-    sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Systems</div><h2>TD Issues</h2><p class="lede">A shared log of issues with our systems — anyone can raise one, everyone sees them. Hit Refresh for the latest.</p></div><div class="actions">'+(TEAM.dir?'<button class="btn" id="tdRefresh">↻ Refresh</button><button class="btn primary" id="tdNew">+ Log issue</button>':'')+'</div></div><div id="tdBody"></div>';
-    if(!TEAM.dir){ document.getElementById("tdBody").innerHTML='<div class="empty"><div class="big">Not connected</div>Connect the shared folder in Settings to use the shared issues log.</div>'; return; }
-    document.getElementById("tdBody").innerHTML='<div class="vhint">Loading…</div>';
+  var tdQuery="", tdSysFilter="";
+  function tdCanManage(){ return isManager() || !!(state.teamInbox&&state.teamInbox.admin); }
+  function tdInitials(n){ n=(n||"").trim(); if(!n) return "?"; var p=n.split(/\s+/); return ((p[0]?p[0].charAt(0):"")+(p.length>1?p[p.length-1].charAt(0):"")).toUpperCase(); }
+  function tdEnsureSeq(list){ var mx=0; list.forEach(function(y){ if((y.seq||0)>mx)mx=y.seq; }); list.slice().sort(function(a,b){return (a.ts||"").localeCompare(b.ts||"");}).forEach(function(y){ if(!y.seq){ mx++; y.seq=mx; } }); }
+  function tdRef(x,order){ return "TD-"+("00"+(x.seq||(order&&order[x.id])||0)).slice(-3); }
+  function tdSave(fn){ return tdMutate(function(list){ fn(list); tdEnsureSeq(list); }); }
+  function tdStyle(){ if(document.getElementById("tdStyle")) return; var s=document.createElement("style"); s.id="tdStyle";
+    s.textContent=".td-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}.td-search{flex:1;min-width:180px}"
+      +".td-board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}@media(max-width:900px){.td-board{grid-template-columns:1fr}}"
+      +".td-col{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 6px 12px}"
+      +".td-colhead{display:flex;align-items:center;gap:9px;padding:13px 14px 11px}.td-coldot{width:9px;height:9px;border-radius:50%;flex:none}.td-colhead h3{font-family:var(--disp);font-weight:700;font-size:15px}"
+      +".td-colcount{margin-left:auto;font-size:12px;font-weight:700;color:var(--ink-faint);background:var(--card-2);padding:2px 10px;border-radius:20px}"
+      +".td-col.open .td-coldot{background:var(--blue)}.td-col.prog .td-coldot{background:var(--amber)}.td-col.done .td-coldot{background:var(--a2)}"
+      +".td-colempty{padding:20px 12px;text-align:center;color:var(--ink-faint);font-size:12.5px}"
+      +".td-tk{display:block;width:100%;text-align:left;background:var(--card-2);border:1px solid var(--line);border-radius:13px;padding:13px 14px;margin:8px 6px;cursor:pointer;transition:border-color .15s,transform .15s;color:var(--ink);font-family:var(--body)}"
+      +".td-tk:hover{border-color:rgba(var(--a1-rgb),.5);transform:translateY(-2px)}"
+      +".td-tk-top{display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap}.td-ref{font-family:var(--disp);font-weight:700;font-size:12px;color:var(--ink-faint)}"
+      +".td-sys{font-size:11px;font-weight:600;color:var(--a2);background:var(--teal-wash);padding:3px 9px;border-radius:20px}"
+      +".td-tk-title{font-family:var(--disp);font-weight:600;font-size:14px;line-height:1.3;margin-bottom:10px}"
+      +".td-tk-foot{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-faint);flex-wrap:wrap}.td-tk-foot .who{color:var(--ink-soft)}.td-tk-foot .cc{margin-left:auto}"
+      +".td-claim{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--amber);background:var(--amber-wash);border:1px solid rgba(255,178,77,.3);border-radius:8px;padding:5px 9px;margin-bottom:9px}"
+      +".td-dh{display:flex;flex-direction:column;gap:8px}.td-drow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}"
+      +".td-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin:6px 0 6px}"
+      +".td-desc{font-size:13.5px;color:var(--ink-soft);line-height:1.55;white-space:pre-wrap;margin-bottom:6px}"
+      +".td-tl{display:flex;flex-direction:column;gap:12px}.td-ev{font-size:12px;color:var(--ink-faint);text-align:center;padding:2px}"
+      +".td-cmt{display:flex;gap:10px}.td-cav{width:28px;height:28px;border-radius:8px;flex:none;display:grid;place-items:center;font-weight:700;font-size:11px;color:#fff;background:var(--grad-teal)}"
+      +".td-cmt .cm{font-size:11px;color:var(--ink-faint);margin-bottom:2px}.td-cmt .cm b{color:var(--ink)}.td-cmt .ct{font-size:13px;color:var(--ink-soft);line-height:1.5;white-space:pre-wrap}"
+      +".td-badge{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:20px}.td-badge.open{background:var(--blue-wash);color:var(--blue)}.td-badge.prog{background:var(--amber-wash);color:var(--amber)}.td-badge.done{background:var(--teal-wash);color:var(--a2)}";
+    document.head.appendChild(s); }
+  renderers.tdissues=function(){ tdStyle(); var sec=document.getElementById("sec-tdissues");
+    sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Systems</div><h2>System Tickets</h2><p class="lede">Raise an issue with any of our systems. Your manager picks it up, works it and closes it \u2014 everyone can follow along and comment.</p></div><div class="actions">'+(TEAM.dir?'<button class="btn" id="tdRefresh">\u21bb Refresh</button><button class="btn primary" id="tdNew">+ Raise a ticket</button>':'')+'</div></div>'
+      +(TEAM.dir?'<div class="td-toolbar"><input class="in td-search" id="tdSearch" placeholder="Search tickets\u2026" value="'+esc(tdQuery)+'"><select class="in" id="tdSysF" style="max-width:200px"></select></div>':'')
+      +'<div id="tdBody"></div>';
+    if(!TEAM.dir){ document.getElementById("tdBody").innerHTML='<div class="empty"><div class="big">Not connected</div>Connect the shared folder in Settings to use the shared tickets.</div>'; return; }
+    document.getElementById("tdBody").innerHTML='<div class="vhint">Loading\u2026</div>';
     document.getElementById("tdNew").onclick=function(){ openTdEditor(null); };
     document.getElementById("tdRefresh").onclick=function(){ renderers.tdissues(); };
-    tdLoad().then(tdDraw);
+    var se=document.getElementById("tdSearch"); if(se) se.oninput=function(){ tdQuery=se.value; tdDraw(); };
+    tdLoad().then(function(){ var sysSel=document.getElementById("tdSysF"); if(sysSel){ var systems={}; TD_LIST.forEach(function(y){ if(y.system) systems[y.system]=1; }); sysSel.innerHTML='<option value="">All systems</option>'+Object.keys(systems).sort().map(function(sy){return '<option'+(sy===tdSysFilter?" selected":"")+'>'+esc(sy)+'</option>';}).join(""); sysSel.onchange=function(){ tdSysFilter=sysSel.value; tdDraw(); }; } tdDraw(); });
   };
   function tdDraw(){ var box=document.getElementById("tdBody"); if(!box) return;
-    var open=TD_LIST.filter(function(x){return x.status!=="resolved";}).sort(function(a,b){return (b.ts||"").localeCompare(a.ts||"");});
-    var done=TD_LIST.filter(function(x){return x.status==="resolved";}).sort(function(a,b){return (b.resolvedAt||b.ts||"").localeCompare(a.resolvedAt||a.ts||"");});
-    function card(x){ var sev=x.severity||"Normal";
-      return '<div class="panel" style="margin-bottom:12px"><div class="panel-b">'
-        +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="badge '+(x.status==="resolved"?"dn":(x.status==="investigating"?"ip":"fail"))+'">'+(x.status==="resolved"?"resolved":(x.status==="investigating"?"reviewing":"open"))+'</span>'+((x.status==="investigating"&&x.reviewBy)?'<span class="cat" style="color:var(--amber)">ð '+esc(x.reviewBy)+'</span>':'')
-        +(x.system?'<span class="cat teal">'+esc(x.system)+'</span>':'')+'<span class="cat">'+esc(sev)+'</span>'
-        +'<span class="date" style="margin-left:auto">'+esc(x.by||"")+' · '+esc(fmtAgo(x.ts))+'</span></div>'
-        +'<h4 style="margin:8px 0 4px">'+esc(x.title||"Issue")+'</h4>'
-        +(x.detail?'<div class="detail">'+esc(x.detail)+'</div>':'')
-        +((x.comments&&x.comments.length)?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">'+x.comments.map(function(c){return '<div style="font-size:12.5px;color:var(--ink-soft)"><b>'+esc(c.by||"")+'</b> · '+esc(fmtAgo(c.ts))+'<br>'+esc(c.text||"")+'</div>';}).join("")+'</div>'):'')
-        +'<div class="coach-actions" style="margin-top:10px"><button class="btn sm" data-tdcomment="'+esc(x.id)+'">Comment</button>'+(x.status==="resolved"?'<button class="btn sm" data-tdreopen="'+esc(x.id)+'">Reopen</button>':(x.status==="investigating"?'<button class="btn sm" data-tdunreview="'+esc(x.id)+'">Set to open</button><button class="btn sm primary" data-tdresolve="'+esc(x.id)+'">Resolve</button>':'<button class="btn sm" data-tdreview="'+esc(x.id)+'">Reviewing</button><button class="btn sm primary" data-tdresolve="'+esc(x.id)+'">Resolve</button>'))+'<button class="btn sm" data-tdedit="'+esc(x.id)+'">Edit</button><button class="rm" data-tddel="'+esc(x.id)+'">✕</button></div>'
-        +'</div></div>'; }
-    box.innerHTML='<div class="panel-h" style="border:0;padding-left:0"><h3>Open ('+open.length+')</h3></div>'+(open.length?open.map(card).join(""):'<div class="empty">No open issues — all systems clear.</div>')
-      +'<div class="panel-h" style="border:0;padding-left:0;margin-top:14px"><h3>Resolved ('+done.length+')</h3></div>'+(done.length?done.map(card).join(""):'<div class="empty">Nothing resolved yet.</div>');
-    function refresh(){ tdLoad().then(tdDraw); }
-    box.querySelectorAll("[data-tdresolve]").forEach(function(b){ b.onclick=function(){ tdMutate(function(list){ var x=list.filter(function(y){return y.id===b.getAttribute("data-tdresolve");})[0]; if(x){ x.status="resolved"; x.resolvedAt=nowISO(); } }).then(refresh).then(function(){ toast("Marked resolved."); }); }; });
-    box.querySelectorAll("[data-tdreopen]").forEach(function(b){ b.onclick=function(){ tdMutate(function(list){ var x=list.filter(function(y){return y.id===b.getAttribute("data-tdreopen");})[0]; if(x){ x.status="open"; x.resolvedAt=""; } }).then(refresh); }; });
-    box.querySelectorAll("[data-tdreview]").forEach(function(b){ b.onclick=function(){ tdMutate(function(list){ var x=list.filter(function(y){return y.id===b.getAttribute("data-tdreview");})[0]; if(x){ x.status="investigating"; x.reviewBy=tdWho(); x.reviewAt=nowISO(); } }).then(refresh).then(function(){ toast("Marked as reviewing."); }); }; });
-    box.querySelectorAll("[data-tdunreview]").forEach(function(b){ b.onclick=function(){ tdMutate(function(list){ var x=list.filter(function(y){return y.id===b.getAttribute("data-tdunreview");})[0]; if(x){ x.status="open"; x.reviewBy=""; x.reviewAt=""; } }).then(refresh); }; });
-    box.querySelectorAll("[data-tddel]").forEach(function(b){ b.onclick=function(){ tdMutate(function(list){ var i=-1; list.forEach(function(y,j){if(y.id===b.getAttribute("data-tddel"))i=j;}); if(i>=0) list.splice(i,1); }).then(refresh).then(function(){ toast("Deleted."); }); }; });
-    box.querySelectorAll("[data-tdedit]").forEach(function(b){ b.onclick=function(){ var x=TD_LIST.filter(function(y){return y.id===b.getAttribute("data-tdedit");})[0]; if(x) openTdEditor(x); }; });
-    box.querySelectorAll("[data-tdcomment]").forEach(function(b){ b.onclick=function(){ var t=prompt("Add a comment"); if(t&&t.trim()){ tdMutate(function(list){ var x=list.filter(function(y){return y.id===b.getAttribute("data-tdcomment");})[0]; if(x){ x.comments=x.comments||[]; x.comments.push({by:tdWho(),ts:nowISO(),text:t.trim()}); } }).then(refresh); } }; });
+    var q=(tdQuery||"").toLowerCase().trim(), fsys=tdSysFilter||"";
+    var order={}; TD_LIST.slice().sort(function(a,b){return (a.ts||"").localeCompare(b.ts||"");}).forEach(function(y,i){ order[y.id]=i+1; });
+    function match(x){ if(fsys && (x.system||"")!==fsys) return false; if(q){ var hay=((x.title||"")+" "+(x.detail||"")+" "+(x.system||"")+" "+(x.by||"")+" "+tdRef(x,order)).toLowerCase(); if(hay.indexOf(q)<0) return false; } return true; }
+    function byNew(a,b){ return (b.ts||"").localeCompare(a.ts||""); }
+    var items=TD_LIST.filter(match);
+    var cols=[
+      {key:"open",label:"Open",list:items.filter(function(x){return x.status!=="resolved"&&x.status!=="investigating";}).sort(byNew)},
+      {key:"prog",label:"In progress",list:items.filter(function(x){return x.status==="investigating";}).sort(byNew)},
+      {key:"done",label:"Resolved",list:items.filter(function(x){return x.status==="resolved";}).sort(function(a,b){return (b.resolvedAt||b.ts||"").localeCompare(a.resolvedAt||a.ts||"");})}
+    ];
+    function tkCard(x){ var cc=(x.comments||[]).length;
+      var claim=(x.status==="investigating"&&x.reviewBy)?'<span class="td-claim">\u25c9 Claimed by '+esc(x.reviewBy)+'</span>':"";
+      var whoFoot=x.status==="resolved"?("Resolved"+(x.reviewBy?(" by "+esc(x.reviewBy)):"")):esc(x.by||"");
+      var when=x.status==="resolved"?fmtAgo(x.resolvedAt||x.ts):fmtAgo(x.ts);
+      return '<button class="td-tk" data-tk="'+esc(x.id)+'">'+claim+'<div class="td-tk-top"><span class="td-ref">'+tdRef(x,order)+'</span>'+(x.system?'<span class="td-sys">'+esc(x.system)+'</span>':"")+'</div><h4 class="td-tk-title">'+esc(x.title||"Issue")+'</h4><div class="td-tk-foot"><span class="who">'+whoFoot+'</span> \u00b7 '+esc(when)+'<span class="cc">\ud83d\udcac '+cc+'</span></div></button>'; }
+    box.innerHTML='<div class="td-board">'+cols.map(function(c){ return '<div class="td-col '+c.key+'"><div class="td-colhead"><span class="td-coldot"></span><h3>'+c.label+'</h3><span class="td-colcount">'+c.list.length+'</span></div>'+(c.list.length?c.list.map(tkCard).join(""):'<div class="td-colempty">'+(c.key==="open"?"Nothing open \u2014 all systems clear.":(c.key==="prog"?"Nothing being worked right now.":"Nothing resolved yet."))+'</div>')+'</div>'; }).join("")+'</div>';
+    box.querySelectorAll("[data-tk]").forEach(function(b){ b.onclick=function(){ tdOpenTicket(b.getAttribute("data-tk")); }; });
+  }
+  function tdOpenTicket(id){ var x=TD_LIST.filter(function(y){return y.id===id;})[0]; if(!x) return;
+    var order={}; TD_LIST.slice().sort(function(a,b){return (a.ts||"").localeCompare(b.ts||"");}).forEach(function(y,i){ order[y.id]=i+1; });
+    var manage=tdCanManage(), mine=(x.by===tdWho());
+    var statusKey=x.status==="resolved"?"done":(x.status==="investigating"?"prog":"open");
+    var statusTxt=x.status==="resolved"?"Resolved":(x.status==="investigating"?"In progress":"Open");
+    var ev=[]; ev.push({ts:x.ts||"",t:"Raised by "+(x.by||"someone")}); if(x.reviewAt) ev.push({ts:x.reviewAt,t:"Claimed by "+(x.reviewBy||"manager")}); (x.comments||[]).forEach(function(c){ ev.push({ts:c.ts||"",c:c}); }); if(x.resolvedAt) ev.push({ts:x.resolvedAt,t:"Resolved"+(x.reviewBy?(" by "+x.reviewBy):"")});
+    ev.sort(function(a,b){ return String(a.ts).localeCompare(String(b.ts)); });
+    var tl=ev.map(function(e){ if(e.c){ return '<div class="td-cmt"><div class="td-cav">'+esc(tdInitials(e.c.by))+'</div><div><div class="cm"><b>'+esc(e.c.by||"")+'</b> \u00b7 '+esc(fmtAgo(e.c.ts))+'</div><div class="ct">'+esc(e.c.text||"")+'</div></div></div>'; } return '<div class="td-ev">\u2014 '+esc(e.t)+' \u00b7 '+esc(fmtAgo(e.ts))+' \u2014</div>'; }).join("");
+    var claimChip=(x.status==="investigating"&&x.reviewBy)?'<span class="td-claim" style="margin:0">\u25c9 '+esc(x.reviewBy)+'</span>':"";
+    var acts="";
+    if(x.status==="resolved"){ if(manage) acts+='<button class="btn sm" data-act="reopen">Reopen</button>'; }
+    else if(x.status==="investigating"){ if(manage) acts+='<button class="btn sm" data-act="unclaim">Back to open</button><button class="btn sm primary" data-act="resolve">\u2713 Resolve</button>'; }
+    else { if(manage) acts+='<button class="btn sm" data-act="claim">Claim to review</button><button class="btn sm primary" data-act="resolve">\u2713 Resolve</button>'; }
+    if(manage||mine) acts+='<button class="btn sm" data-act="edit">Edit</button>';
+    if(manage) acts+='<button class="rm" data-act="del" title="Delete ticket">\u2715</button>';
+    openModal('<div class="modal-h"><div class="td-dh"><div class="td-drow"><span class="td-ref">'+tdRef(x,order)+'</span><span class="td-badge '+statusKey+'">'+statusTxt+'</span>'+(x.system?'<span class="td-sys">'+esc(x.system)+'</span>':"")+claimChip+'</div><h3 style="font-family:var(--disp);font-weight:700;font-size:18px;line-height:1.25">'+esc(x.title||"Ticket")+'</h3></div><button class="x" id="mX">\u2715</button></div>'
+      +'<div class="modal-b">'+(x.detail?'<div class="td-lbl">Description</div><div class="td-desc">'+esc(x.detail)+'</div>':"")+'<div class="td-lbl">Activity</div><div class="td-tl">'+tl+'</div></div>'
+      +'<div class="modal-f" style="flex-wrap:wrap;gap:9px"><div style="display:flex;gap:8px;flex:1;min-width:200px"><input class="in" id="tdCmt" placeholder="Add a comment\u2026" style="flex:1"><button class="btn sm" id="tdCmtSend">Comment</button></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+acts+'</div></div>');
+    document.getElementById("mX").onclick=closeModal;
+    function after(keep){ tdDraw(); if(keep) tdOpenTicket(id); else closeModal(); }
+    var ci=document.getElementById("tdCmt"); function sendCmt(){ var t=(ci.value||"").trim(); if(!t) return; tdSave(function(list){ var y=list.filter(function(z){return z.id===id;})[0]; if(y){ y.comments=y.comments||[]; y.comments.push({by:tdWho(),ts:nowISO(),text:t}); } }).then(function(){ after(true); }); }
+    document.getElementById("tdCmtSend").onclick=sendCmt; ci.onkeydown=function(e){ if(e.key==="Enter"){ sendCmt(); } };
+    (function(){ var map={ claim:function(y){ y.status="investigating"; y.reviewBy=tdWho(); y.reviewAt=nowISO(); }, unclaim:function(y){ y.status="open"; y.reviewBy=""; y.reviewAt=""; }, resolve:function(y){ y.status="resolved"; y.resolvedAt=nowISO(); if(!y.reviewBy) y.reviewBy=tdWho(); }, reopen:function(y){ y.status="open"; y.resolvedAt=""; y.reviewBy=""; y.reviewAt=""; } };
+      ["claim","unclaim","resolve","reopen"].forEach(function(act){ var b=modalInner.querySelector('[data-act="'+act+'"]'); if(b) b.onclick=function(){ tdSave(function(list){ var y=list.filter(function(z){return z.id===id;})[0]; if(y) map[act](y); }).then(function(){ toast(act==="resolve"?"Resolved.":(act==="claim"?"Claimed \u2014 marked in progress.":act==="reopen"?"Reopened.":"Back to open.")); after(act!=="resolve"&&act!=="reopen"?true:true); }); }; });
+      var eb=modalInner.querySelector('[data-act="edit"]'); if(eb) eb.onclick=function(){ openTdEditor(x); };
+      var db=modalInner.querySelector('[data-act="del"]'); if(db) db.onclick=function(){ if(!confirm("Delete this ticket? This cannot be undone.")) return; tdSave(function(list){ var i=-1; list.forEach(function(z,j){ if(z.id===id) i=j; }); if(i>=0) list.splice(i,1); }).then(function(){ toast("Ticket deleted."); after(false); }); };
+    })();
   }
   function openTdEditor(x){ var editing=!!x; x=x||{};
-    openModal('<div class="modal-h"><h3>'+(editing?"Edit":"Log")+' issue</h3><button class="x" id="mX">✕</button></div>'
+    openModal('<div class="modal-h"><h3>'+(editing?"Edit ticket":"Raise a ticket")+'</h3><button class="x" id="mX">\u2715</button></div>'
       +'<div class="modal-b"><label class="fld"><span class="lab">Title</span><input class="in" id="tdTitle" value="'+esc(x.title||"")+'" placeholder="Short summary of the issue"></label>'
-      +'<div class="row2"><label class="fld"><span class="lab">System / area</span><input class="in" id="tdSystem" value="'+esc(x.system||"")+'" placeholder="e.g. CRM, Telephony"></label>'
-      +'<label class="fld"><span class="lab">Severity</span><select class="in" id="tdSev">'+["Low","Normal","High","Critical"].map(function(s){return '<option'+(((x.severity||"Normal")===s)?" selected":"")+'>'+s+'</option>';}).join("")+'</select></label></div>'
-      +'<label class="fld"><span class="lab">Details</span><textarea class="in" id="tdDetail" style="min-height:90px" placeholder="What is happening, steps to reproduce, who is affected…">'+esc(x.detail||"")+'</textarea></label></div>'
-      +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="tdSave">'+(editing?"Save":"Log issue")+'</button></div>');
+      +'<label class="fld"><span class="lab">System / area</span><input class="in" id="tdSystem" value="'+esc(x.system||"")+'" placeholder="e.g. CRM, Telephony, Intranet"></label>'
+      +'<label class="fld"><span class="lab">Details</span><textarea class="in" id="tdDetail" style="min-height:110px" placeholder="What is happening, steps to reproduce, who is affected\u2026">'+esc(x.detail||"")+'</textarea></label></div>'
+      +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="tdSaveBtn">'+(editing?"Save":"Raise ticket")+'</button></div>');
     document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
-    document.getElementById("tdSave").onclick=function(){ var t=document.getElementById("tdTitle").value.trim(); if(!t){ toast("Add a title."); return; }
-      var sys=document.getElementById("tdSystem").value.trim(), sev=document.getElementById("tdSev").value, det=document.getElementById("tdDetail").value.trim();
-      tdMutate(function(list){ if(editing){ var o=list.filter(function(y){return y.id===x.id;})[0]; if(o){ o.title=t; o.system=sys; o.severity=sev; o.detail=det; o.updatedAt=nowISO(); } } else { list.push({id:uid("td"),ts:nowISO(),by:tdWho(),title:t,system:sys,severity:sev,detail:det,status:"open",comments:[]}); } }).then(function(){ closeModal(); if(current==="tdissues") renderers.tdissues(); toast(editing?"Saved.":"Issue logged."); }); };
+    document.getElementById("tdSaveBtn").onclick=function(){ var t=document.getElementById("tdTitle").value.trim(); if(!t){ toast("Add a title."); return; }
+      var sys=document.getElementById("tdSystem").value.trim(), det=document.getElementById("tdDetail").value.trim();
+      tdSave(function(list){ if(editing){ var o=list.filter(function(y){return y.id===x.id;})[0]; if(o){ o.title=t; o.system=sys; o.detail=det; o.updatedAt=nowISO(); } } else { list.push({id:uid("td"),ts:nowISO(),by:tdWho(),title:t,system:sys,detail:det,status:"open",comments:[]}); } }).then(function(){ closeModal(); if(current==="tdissues") tdDraw(); toast(editing?"Saved.":"Ticket raised."); }); };
   }
 
   /* ================= YOUR WEEK (Your Week board, live) ================= */
