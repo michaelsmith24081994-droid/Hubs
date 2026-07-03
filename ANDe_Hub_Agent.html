@@ -3302,44 +3302,56 @@
     }
     enhTimeOwed(sec);
   }
-  var _toPulledAt=0;
-  function enhTimeOwed(sec){
-    // pull the latest from the shared folder (throttled) so manager entries show without a manual sync
-    if(TEAM.dir && (Date.now()-_toPulledAt>15000)){ _toPulledAt=Date.now(); Promise.resolve(pullFeedback(true)).then(function(){ if(current==="dash") renderers.dash(); }).catch(function(){}); }
-    var to=(state.teamInbox&&state.teamInbox.timeOwed)||[];
-    var acks=(state.teamInbox&&state.teamInbox.timeOwedAcks)||[];
-    if(!TEAM.dir && !to.length && !(state.timeOwedReq||[]).length) return; // nothing to show & can't request without a folder
-    var bal=to.reduce(function(s,e){return s+(e.delta||0);},0);
-    var ackBy={}; acks.forEach(function(a){ ackBy[a.reqId]=a.status; });
-    var pending=(state.timeOwedReq||[]).filter(function(r){ return !ackBy[r.id]; });
-    var monthAgo=Date.now()-31*86400000;
-    var recent=to.filter(function(e){ var t=e.ts?new Date(e.ts).getTime():0; return t>=monthAgo; }).slice().reverse();
-    var card=document.createElement("div"); card.className="enh-card";
-    card.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div><h3>Time owed</h3>'
-      +'<div style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+(bal<0?'var(--red)':'var(--a2)')+'">'+esc(fmtMins(bal))+'</div>'
-      +'<div style="font-size:12px;color:var(--ink-faint)">logged by your manager'+(pending.length?(' · '+pending.length+' request'+(pending.length===1?"":"s")+' pending'):'')+'</div></div>'
-      +'<button class="btn sm" id="toReqBtn" style="margin-left:auto">Request change</button></div>'
-      +(recent.length?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px"><div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-faint)">Last 30 days</div>'+recent.map(function(e){return '<div style="font-size:12.5px;color:var(--ink-soft)">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+' <span style="color:var(--ink-faint)">'+esc(fmtShort((e.ts||"").slice(0,10)))+'</span></div>';}).join("")+'</div>'):'')
-      +(pending.length?('<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">'+pending.map(function(r){return '<div style="font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:8px">⏳ requested '+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+(r.note?(' · '+esc(r.note)):'')+' <button class="btn sm" data-cancelto="'+esc(r.id)+'" style="margin-left:auto;padding:2px 8px">Cancel</button></div>';}).join("")+'</div>'):'');
-    var todayList=sec.querySelector("#todayList"), todayPanel=todayList?todayList.closest(".panel"):null;
-    if(todayPanel&&todayPanel.parentNode){ todayPanel.parentNode.insertBefore(card, todayPanel.nextSibling); }
-    else { var vh=sec.querySelector(".vhead"); if(vh&&vh.nextSibling) sec.insertBefore(card, vh.nextSibling); else sec.appendChild(card); }
-    card.querySelectorAll("[data-cancelto]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-cancelto"); state.timeOwedReq=(state.timeOwedReq||[]).filter(function(x){return x.id!==rid;}); save(); if(TEAM.dir){ Promise.resolve(publishSummary(true)).then(function(){ toast("Request cancelled."); }); } else toast("Request cancelled."); renderers.dash(); }; });
-    document.getElementById("toReqBtn").onclick=function(){
-      openModal('<div class="modal-h"><h3>Request time owed change</h3><button class="x" id="mX">✕</button></div>'
-        +'<div class="modal-b"><div class="seg" id="toSign" style="margin-bottom:12px"><button class="on" data-sign="1">Add time</button><button data-sign="-1">Deduct time</button></div>'
-        +'<label class="fld"><span class="lab">Amount (hours:minutes or minutes)</span><input class="in" id="toAmt" placeholder="e.g. 1:30 or 90"></label>'
-        +'<label class="fld"><span class="lab">Reason</span><input class="in" id="toNote" placeholder="e.g. stayed late Friday"></label></div>'
-        +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="toSend">Send request</button></div>');
-      var sign=1; document.getElementById("toSign").addEventListener("click",function(e){ var b=e.target.closest("button[data-sign]"); if(!b) return; sign=parseInt(b.getAttribute("data-sign"),10); [].forEach.call(this.children,function(x){x.classList.toggle("on",x===b);}); });
-      document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
-      document.getElementById("toSend").onclick=function(){ var mins=parseMins(document.getElementById("toAmt").value); if(!mins){ toast("Enter an amount."); return; } var note=document.getElementById("toNote").value.trim();
-        state.timeOwedReq=state.timeOwedReq||[]; state.timeOwedReq.push({id:uid("tr"),ts:nowISO(),delta:sign*mins,note:note}); save();
-        if(TEAM.dir){ Promise.resolve(publishSummary(true)).then(function(){ toast("Request sent to your manager."); }); } else toast("Saved — connect the folder to send.");
-        closeModal(); renderers.dash(); };
-    };
+  /* ---- Time owed: single shared ledger per agent (timeowed-<id>.json) ---- */
+  function toFile(id){ return "timeowed-"+id+".json"; }
+  function toLoad(id){ if(!TEAM.dir) return Promise.resolve([]); return fsRead(toFile(id)).then(function(d){ return (d&&Array.isArray(d.entries))?d.entries:[]; }).catch(function(){ return []; }); }
+  function toMutate(id,fn){ if(!TEAM.dir) return Promise.resolve([]); return fsRead(toFile(id)).then(function(d){ var e=(d&&Array.isArray(d.entries))?d.entries:[]; fn(e); return fsWrite(toFile(id),{kind:"timeowed",agentId:id,updatedAt:nowISO(),entries:e}).then(function(){ return e; }); }); }
+  function toCounts(entries){ return (entries||[]).filter(function(e){ return e.status!=="pending"&&e.status!=="declined"; }); }
+  function toBalance(entries){ return toCounts(entries).reduce(function(s,e){ return s+(e.delta||0); },0); }
+  var _toHist=false;
+  function enhTimeOwed(sec){ if(!TEAM.dir) return; var myId=myAgentId();
+    function mount(entries){
+      var ex=sec.querySelector("#toCardEnh"); if(ex) ex.remove();
+      var bal=toBalance(entries);
+      var pending=(entries||[]).filter(function(e){ return e.kind==="request"&&e.status==="pending"; }).slice().reverse();
+      var hist=toCounts(entries).slice().sort(function(a,b){ return String(b.ts).localeCompare(String(a.ts)); });
+      /* notify agent of new manager grants */
+      state._toSeen=state._toSeen||{}; var wasInit=!!state._toSeenInit; var changed=false;
+      toCounts(entries).forEach(function(e){ if(e.kind==="grant"&&!state._toSeen[e.id]){ state._toSeen[e.id]=1; changed=true; if(wasInit&&typeof enhNotify==="function") enhNotify("tolog:"+e.id,"Time owed updated",(e.delta<0?"\u2212":"+")+fmtMins(Math.abs(e.delta))+(e.note?(" \u00b7 "+e.note):"")+" from your manager.","dash"); } });
+      if(!wasInit){ (entries||[]).forEach(function(e){ if(e.kind==="request") state._toSeen[e.id]=state._toSeen[e.id]||1; }); } state._toSeenInit=1; if(changed) save();
+      var card=document.createElement("div"); card.className="enh-card"; card.id="toCardEnh";
+      card.innerHTML='<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><div><h3>Time owed</h3>'
+        +'<div style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+(bal<0?"var(--red)":"var(--a2)")+'">'+esc(fmtMins(bal))+'</div>'
+        +'<div style="font-size:12px;color:var(--ink-faint)">logged by your manager'+(pending.length?(" \u00b7 "+pending.length+" request"+(pending.length===1?"":"s")+" pending"):"")+'</div></div>'
+        +'<button class="btn sm" id="toReqBtn" style="margin-left:auto">Request change</button></div>'
+        +(pending.length?('<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">'+pending.map(function(r){return '<div style="font-size:12px;color:var(--ink-faint);display:flex;align-items:center;gap:8px">\u23f3 requested '+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+(r.note?(" \u00b7 "+esc(r.note)):"")+' <button class="btn sm" data-cancelto="'+esc(r.id)+'" style="margin-left:auto;padding:2px 8px">Cancel</button></div>';}).join("")+'</div>'):"")
+        +(hist.length?('<div style="margin-top:12px"><button class="btn sm" id="toHistBtn" style="width:100%;display:flex;justify-content:space-between">History ('+hist.length+')<span id="toHistCh">'+(_toHist?"\u2013":"+")+'</span></button><div id="toHistBody" style="display:'+(_toHist?"block":"none")+';margin-top:8px">'+hist.map(function(e){return '<div style="font-size:12.5px;color:var(--ink-soft);padding:2px 0">'+(e.delta<0?"\u2212":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(" \u00b7 "+esc(e.note)):"")+' <span style="color:var(--ink-faint)">'+esc(fmtShort((e.ts||"").slice(0,10)))+'</span></div>';}).join("")+'</div></div>'):"");
+      var todayList=sec.querySelector("#todayList"), todayPanel=todayList?todayList.closest(".panel"):null;
+      if(todayPanel&&todayPanel.parentNode){ todayPanel.parentNode.insertBefore(card, todayPanel.nextSibling); } else { var vh=sec.querySelector(".vhead"); if(vh&&vh.nextSibling) sec.insertBefore(card, vh.nextSibling); else sec.appendChild(card); }
+      var hb=document.getElementById("toHistBtn"); if(hb) hb.onclick=function(){ _toHist=!_toHist; var body=document.getElementById("toHistBody"); if(body) body.style.display=_toHist?"block":"none"; var ch=document.getElementById("toHistCh"); if(ch) ch.textContent=_toHist?"\u2013":"+"; };
+      card.querySelectorAll("[data-cancelto]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-cancelto"); toMutate(myId,function(e){ var i=-1; e.forEach(function(x,j){ if(x.id===rid&&x.status==="pending") i=j; }); if(i>=0) e.splice(i,1); }).then(function(){ toast("Request cancelled."); if(current==="dash") renderers.dash(); }); }; });
+      document.getElementById("toReqBtn").onclick=function(){
+        openModal('<div class="modal-h"><h3>Request time owed change</h3><button class="x" id="mX">\u2715</button></div>'
+          +'<div class="modal-b"><div class="seg" id="toSign" style="margin-bottom:12px"><button class="on" data-sign="1">Add time</button><button data-sign="-1">Deduct time</button></div>'
+          +'<label class="fld"><span class="lab">Amount (hours:minutes or minutes)</span><input class="in" id="toAmt" placeholder="e.g. 1:30 or 90"></label>'
+          +'<label class="fld"><span class="lab">Reason</span><input class="in" id="toNote" placeholder="e.g. stayed late Friday"></label></div>'
+          +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="toSend">Send request</button></div>');
+        var sign=1; document.getElementById("toSign").addEventListener("click",function(e){ var b=e.target.closest("button[data-sign]"); if(!b) return; sign=parseInt(b.getAttribute("data-sign"),10); [].forEach.call(this.children,function(x){x.classList.toggle("on",x===b);}); });
+        document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
+        document.getElementById("toSend").onclick=function(){ var mins=parseMins(document.getElementById("toAmt").value); if(!mins){ toast("Enter an amount."); return; } var note=document.getElementById("toNote").value.trim(); if(!TEAM.dir){ toast("Connect the folder to send."); return; }
+          toMutate(myId,function(e){ e.push({id:uid("tr"),ts:nowISO(),delta:sign*mins,note:note,by:state.config.name||"me",kind:"request",status:"pending"}); }).then(function(){ toast("Request sent to your manager."); if(current==="dash") renderers.dash(); }); closeModal(); };
+      };
+    }
+    toLoad(myId).then(function(entries){
+      if(!entries.length){ var legacy=[];
+        (((state.teamInbox&&state.teamInbox.timeOwed)||[])).forEach(function(e){ legacy.push({id:e.id||uid("to"),ts:e.ts,delta:e.delta,note:e.note,by:e.by||"manager",kind:"grant",status:"approved"}); });
+        ((state.timeOwedReq)||[]).forEach(function(r){ legacy.push({id:r.id||uid("tr"),ts:r.ts,delta:r.delta,note:r.note,by:state.config.name||"me",kind:"request",status:"pending"}); });
+        if(legacy.length){ toMutate(myId,function(e){ if(!e.length){ legacy.forEach(function(x){ e.push(x); }); } }).then(mount); return; }
+      }
+      mount(entries);
+    });
   }
-  /* ----- stats: CSV / paste import ----- */
+    /* ----- stats: CSV / paste import ----- */
   function enhWrapStats(){
     if(renderers.stats && !renderers.stats._enh){
       var orig=renderers.stats;

@@ -1892,6 +1892,13 @@
       .then(function(arr){ var all=arr.filter(Boolean); var mine=myAgentId(); var asn=state.assignedAgents||[]; var fl=all.filter(function(s){ return (s.managerId&&s.managerId===mine) || asn.indexOf(s.agentId)>=0; }); TEAMROSTER=fl.sort(function(a,b){ return (a.agentName||"").localeCompare(b.agentName||""); }); return TEAMROSTER; });
   }
   function getFeedback(id){ return TEAM.dir? fsRead("feedback-"+id+".json").then(function(f){ var fb=f||emptyFeedback(id); fb.agentId=id; return fb; }) : Promise.resolve(emptyFeedback(id)); }
+  /* ---- Time owed: single shared ledger per agent (timeowed-<id>.json) ---- */
+  function toFile(id){ return "timeowed-"+id+".json"; }
+  function toLoad(id){ if(!TEAM.dir) return Promise.resolve([]); return fsRead(toFile(id)).then(function(d){ return (d&&Array.isArray(d.entries))?d.entries:[]; }).catch(function(){ return []; }); }
+  function toMutate(id,fn){ if(!TEAM.dir) return Promise.resolve([]); return fsRead(toFile(id)).then(function(d){ var e=(d&&Array.isArray(d.entries))?d.entries:[]; fn(e); return fsWrite(toFile(id),{kind:"timeowed",agentId:id,updatedAt:nowISO(),entries:e}).then(function(){ return e; }); }); }
+  function toCounts(entries){ return (entries||[]).filter(function(e){ return e.status!=="pending"&&e.status!=="declined"; }); }
+  function toBalance(entries){ return toCounts(entries).reduce(function(s,e){ return s+(e.delta||0); },0); }
+  var _mtoHist=false;
   function saveFeedback(fb,opts){
     // opts: boolean (silent) for back-compat, or {silent, owns:[arrays this write is authoritative for]}.
     // Arrays NOT owned are re-read from disk and preserved, so e.g. sending a note never wipes
@@ -2119,30 +2126,39 @@
     var _sp=sec.querySelector("#agSentPanel");
     var _toHTML='<div class="panel" id="toPanel" style="margin-top:18px"><div class="panel-h"><h3>Time owed</h3><div style="display:flex;gap:6px"><button class="btn sm" id="toAdd">+ Add</button><button class="btn sm" id="toDeduct">– Deduct</button></div></div><div class="panel-b" id="toBox"><div class="vhint">Loading…</div></div></div>';
     if(_sp) _sp.insertAdjacentHTML("beforebegin",_toHTML); else sec.insertAdjacentHTML("beforeend",_toHTML);
-    function loadTimeOwed(fbIn){ var box=sec.querySelector("#toBox"); if(!box) return;
+    function loadTimeOwed(){ var box=sec.querySelector("#toBox"); if(!box) return;
       if(!TEAM.dir){ box.innerHTML='<div class="vhint">Connect the shared folder to manage time owed.</div>'; return; }
-      (fbIn?Promise.resolve(fbIn):getFeedback(a.agentId)).then(function(fb){ fb.timeOwed=fb.timeOwed||[]; fb.timeOwedAcks=fb.timeOwedAcks||[];
-        var bal=fb.timeOwed.reduce(function(s,e){return s+(e.delta||0);},0);
-        var reqs=(a.timeOwedReq||[]).filter(function(r){ return !(state.toHandled||{})[r.id]; });
-        var hist=fb.timeOwed.slice().reverse();
-        var h='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+(bal<0?"var(--red)":"var(--a2)")+'">'+esc(fmtMins(bal))+'</span><span class="vhint">current balance owed to '+esc((a.agentName||"agent").split(" ")[0])+'</span></div>';
-        if(reqs.length){ h+='<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin:6px 0 8px">Pending requests</div>'+reqs.map(function(r){ return '<div class="coach-row"><div class="coach-main"><div class="coach-top"><span class="cat '+(r.delta<0?"":"teal")+'">'+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+'</span><span class="date">'+esc(fmtAgo(r.ts))+'</span></div>'+(r.note?'<div class="detail">'+esc(r.note)+'</div>':'')+'</div><div class="coach-actions"><button class="btn sm primary" data-toapprove="'+esc(r.id)+'">Approve</button><button class="btn sm" data-todecline="'+esc(r.id)+'">Decline</button></div></div>'; }).join(""); }
-        h+='<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin:14px 0 8px">History</div>';
-        h+= hist.length? hist.map(function(e){ return '<div class="listrow"><span style="flex:1">'+(e.delta<0?"−":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(' · '+esc(e.note)):'')+'</span><span class="date">'+esc(fmtDate((e.ts||"").slice(0,10)))+'</span><button class="rm" data-todel="'+esc(e.id)+'">✕</button></div>'; }).join("") : '<div class="empty">No time logged yet.</div>';
-        box.innerHTML=h;
-        box.querySelectorAll("[data-toapprove]").forEach(function(b){ b.onclick=function(){ var r=(a.timeOwedReq||[]).filter(function(x){return x.id===b.getAttribute("data-toapprove");})[0]; if(!r) return; fb.agentName=a.agentName||fb.agentName||""; fb.timeOwed.push({id:uid("to"),ts:nowISO(),delta:r.delta,note:(r.note||"")+" (request approved)",by:"manager"}); fb.timeOwedAcks.push({id:uid("ak"),reqId:r.id,status:"approved",ts:nowISO()}); state.toHandled[r.id]="approved"; save(); saveFeedback(fb,{owns:["timeOwed","timeOwedAcks"],silent:true}).then(function(){ loadTimeOwed(fb); }); toast("Approved."); }; });
-        box.querySelectorAll("[data-todecline]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-todecline"); fb.timeOwedAcks.push({id:uid("ak"),reqId:rid,status:"declined",ts:nowISO()}); state.toHandled[rid]="declined"; save(); saveFeedback(fb,{owns:["timeOwedAcks"],silent:true}).then(function(){ loadTimeOwed(fb); }); toast("Declined."); }; });
-        box.querySelectorAll("[data-todel]").forEach(function(b){ b.onclick=function(){ fb.timeOwed=fb.timeOwed.filter(function(x){return x.id!==b.getAttribute("data-todel");}); saveFeedback(fb,{owns:["timeOwed"],silent:true}).then(function(){ loadTimeOwed(fb); }); }; });
-      }).catch(function(){ box.innerHTML='<div class="vhint">Couldn’t load — reconnect the folder.</div>'; });
+      function render(entries){
+        var bal=toBalance(entries);
+        var reqs=(entries||[]).filter(function(e){ return e.kind==="request"&&e.status==="pending"; }).slice().reverse();
+        var hist=toCounts(entries).slice().sort(function(x,y){ return String(y.ts).localeCompare(String(x.ts)); });
+        var hh='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+(bal<0?"var(--red)":"var(--a2)")+'">'+esc(fmtMins(bal))+'</span><span class="vhint">current balance owed to '+esc((a.agentName||"agent").split(" ")[0])+'</span></div>';
+        if(reqs.length){ hh+='<div class="vhint" style="font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;margin:6px 0 8px">Pending requests</div>'+reqs.map(function(r){ return '<div class="coach-row"><div class="coach-main"><div class="coach-top"><span class="cat '+(r.delta<0?"":"teal")+'">'+(r.delta<0?"deduct ":"add ")+esc(fmtMins(Math.abs(r.delta)))+'</span><span class="date">'+esc(fmtAgo(r.ts))+'</span></div>'+(r.note?'<div class="detail">'+esc(r.note)+'</div>':"")+'</div><div class="coach-actions"><button class="btn sm primary" data-toapprove="'+esc(r.id)+'">Approve</button><button class="btn sm" data-todecline="'+esc(r.id)+'">Decline</button></div></div>'; }).join(""); }
+        hh+='<button class="btn sm" id="toHistBtn2" style="width:100%;display:flex;justify-content:space-between;margin-top:8px">History ('+hist.length+')<span id="toHistCh2">'+(_mtoHist?"\u2013":"+")+'</span></button><div id="toHistBody2" style="display:'+(_mtoHist?"block":"none")+';margin-top:8px">'+(hist.length?hist.map(function(e){ return '<div class="listrow"><span style="flex:1">'+(e.delta<0?"\u2212":"+")+esc(fmtMins(Math.abs(e.delta)))+(e.note?(" \u00b7 "+esc(e.note)):"")+'</span><span class="date">'+esc(fmtDate((e.ts||"").slice(0,10)))+'</span><button class="rm" data-todel="'+esc(e.id)+'">\u2715</button></div>'; }).join(""):'<div class="empty">No time logged yet.</div>')+'</div>';
+        box.innerHTML=hh;
+        var hb=document.getElementById("toHistBtn2"); if(hb) hb.onclick=function(){ _mtoHist=!_mtoHist; var b2=document.getElementById("toHistBody2"); if(b2) b2.style.display=_mtoHist?"block":"none"; var ch=document.getElementById("toHistCh2"); if(ch) ch.textContent=_mtoHist?"\u2013":"+"; };
+        box.querySelectorAll("[data-toapprove]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-toapprove"); toMutate(a.agentId,function(e){ var x=e.filter(function(y){return y.id===rid;})[0]; if(x){ x.status="approved"; x.handledBy=state.config.name||"Manager"; x.handledAt=nowISO(); } }).then(function(){ toast("Approved."); reload(); }); }; });
+        box.querySelectorAll("[data-todecline]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-todecline"); toMutate(a.agentId,function(e){ var x=e.filter(function(y){return y.id===rid;})[0]; if(x){ x.status="declined"; x.handledBy=state.config.name||"Manager"; x.handledAt=nowISO(); } }).then(function(){ toast("Declined."); reload(); }); }; });
+        box.querySelectorAll("[data-todel]").forEach(function(b){ b.onclick=function(){ var rid=b.getAttribute("data-todel"); toMutate(a.agentId,function(e){ var i=-1; e.forEach(function(y,j){ if(y.id===rid) i=j; }); if(i>=0) e.splice(i,1); }).then(function(){ reload(); }); }; });
+      }
+      function reload(){ toLoad(a.agentId).then(render); }
+      toLoad(a.agentId).then(function(entries){
+        if(!entries.length){ getFeedback(a.agentId).then(function(fb){ var seed=[];
+          (fb.timeOwed||[]).forEach(function(e){ seed.push({id:e.id||uid("to"),ts:e.ts,delta:e.delta,note:e.note,by:e.by||"manager",kind:"grant",status:"approved"}); });
+          var acks={}; (fb.timeOwedAcks||[]).forEach(function(k){ acks[k.reqId]=k.status; });
+          (a.timeOwedReq||[]).forEach(function(r){ seed.push({id:r.id||uid("tr"),ts:r.ts,delta:r.delta,note:r.note,by:a.agentName||a.agentId,kind:"request",status:acks[r.id]||((state.toHandled||{})[r.id])||"pending"}); });
+          if(seed.length){ toMutate(a.agentId,function(e){ if(!e.length){ seed.forEach(function(x){ e.push(x); }); } }).then(render); } else render([]); }); return; }
+        render(entries);
+      });
     }
-    function logTimeOwed(sign){ openModal('<div class="modal-h"><h3>'+(sign<0?"Deduct":"Add")+' time owed</h3><button class="x" id="mX">✕</button></div>'
+    function logTimeOwed(sign){ openModal('<div class="modal-h"><h3>'+(sign<0?"Deduct":"Add")+' time owed</h3><button class="x" id="mX">\u2715</button></div>'
         +'<div class="modal-b"><label class="fld"><span class="lab">Amount (hours:minutes or minutes)</span><input class="in" id="toAmt" placeholder="e.g. 1:30 or 90"></label><label class="fld"><span class="lab">Note (optional)</span><input class="in" id="toNote" placeholder="e.g. stayed late on a complaint"></label></div>'
         +'<div class="modal-f"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="toSave">'+(sign<0?"Deduct":"Add")+'</button></div>');
       document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
       document.getElementById("toSave").onclick=function(){ var mins=parseMins(document.getElementById("toAmt").value); if(!mins){ toast("Enter an amount."); return; } var note=document.getElementById("toNote").value.trim();
-        getFeedback(a.agentId).then(function(fb){ fb.agentName=a.agentName||fb.agentName||""; fb.timeOwed=fb.timeOwed||[]; fb.timeOwed.push({id:uid("to"),ts:nowISO(),delta:sign*mins,note:note,by:"manager"}); return saveFeedback(fb,{owns:["timeOwed"],silent:true}).then(function(){ closeModal(); loadTimeOwed(fb); toast(sign<0?"Deducted "+fmtMins(mins)+".":"Added "+fmtMins(mins)+"."); }); }); };
+        toMutate(a.agentId,function(e){ e.push({id:uid("to"),ts:nowISO(),delta:sign*mins,note:note,by:"manager",kind:"grant",status:"approved"}); }).then(function(){ closeModal(); loadTimeOwed(); toast(sign<0?"Deducted "+fmtMins(mins)+".":"Added "+fmtMins(mins)+"."); }); };
     }
-    var ta=sec.querySelector("#toAdd"); if(ta) ta.onclick=function(){ logTimeOwed(1); };
+        var ta=sec.querySelector("#toAdd"); if(ta) ta.onclick=function(){ logTimeOwed(1); };
     var td=sec.querySelector("#toDeduct"); if(td) td.onclick=function(){ logTimeOwed(-1); };
     loadTimeOwed();
   }
@@ -3338,7 +3354,7 @@
     document.head.appendChild(s); }
   function enhPendingItems(){ var out=[]; if(!(typeof isManager==="function"&&isManager())) return out;
     var roster=(typeof TEAMROSTER!=="undefined"&&TEAMROSTER)||[];
-    roster.forEach(function(a){ (a.timeOwedReq||[]).forEach(function(r){ if((state.toHandled||{})[r.id]) return; out.push({key:"to:"+r.id, title:"Time owed "+((r.delta<0)?"deduction":"request")+" \u00b7 "+(a.agentName||a.agentId), body:((r.delta>0?"+":"")+r.delta+" min")+(r.note?(" \u2014 "+r.note):"")+" \u2014 awaiting your approval", section:"team", focus:a.agentId}); }); });
+    var tp=state._toPending||{}; Object.keys(tp).forEach(function(aid){ (tp[aid]||[]).forEach(function(r){ out.push({key:"to:"+r.id, title:"Time owed "+((r.delta<0)?"deduction":"request")+" \u00b7 "+(r.agentName||aid), body:((r.delta>0?"+":"")+r.delta+" min")+(r.note?(" \u2014 "+r.note):"")+" \u2014 awaiting your approval", section:"team", focus:aid}); }); });
     (state._resetReqs||[]).forEach(function(r){ out.push({key:"rst:"+r.agentId, title:"Password reset \u00b7 "+(r.agentName||r.agentId), body:"Awaiting your action in Settings", section:"customise"}); });
     return out; }
   function enhNotify(key,title,body,section,focus){ if(!Array.isArray(state.notifs)) state.notifs=[]; if(!key) key=title+":"+body; for(var i=0;i<state.notifs.length;i++){ if(state.notifs[i].key===key) return; } state.notifs.unshift({id:uid("nf"),ts:nowISO(),key:key,title:title,body:body||"",section:section||"",focus:focus||"",read:false}); if(state.notifs.length>80) state.notifs=state.notifs.slice(0,80); save(); enhNotifBadge(); }
@@ -3356,13 +3372,13 @@
   function enhNotifToggle(){ var p=document.getElementById("notifPanel"); if(!p) return; if(p.hidden){ enhNotifRender(); p.hidden=false; } else { p.hidden=true; } }
   function enhScanTeam(roster){ if(!(typeof isManager==="function"&&isManager())) return; if(!Array.isArray(state.notifs)) state.notifs=[]; state._teamSeen=state._teamSeen||{}; state._coachSeen=state._coachSeen||{};
     (roster||[]).forEach(function(a){
-      /* time owed requests (add and remove) */
-      (a.timeOwedReq||[]).forEach(function(r){ if((state.toHandled||{})[r.id]) return; enhNotify("toreq:"+r.id, "Time owed "+((r.delta<0)?"deduction":"request")+" \u00b7 "+(a.agentName||a.agentId), ((r.delta>0?"+":"")+r.delta+" min")+(r.note?(" \u2014 "+r.note):"")+" needs your approval.", "team", a.agentId); });
+      /* time owed pending requests come from the shared ledger (scanned below) */
       /* coaching / feedback requests */
       var firstCoach=!(a.agentId in state._coachSeen); var cseen=state._coachSeen[a.agentId]=state._coachSeen[a.agentId]||{};
       (a.coachThread||[]).forEach(function(m){ if(!m||!m.request) return; var sig=String(m.id||m.ts||m.text||""); if(cseen[sig]) return; cseen[sig]=1; if(!firstCoach) enhNotify("coachreq:"+a.agentId+":"+sig, "Coaching request \u00b7 "+(a.agentName||a.agentId), String(m.text||"Requested coaching / feedback.").slice(0,90), "coaching", a.agentId); });
       state._teamSeen[a.agentId]=a.updatedAt;
     });
+    if(TEAM.dir && typeof toLoad==="function"){ state._toPending=state._toPending||{}; (roster||[]).forEach(function(a){ toLoad(a.agentId).then(function(entries){ var pend=(entries||[]).filter(function(e){ return e.kind==="request"&&e.status==="pending"; }); state._toPending[a.agentId]=pend.map(function(r){ return {id:r.id,delta:r.delta,note:r.note,ts:r.ts,agentName:a.agentName||a.agentId,agentId:a.agentId}; }); pend.forEach(function(r){ enhNotify("toreq:"+r.id, "Time owed "+((r.delta<0)?"deduction":"request")+" \u00b7 "+(a.agentName||a.agentId), ((r.delta>0?"+":"")+r.delta+" min")+(r.note?(" \u2014 "+r.note):"")+" needs your approval.", "team", a.agentId); }); enhNotifBadge(); }).catch(function(){}); }); }
     if(typeof fsRead==="function" && TEAM.dir){
       /* TD issues raised */
       fsRead("tdissues.json").then(function(d){ var list=(d&&d.issues)||[]; var firstTd=!state._tdSeen; var tseen=state._tdSeen=state._tdSeen||{}; list.forEach(function(x){ if(!x||!x.id) return; if(tseen[x.id]) return; tseen[x.id]=1; if(!firstTd) enhNotify("td:"+x.id, "TD issue raised"+(x.system?(" \u00b7 "+x.system):""), String(x.title||"New issue")+(x.by?(" \u2014 "+x.by):""), "tdissues", ""); }); save(); enhNotifBadge(); }).catch(function(){});
