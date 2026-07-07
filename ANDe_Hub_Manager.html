@@ -739,6 +739,7 @@
     if(Array.isArray(s.config.kpis)) s.config.kpis.forEach(function(k){ if(k && (k.id==="breaks" || /unsched|break/i.test(k.label||""))){ k.type="dur"; k.sumDur=true; if(k.target==null) k.target=600; k.lower=true; } });
     if(typeof s.config.agentId!=="string") s.config.agentId="";
     if(!s.config.agentId){ s.config.agentId=(typeof slug==="function"?slug(s.config.name):"")||("ag"+Math.random().toString(36).slice(2,8)); }
+    if(!Array.isArray(s.config.hiddenTabs)) s.config.hiddenTabs=[];
     if(typeof s.config.autoPull!=="boolean") s.config.autoPull=true;
     if(!s.teamInbox||typeof s.teamInbox!=="object") s.teamInbox={notes:[],stats:[],audits:[],recognitions:[],updatedAt:""};
     if(!Array.isArray(s.teamInbox.recognitions)) s.teamInbox.recognitions=[];
@@ -2757,7 +2758,7 @@
     wrap.appendChild(img); wrap.appendChild(shine); ov.appendChild(wrap); document.body.appendChild(ov);
     setTimeout(function(){ if(ov&&ov.parentNode) ov.parentNode.removeChild(ov); }, 2450);
   }
-  function start(){ applyTheme(); applyAccent(); applyRole(); if(hasLock()) showLock(); buildContours(); teamRestore().then(function(){ if(!isManager()&&state.config.autoPull&&TEAM.dir) pullFeedback(true); updateFbDot(""); }); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||state.config.role||"Live chat agent"; go("dash"); requestAnimationFrame(positionNavInd); setTimeout(positionNavInd,260); try{ enhInit(); }catch(e){} if(!document.body.classList.contains("locked")){ try{ playIntro(); }catch(e){} } }
+  function start(){ applyTheme(); applyAccent(); applyRole(); if(hasLock()) showLock(); buildContours(); teamRestore().then(function(){ if(!isManager()&&state.config.autoPull&&TEAM.dir) pullFeedback(true); updateFbDot(""); }); var wl=document.getElementById("whoLabel"); if(wl) wl.textContent=state.config.name||state.config.role||"Live chat agent"; go("dash"); requestAnimationFrame(positionNavInd); setTimeout(positionNavInd,260); try{ enhInit(); }catch(e){} try{ applyTabs(); }catch(e){} if(!document.body.classList.contains("locked")){ try{ playIntro(); }catch(e){} } }
 
   /* ================= LINKS ================= */
   /* ---- Links & Contacts: shared across the team via links.json ---- */
@@ -3235,7 +3236,18 @@
   function listManagers(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("manager-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
   function listAgents(){ if(!TEAM.dir) return Promise.resolve([]); return fsList("summary-").then(function(names){ return Promise.all(names.map(function(n){ return fsRead(n); })); }).then(function(a){ return a.filter(Boolean); }).catch(function(){ return []; }); }
   function publishManagerPresence(){ if(!TEAM.dir || !isManager()) return Promise.resolve(); var p={kind:"manager", id:myAgentId(), name:state.config.name||"Manager", role:state.config.role||"Manager", updatedAt:nowISO()}; return fsWrite("manager-"+myAgentId()+".json", p).catch(function(){}); }
-  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhAssign(document.getElementById("sec-customise")); enhResets(document.getElementById("sec-customise")); enhDanger(document.getElementById("sec-customise")); enhLockConfig(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
+  var TAB_OPTS=[{id:"dev",label:"Development"},{id:"evidence",label:"Checkpoint Evidence"},{id:"kb",label:"Knowledge Base"},{id:"buzz",label:"Buzz Session"}];
+  function applyTabs(){ var hid=state.config.hiddenTabs||[]; TAB_OPTS.forEach(function(t){ var btn=document.querySelector('.navi[data-section="'+t.id+'"]'); if(btn) btn.style.display=(hid.indexOf(t.id)>=0)?"none":""; }); if(hid.indexOf(current)>=0 && typeof go==="function"){ go("dash"); } try{ positionNavInd(); }catch(e){} }
+  function enhTabs(sec){ if(!sec) return; var old=sec.querySelector("#tabsPanel"); if(old) old.remove();
+    var hid=state.config.hiddenTabs||[];
+    var panel=document.createElement("div"); panel.className="panel"; panel.id="tabsPanel"; panel.style.marginBottom="18px";
+    panel.innerHTML='<div class="panel-h"><h3>Visible tabs</h3></div><div class="panel-b"><div class="vhint" style="margin-bottom:10px">Tick the tabs you want in the sidebar. Hiding one only affects your hub \u2014 nothing is deleted, and you can bring it back anytime.</div>'
+      +TAB_OPTS.map(function(t){ return '<label class="chk" style="display:flex;gap:9px;align-items:center;font-size:13.5px;color:var(--ink-soft);padding:6px 0"><input type="checkbox" data-tab="'+t.id+'"'+(hid.indexOf(t.id)<0?" checked":"")+'> '+esc(t.label)+'</label>'; }).join("")
+      +'</div>';
+    var vh=sec.querySelector(".vhead"); if(vh&&vh.nextSibling) sec.insertBefore(panel, vh.nextSibling); else sec.insertBefore(panel, sec.firstChild);
+    panel.querySelectorAll("[data-tab]").forEach(function(cb){ cb.onchange=function(){ var id=cb.getAttribute("data-tab"); state.config.hiddenTabs=state.config.hiddenTabs||[]; var i=state.config.hiddenTabs.indexOf(id); if(cb.checked){ if(i>=0) state.config.hiddenTabs.splice(i,1); } else { if(i<0) state.config.hiddenTabs.push(id); } save(); applyTabs(); }; });
+  }
+  function enhWrapCustomise(){ if(renderers.customise && !renderers.customise._enhAsn){ var o=renderers.customise; renderers.customise=function(){ o.apply(this,arguments); try{ enhTabs(document.getElementById("sec-customise")); enhAssign(document.getElementById("sec-customise")); enhResets(document.getElementById("sec-customise")); enhDanger(document.getElementById("sec-customise")); enhLockConfig(document.getElementById("sec-customise")); }catch(e){} }; renderers.customise._enhAsn=true; } }
   function enhAssign(sec){ if(!sec) return; var old=sec.querySelector("#asnPanel"); if(old) old.remove();
     var panel=document.createElement("div"); panel.className="panel"; panel.id="asnPanel"; panel.style.marginBottom="18px";
     if(isManager()){
