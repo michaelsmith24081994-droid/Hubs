@@ -857,11 +857,16 @@
     document.getElementById("whoLabel").textContent=state.config.role||"";
     var openTasks=state.tasks.filter(function(t){return !t.done;}).length;
     var ws=weeksSorted();
-    var au=state.audits||[];
+    var todayD=todayISO(); var _nm=new Date(); var mStartD=_nm.getFullYear()+"-"+pad(_nm.getMonth()+1)+"-01";
+    var au=(state.audits||[]).filter(function(a){ return a.date>=mStartD && a.date<=todayD; });
     var asc=au.map(auScore).filter(function(n){return n!=null;});
     var avgAudit=asc.length?Math.round(asc.reduce(function(x,y){return x+y;},0)/asc.length):null;
     var passes=au.filter(function(a){return a.result==="pass";}).length, fails=au.filter(function(a){return a.result==="fail";}).length;
     var passRate=(passes+fails)?Math.round(passes/(passes+fails)*100):null;
+    var monthW=ws.filter(function(w){ return w.weekOf>=mStartD && w.weekOf<=todayD; });
+    function _kpi(id){ return (state.config.kpis||[]).filter(function(k){return k.id===id;})[0]; }
+    var awolK=_kpi("awol"), breaksK=_kpi("breaks"); var awolTot=awolK?0:null, breaksTot=breaksK?0:null;
+    monthW.forEach(function(w){ if(awolK){ var _a=numericOf(awolK,(w.vals||{})[awolK.id]); if(_a!=null) awolTot+=_a; } if(breaksK){ var _b=numericOf(breaksK,(w.vals||{})[breaksK.id]); if(_b!=null) breaksTot+=_b; } });
     var today=todayISO();
     var fuToday=state.tasks.filter(function(t){return !t.done && t.due===today;}).length;
     var overdueCount=state.tasks.filter(function(t){return !t.done && t.due && t.due<today;}).length;
@@ -869,11 +874,7 @@
     var yNow=new Date().getFullYear(), midD=yNow+"-06-30", eoyD=yNow+"-12-31";
     var chk = today<=midD ? {name:"Mid-Year",date:midD} : (today<=eoyD ? {name:"End-of-Year",date:eoyD} : {name:"Mid-Year",date:(yNow+1)+"-06-30"});
     var chkDays=Math.max(0,Math.round((new Date(chk.date+"T00:00:00")-new Date(today+"T00:00:00"))/86400000));
-    // backup freshness
-    var lastB=(state.meta&&state.meta.lastBackup)||"";
-    var staleDays=lastB?Math.floor((new Date(today+"T00:00:00")-new Date(lastB+"T00:00:00"))/86400000):null;
-    var needBackup=lastB?staleDays>=14:true;
-    var bannerH=needBackup?('<div class="banner"><span>\u26a0\ufe0f <b>'+(lastB?("It\u2019s been "+staleDays+" days since your last backup"):"No backup taken yet")+'</b> \u2014 everything lives only on this device.</span><button class="btn sm" id="bannerBackup">\u2193 Back up now</button></div>'):"";
+    var bannerH="";
     var sec=document.getElementById("sec-dash");
     sec.innerHTML=
       '<div class="vhead"><div><div class="eyebrow">My Hub</div><h2>'+esc(greetingText())+'</h2>'+
@@ -889,12 +890,12 @@
         '</div></div>'+
         '<div class="panel"><div class="panel-h"><h3>Today \u00b7 '+new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+'</h3></div><div class="panel-b"><div class="today-list" id="todayList"></div></div></div>'+
         '<div class="cards hero-row">'+
-        '<div class="scard fill fill-b click" data-go="evidence"><div class="k">Next checkpoint</div><div class="v big">'+chkDays+'<span class="vu">days</span></div><div class="sub">'+chk.name+' \u00b7 '+fmtShort(chk.date)+'</div>'+icoWm("flag")+'</div>'+
-        '<div class="scard fill fill-a click" data-go="dash"><div class="k">Follow-ups today</div><div class="v big">'+fuToday+'</div><div class="sub">'+(overdueCount?(overdueCount+" overdue too"):(fuToday?"due today":"all clear"))+'</div>'+icoWm("checklist")+'</div>'+
+        '<div class="scard fill fill-b click" data-go="stats"><div class="k">AWOL \u00b7 this month</div><div class="v big">'+(awolTot==null?"\u2014":awolTot)+'</div><div class="sub">'+(awolTot==null?"add the AWOL metric":(awolTot===1?"instance":"instances"))+'</div>'+icoWm("shield")+'</div>'+
+        '<div class="scard fill fill-a click" data-go="stats"><div class="k">Unscheduled breaks \u00b7 this month</div><div class="v big">'+(breaksTot==null?"\u2014":fmtDur(breaksTot))+'</div><div class="sub">'+(breaksTot==null?"add the breaks metric":"total time")+'</div>'+icoWm("chart")+'</div>'+
         '</div>'+
         '<div class="cards">'+
-        '<div class="scard click" data-go="audits">'+ico("target")+'<div class="k">Average audit score</div><div class="v">'+(avgAudit!=null?avgAudit+"%":"\u2014")+'</div><div class="sub">'+(asc.length?("across "+asc.length+" audit"+(asc.length===1?"":"s")):"no audits yet")+'</div></div>'+
-        '<div class="scard click" data-go="audits">'+ico("shield")+'<div class="k">Pass / fail</div><div class="v">'+passes+' / '+fails+'</div><div class="sub">'+(passRate!=null?(passRate+"% pass rate"):"no audits yet")+'</div></div>'+
+        '<div class="scard click" data-go="audits">'+ico("target")+'<div class="k">Average audit score</div><div class="v">'+(avgAudit!=null?avgAudit+"%":"\u2014")+'</div><div class="sub">'+(asc.length?("across "+asc.length+" audit"+(asc.length===1?"":"s")+" this month"):"no audits this month")+'</div></div>'+
+        '<div class="scard click" data-go="audits">'+ico("shield")+'<div class="k">Pass / fail</div><div class="v">'+passes+' / '+fails+'</div><div class="sub">'+(passRate!=null?(passRate+"% pass rate this month"):"no audits this month")+'</div></div>'+
         '</div>'+
         '<div class="panel"><div class="panel-h"><h3>Performance · this month so far</h3><button class="btn sm" id="goStats">Open stats →</button></div><div class="panel-b"><div class="pillrow" id="dashPills"></div></div></div>'+
       '</div>'+
