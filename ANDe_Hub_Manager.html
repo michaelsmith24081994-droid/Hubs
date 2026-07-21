@@ -1454,7 +1454,7 @@
     document.getElementById("auForm").onchange=drawAudits;
     drawAudits();
   };
-  function drawAuPoints(){ var box=document.getElementById("auPoints"); if(!box) return; var nowP=new Date(), mS=nowP.getFullYear()+"-"+pad(nowP.getMonth()+1)+"-01", tD=todayISO(); var mAu=(state.audits||[]).filter(function(a){ return a.date>=mS && a.date<=tD; }); var pts=mAu.reduce(function(s,a){ return s+auditPoints(a); },0); var pct=Math.min(100,Math.round(pts/AU_PTS_MAX*100)); var msg; if(pts>=AU_PTS_MAX){ msg="You\u2019ve reached the monthly maximum of "+AU_PTS_MAX+" points \u2014 all audits done for this month."; } else if(pts>=AU_PTS_MIN){ var room=AU_PTS_MAX-pts; msg="In range ("+AU_PTS_MIN+"\u2013"+AU_PTS_MAX+"). You may still receive up to "+room+" more point"+(room===1?"":"s")+"."; } else { var need=AU_PTS_MIN-pts; msg=need+" more point"+(need===1?"":"s")+" to your minimum of "+AU_PTS_MIN+" \u2014 expect more audits this month."; } var col=pts>=AU_PTS_MIN?"var(--a2)":"var(--amber)"; box.innerHTML='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+col+'">'+pts+'</span><span class="vhint">of '+AU_PTS_MIN+'\u2013'+AU_PTS_MAX+' points this month \u00b7 '+mAu.length+' audit'+(mAu.length===1?"":"s")+'</span></div><div style="height:10px;border-radius:6px;background:var(--card-2);overflow:hidden;position:relative"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:6px"></div><div style="position:absolute;top:-3px;bottom:-3px;left:'+(AU_PTS_MIN/AU_PTS_MAX*100)+'%;width:2px;background:var(--ink-faint)" title="Minimum '+AU_PTS_MIN+'"></div></div><div class="vhint" style="margin-top:8px">'+esc(msg)+'</div><div class="vhint" style="margin-top:4px;font-size:11.5px">Chats & emails = 1 point; complaint or vulnerable-customer chats = 2 points.</div>'; }
+  function drawAuPoints(){ var box=document.getElementById("auPoints"); if(!box) return; var nowP=new Date(), mS=nowP.getFullYear()+"-"+pad(nowP.getMonth()+1)+"-01", tD=todayISO(); var mAu=(state.audits||[]).filter(function(a){ return a.date>=mS && a.date<=tD; }); var pts=mAu.reduce(function(s,a){ return s+auditPoints(a); },0); var pct=Math.min(100,Math.round(pts/auPtsMax()*100)); var msg; if(pts>=auPtsMax()){ msg="You\u2019ve reached the monthly maximum of "+auPtsMax()+" points \u2014 all audits done for this month."; } else if(pts>=auPtsMin()){ var room=auPtsMax()-pts; msg="In range ("+auPtsMin()+"\u2013"+auPtsMax()+"). You may still receive up to "+room+" more point"+(room===1?"":"s")+"."; } else { var need=auPtsMin()-pts; msg=need+" more point"+(need===1?"":"s")+" to your minimum of "+auPtsMin()+" \u2014 expect more audits this month."; } var col=pts>=auPtsMin()?"var(--a2)":"var(--amber)"; box.innerHTML='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+col+'">'+pts+'</span><span class="vhint">of '+auPtsMin()+'\u2013'+auPtsMax()+' points this month \u00b7 '+mAu.length+' audit'+(mAu.length===1?"":"s")+'</span></div><div style="height:10px;border-radius:6px;background:var(--card-2);overflow:hidden;position:relative"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:6px"></div><div style="position:absolute;top:-3px;bottom:-3px;left:'+(auPtsMin()/auPtsMax()*100)+'%;width:2px;background:var(--ink-faint)" title="Minimum '+auPtsMin()+'"></div></div><div class="vhint" style="margin-top:8px">'+esc(msg)+'</div><div class="vhint" style="margin-top:4px;font-size:11.5px">Chats & emails = 1 point; complaint or vulnerable-customer chats = 2 points.</div>'; }
   function drawAudits(){
     drawAuPoints(); drawAuMonth();
     var sel=document.getElementById("auForm"); if(!sel) return; var cur=sel.value;
@@ -1473,8 +1473,12 @@
   function auStats(items){ var s=items.map(auScore).filter(function(n){return n!=null;}); var avgS=s.length?Math.round(s.reduce(function(x,y){return x+y;},0)/s.length):null; var p=items.filter(function(a){return a.result==="pass";}).length, fl=items.filter(function(a){return a.result==="fail";}).length, rv=items.filter(function(a){return a.result==="review";}).length; return {avg:avgS,passes:p,fails:fl,review:rv,rate:(p+fl)?Math.round(p/(p+fl)*100):null,count:items.length}; }
   function drawAuMonth(){ var wrap=document.getElementById("auMonth"); if(!wrap) return; var n=new Date(), mStart=n.getFullYear()+"-"+pad(n.getMonth()+1)+"-01"; var items=state.audits.filter(function(a){ return a.date>=mStart && a.date<=todayISO(); }); if(!items.length){ wrap.innerHTML='<div class="empty">No audits logged this month yet.</div>'; return; } var st=auStats(items); var sc=st.avg==null?"neutral":(st.avg>=90?"good":st.avg<75?"bad":"neutral"); wrap.innerHTML='<div class="pill '+sc+'"><div class="pl">Avg score</div><div class="pv">'+(st.avg!=null?st.avg+"%":"—")+'</div></div><div class="pill neutral"><div class="pl">Pass rate</div><div class="pv">'+(st.rate!=null?st.rate+"%":"—")+'</div></div><div class="pill good"><div class="pl">Passes</div><div class="pv">'+st.passes+'</div></div><div class="pill bad"><div class="pl">Fails</div><div class="pv">'+st.fails+'</div></div>'+(st.review?'<div class="pill neutral"><div class="pl">In review</div><div class="pv">'+st.review+'</div></div>':''); }
   function auScore(a){ var n=typeof a.score==="number"?a.score:parseFloat(a.score); return isNaN(n)?null:n; }
-  var AU_PTS_MIN=6, AU_PTS_MAX=9;
-  function auditPoints(a){ if(a&&(a.pts===1||a.pts===2)) return a.pts; return (/complaint|vulnerab/.test(((a&&a.form)||"").toLowerCase()))?2:1; }
+  var AU_CATS=[{n:"Renewal - Accept",p:1},{n:"Renewal - Reject",p:1},{n:"Renewal - Query",p:1},{n:"MTA",p:1},{n:"Cancellation",p:1},{n:"General Query",p:1},{n:"NCD Query",p:1},{n:"Suspension",p:1},{n:"Other",p:1},{n:"Email",p:1},{n:"Vulnerable Customer",p:2},{n:"Complaint",p:2}];
+  function auCatPts(name){ var i; for(i=0;i<AU_CATS.length;i++){ if(AU_CATS[i].n===name) return AU_CATS[i].p; } return null; }
+  function auCatOpts(sel){ var o="",found=false,i; for(i=0;i<AU_CATS.length;i++){ var s=AU_CATS[i].n===sel; if(s)found=true; o+='<option value="'+esc(AU_CATS[i].n)+'"'+(s?" selected":"")+'>'+esc(AU_CATS[i].n)+' \u00b7 '+AU_CATS[i].p+' pt'+(AU_CATS[i].p===1?"":"s")+'</option>'; } if(sel&&!found){ o='<option value="'+esc(sel)+'" selected>'+esc(sel)+'</option>'+o; } else if(!sel){ o='<option value="" selected disabled>Choose a category\u2026</option>'+o; } return o; }
+  function auPtsMin(){ var v=state.teamInbox&&state.teamInbox.ptsMin; return (typeof v==="number"&&v>0)?v:6; }
+  function auPtsMax(){ var v=state.teamInbox&&state.teamInbox.ptsMax; return (typeof v==="number"&&v>0)?v:9; }
+  function auditPoints(a){ var cp=auCatPts((a&&a.form)||""); if(cp!=null) return cp; if(a&&(a.pts===1||a.pts===2)) return a.pts; return (/complaint|vulnerab/.test(((a&&a.form)||"").toLowerCase()))?2:1; }
   function drawAuOverview(items){
     var wrap=document.getElementById("auOverview");
     if(!items.length){ wrap.innerHTML=""; return; }
@@ -1540,14 +1544,12 @@
   function openAudit(id){
     var e=id?state.audits.filter(function(x){return x.id===id;})[0]:null;
     var ed=e?{id:e.id,date:e.date,form:e.form,score:e.score,result:e.result,pts:e.pts,mistakes:(e.mistakes||[]).slice(),notes:e.notes,attachments:(e.attachments||[]).slice()}:{id:null,date:todayISO(),form:"",score:"",result:"pass",pts:undefined,mistakes:[],notes:"",attachments:[]};
-    var eff2=(ed.pts?ed.pts===2:/complaint|vulnerab/.test((ed.form||"").toLowerCase()));
     var dl=(state.config.auditForms||[]).map(function(c){return '<option value="'+esc(c).replace(/&amp;/g,"&")+'">';}).join("");
     openModal('<div class="modal-h"><h3>'+(e?"Edit audit":"New audit")+'</h3><button class="x" id="mX">✕</button></div>'+
       '<div class="modal-b"><div class="row2"><label class="fld"><span class="lab">Evaluation date</span><input class="in" type="date" id="fDate" value="'+esc(ed.date)+'"></label>'+
-      '<label class="fld"><span class="lab">Evaluation form (chat type)</span><input class="in" id="fForm" list="aufDL" value="'+esc(ed.form)+'" placeholder="e.g. MTA"></label></div><datalist id="aufDL">'+dl+'</datalist>'+
+      '<label class="fld"><span class="lab">Audit category</span><select class="in" id="fForm">'+auCatOpts(ed.form)+'</select></label></div>'+
       '<div class="row2"><label class="fld"><span class="lab">Score (%)</span><input class="in" type="number" min="0" max="100" id="fScore" value="'+esc(ed.score)+'" placeholder="0–100"></label>'+
       '<label class="fld"><span class="lab">Result</span><select class="in" id="fResult"><option value="pass"'+(ed.result==="pass"?" selected":"")+'>Pass</option><option value="fail"'+(ed.result==="fail"?" selected":"")+'>Fail</option><option value="review"'+(ed.result==="review"?" selected":"")+'>Review requested</option></select></label></div>'+
-      '<label class="chk" style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:12px"><input type="checkbox" id="fTwoPts"'+(eff2?" checked":"")+'> Complaint / vulnerable-customer chat (worth 2 audit points)</label>'+
       '<label class="fld"><span class="lab">Improvements / mistakes (one per tag)</span><div class="tagbox" id="fMistakes"><input placeholder="Type a mistake, press Enter"></div></label>'+
       '<label class="fld"><span class="lab">Notes</span><textarea class="in" id="fNotes" placeholder="Detail, evaluator comments, what went well…"></textarea></label>'+
       '<label class="fld"><span class="lab">Attachments</span><div id="fAtt"></div></label></div>'+
@@ -1556,7 +1558,7 @@
     attachToolbar(document.getElementById("fNotes")); var tw=tagWidget(document.getElementById("fMistakes"),ed.mistakes); attachWidget(document.getElementById("fAtt"),ed.attachments);
     document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
     document.getElementById("mDel").onclick=function(){ closeModal(); deleteWithUndo("audits",ed.id,"Audit"); };
-    document.getElementById("mSave").onclick=function(){ tw.flush(); ed.date=document.getElementById("fDate").value||todayISO(); ed.form=document.getElementById("fForm").value.trim(); var sv=document.getElementById("fScore").value.trim(); ed.score=sv===""?"":(isNaN(parseFloat(sv))?"":parseFloat(sv)); ed.result=document.getElementById("fResult").value; ed.pts=document.getElementById("fTwoPts").checked?2:1; ed.notes=document.getElementById("fNotes").value.trim();
+    document.getElementById("mSave").onclick=function(){ tw.flush(); ed.date=document.getElementById("fDate").value||todayISO(); ed.form=document.getElementById("fForm").value.trim(); var sv=document.getElementById("fScore").value.trim(); ed.score=sv===""?"":(isNaN(parseFloat(sv))?"":parseFloat(sv)); ed.result=document.getElementById("fResult").value; ed.pts=auCatPts(ed.form)||1; ed.notes=document.getElementById("fNotes").value.trim();
       if(ed.score===""){ toast("Add the score (%)."); return; }
       if(ed.id){ for(var i=0;i<state.audits.length;i++){ if(state.audits[i].id===ed.id){ state.audits[i]=ed; break; } } } else { ed.id=uid("au"); state.audits.push(ed); }
       save(); closeModal(); refresh(); toast("Audit saved."); };
@@ -2133,6 +2135,26 @@
     }
     var hr=sec.querySelector("#agHistRefresh"); if(hr) hr.onclick=loadSentHist;
     loadSentHist();
+    // audit points target (per agent) — syncs to the agent's Audits tab
+    (function(){
+      var html='<div class="panel" id="ptPanel" style="margin-top:18px"><div class="panel-h"><h3>Audit points target</h3></div><div class="panel-b" id="ptBox"><div class="vhint">Loading…</div></div></div>';
+      var sp=sec.querySelector("#agSentPanel"); if(sp) sp.insertAdjacentHTML("beforebegin",html); else sec.insertAdjacentHTML("beforeend",html);
+      var box=sec.querySelector("#ptBox"); if(!box) return;
+      var who=(a.agentName||"this agent").split(" ")[0];
+      if(!TEAM.dir){ box.innerHTML='<div class="vhint">Connect the shared folder to set a points target.</div>'; return; }
+      getFeedback(a.agentId).then(function(fb){
+        var mn=(typeof fb.ptsMin==="number"&&fb.ptsMin>0)?fb.ptsMin:6, mx=(typeof fb.ptsMax==="number"&&fb.ptsMax>0)?fb.ptsMax:9;
+        box.innerHTML='<div class="vhint" style="margin-bottom:10px">How many audit points '+esc(who)+' is scored on each month. This shows on their Audits tab so they can track progress.</div>'
+          +'<div class="row2"><label class="fld"><span class="lab">Minimum points</span><input class="in" type="number" min="0" id="ptMin" value="'+mn+'"></label><label class="fld"><span class="lab">Maximum points</span><input class="in" type="number" min="0" id="ptMax" value="'+mx+'"></label></div>'
+          +'<button class="btn primary" id="ptSave">Save target</button>';
+        document.getElementById("ptSave").onclick=function(){
+          var vmn=parseInt(document.getElementById("ptMin").value,10), vmx=parseInt(document.getElementById("ptMax").value,10);
+          if(isNaN(vmn)||isNaN(vmx)||vmn<0||vmx<0){ toast("Enter valid numbers."); return; }
+          if(vmx<vmn){ toast("Maximum must be at least the minimum."); return; }
+          getFeedback(a.agentId).then(function(fb2){ fb2.ptsMin=vmn; fb2.ptsMax=vmx; return saveFeedback(fb2,{owns:[],silent:true}); }).then(function(){ toast("Points target saved for "+who+" ("+vmn+"–"+vmx+")."); });
+        };
+      }).catch(function(){ box.innerHTML='<div class="vhint">Couldn’t load — reconnect the folder.</div>'; });
+    })();
     // time owed — shown ABOVE the feedback/recognition sent panel
     var _sp=sec.querySelector("#agSentPanel");
     var _toHTML='<div class="panel" id="toPanel" style="margin-top:18px"><div class="panel-h"><h3>Time owed</h3><div style="display:flex;gap:6px"><button class="btn sm" id="toAdd">+ Add</button><button class="btn sm" id="toDeduct">– Deduct</button></div></div><div class="panel-b" id="toBox"><div class="vhint">Loading…</div></div></div>';
