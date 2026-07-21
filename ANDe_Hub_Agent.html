@@ -891,11 +891,11 @@
         '<div class="panel"><div class="panel-h"><h3>Today \u00b7 '+new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+'</h3></div><div class="panel-b"><div class="today-list" id="todayList"></div></div></div>'+
         '<div class="cards hero-row">'+
         '<div class="scard fill fill-b click" data-go="stats"><div class="k">AWOL \u00b7 this month</div><div class="v big">'+(awolTot==null?"\u2014":awolTot)+'</div><div class="sub">'+(awolTot==null?"add the AWOL metric":(awolTot===1?"instance":"instances"))+'</div>'+icoWm("shield")+'</div>'+
-        '<div class="scard fill fill-a click" data-go="stats"><div class="k">Unscheduled breaks \u00b7 this month</div><div class="v big">'+(breaksTot==null?"\u2014":fmtDur(breaksTot))+'</div><div class="sub">'+(breaksTot==null?"add the breaks metric":"total time")+'</div>'+icoWm("chart")+'</div>'+
+        '<div class="scard fill fill-b click" data-go="stats"><div class="k">Unscheduled breaks \u00b7 this month</div><div class="v big">'+(breaksTot==null?"\u2014":fmtDur(breaksTot))+'</div><div class="sub">'+(breaksTot==null?"add the breaks metric":"total time")+'</div>'+icoWm("chart")+'</div>'+
         '</div>'+
         '<div class="cards">'+
-        '<div class="scard click" data-go="audits">'+ico("target")+'<div class="k">Average audit score</div><div class="v">'+(avgAudit!=null?avgAudit+"%":"\u2014")+'</div><div class="sub">'+(asc.length?("across "+asc.length+" audit"+(asc.length===1?"":"s")+" this month"):"no audits this month")+'</div></div>'+
-        '<div class="scard click" data-go="audits">'+ico("shield")+'<div class="k">Pass / fail</div><div class="v">'+passes+' / '+fails+'</div><div class="sub">'+(passRate!=null?(passRate+"% pass rate this month"):"no audits this month")+'</div></div>'+
+        '<div class="scard fill fill-b click" data-go="audits">'+icoWm("target")+'<div class="k">Average audit score</div><div class="v">'+(avgAudit!=null?avgAudit+"%":"\u2014")+'</div><div class="sub">'+(asc.length?("across "+asc.length+" audit"+(asc.length===1?"":"s")+" this month"):"no audits this month")+'</div></div>'+
+        '<div class="scard fill fill-b click" data-go="audits">'+icoWm("shield")+'<div class="k">Pass / fail</div><div class="v">'+passes+' / '+fails+'</div><div class="sub">'+(passRate!=null?(passRate+"% pass rate this month"):"no audits this month")+'</div></div>'+
         '</div>'+
         '<div class="panel"><div class="panel-h"><h3>Performance · this month so far</h3><button class="btn sm" id="goStats">Open stats →</button></div><div class="panel-b"><div class="pillrow" id="dashPills"></div></div></div>'+
       '</div>'+
@@ -1434,6 +1434,7 @@
   renderers.audits=function(){
     var sec=document.getElementById("sec-audits");
     sec.innerHTML='<div class="vhead"><div><div class="eyebrow">Quality</div><h2>Audits</h2><p class="lede">Log your evaluations and see your average score, pass rate and where you most often lose marks.</p></div><div class="actions"><button class="btn primary" id="addAudit">+ New audit</button></div></div>'+
+      '<div class="panel"><div class="panel-h"><h3>Audit points \u00b7 this month</h3></div><div class="panel-b" id="auPoints"></div></div>'+
       '<div class="panel"><div class="panel-h"><h3>This month so far</h3></div><div class="panel-b"><div class="pillrow" id="auMonth"></div></div></div>'+
       '<div class="filters addline"><select class="in" id="auPeriod" style="max-width:190px"><option value="all">All time</option><option value="month">Current month</option><option value="half">Current half</option></select><select class="in" id="auForm" style="max-width:240px"></select></div>'+
       '<div id="auOverview"></div>'+
@@ -1446,8 +1447,9 @@
     document.getElementById("auForm").onchange=drawAudits;
     drawAudits();
   };
+  function drawAuPoints(){ var box=document.getElementById("auPoints"); if(!box) return; var nowP=new Date(), mS=nowP.getFullYear()+"-"+pad(nowP.getMonth()+1)+"-01", tD=todayISO(); var mAu=(state.audits||[]).filter(function(a){ return a.date>=mS && a.date<=tD; }); var pts=mAu.reduce(function(s,a){ return s+auditPoints(a); },0); var pct=Math.min(100,Math.round(pts/AU_PTS_MAX*100)); var msg; if(pts>=AU_PTS_MAX){ msg="You\u2019ve reached the monthly maximum of "+AU_PTS_MAX+" points \u2014 all audits done for this month."; } else if(pts>=AU_PTS_MIN){ var room=AU_PTS_MAX-pts; msg="In range ("+AU_PTS_MIN+"\u2013"+AU_PTS_MAX+"). You may still receive up to "+room+" more point"+(room===1?"":"s")+"."; } else { var need=AU_PTS_MIN-pts; msg=need+" more point"+(need===1?"":"s")+" to your minimum of "+AU_PTS_MIN+" \u2014 expect more audits this month."; } var col=pts>=AU_PTS_MIN?"var(--a2)":"var(--amber)"; box.innerHTML='<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-family:var(--disp);font-size:30px;font-weight:700;color:'+col+'">'+pts+'</span><span class="vhint">of '+AU_PTS_MIN+'\u2013'+AU_PTS_MAX+' points this month \u00b7 '+mAu.length+' audit'+(mAu.length===1?"":"s")+'</span></div><div style="height:10px;border-radius:6px;background:var(--card-2);overflow:hidden;position:relative"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:6px"></div><div style="position:absolute;top:-3px;bottom:-3px;left:'+(AU_PTS_MIN/AU_PTS_MAX*100)+'%;width:2px;background:var(--ink-faint)" title="Minimum '+AU_PTS_MIN+'"></div></div><div class="vhint" style="margin-top:8px">'+esc(msg)+'</div><div class="vhint" style="margin-top:4px;font-size:11.5px">Chats & emails = 1 point; complaint or vulnerable-customer chats = 2 points.</div>'; }
   function drawAudits(){
-    drawAuMonth();
+    drawAuPoints(); drawAuMonth();
     var sel=document.getElementById("auForm"); if(!sel) return; var cur=sel.value;
     var forms={}; state.audits.forEach(function(a){ if(a.form) forms[a.form]=true; });
     sel.innerHTML='<option value="">All chat types</option>'+Object.keys(forms).sort().map(function(f){return '<option'+(f===cur?' selected':'')+'>'+esc(f)+'</option>';}).join("");
@@ -1464,6 +1466,8 @@
   function auStats(items){ var s=items.map(auScore).filter(function(n){return n!=null;}); var avgS=s.length?Math.round(s.reduce(function(x,y){return x+y;},0)/s.length):null; var p=items.filter(function(a){return a.result==="pass";}).length, fl=items.filter(function(a){return a.result==="fail";}).length, rv=items.filter(function(a){return a.result==="review";}).length; return {avg:avgS,passes:p,fails:fl,review:rv,rate:(p+fl)?Math.round(p/(p+fl)*100):null,count:items.length}; }
   function drawAuMonth(){ var wrap=document.getElementById("auMonth"); if(!wrap) return; var n=new Date(), mStart=n.getFullYear()+"-"+pad(n.getMonth()+1)+"-01"; var items=state.audits.filter(function(a){ return a.date>=mStart && a.date<=todayISO(); }); if(!items.length){ wrap.innerHTML='<div class="empty">No audits logged this month yet.</div>'; return; } var st=auStats(items); var sc=st.avg==null?"neutral":(st.avg>=90?"good":st.avg<75?"bad":"neutral"); wrap.innerHTML='<div class="pill '+sc+'"><div class="pl">Avg score</div><div class="pv">'+(st.avg!=null?st.avg+"%":"—")+'</div></div><div class="pill neutral"><div class="pl">Pass rate</div><div class="pv">'+(st.rate!=null?st.rate+"%":"—")+'</div></div><div class="pill good"><div class="pl">Passes</div><div class="pv">'+st.passes+'</div></div><div class="pill bad"><div class="pl">Fails</div><div class="pv">'+st.fails+'</div></div>'+(st.review?'<div class="pill neutral"><div class="pl">In review</div><div class="pv">'+st.review+'</div></div>':''); }
   function auScore(a){ var n=typeof a.score==="number"?a.score:parseFloat(a.score); return isNaN(n)?null:n; }
+  var AU_PTS_MIN=6, AU_PTS_MAX=9;
+  function auditPoints(a){ if(a&&(a.pts===1||a.pts===2)) return a.pts; return (/complaint|vulnerab/.test(((a&&a.form)||"").toLowerCase()))?2:1; }
   function drawAuOverview(items){
     var wrap=document.getElementById("auOverview");
     if(!items.length){ wrap.innerHTML=""; return; }
@@ -1528,13 +1532,15 @@
   }
   function openAudit(id){
     var e=id?state.audits.filter(function(x){return x.id===id;})[0]:null;
-    var ed=e?{id:e.id,date:e.date,form:e.form,score:e.score,result:e.result,mistakes:(e.mistakes||[]).slice(),notes:e.notes,attachments:(e.attachments||[]).slice()}:{id:null,date:todayISO(),form:"",score:"",result:"pass",mistakes:[],notes:"",attachments:[]};
+    var ed=e?{id:e.id,date:e.date,form:e.form,score:e.score,result:e.result,pts:e.pts,mistakes:(e.mistakes||[]).slice(),notes:e.notes,attachments:(e.attachments||[]).slice()}:{id:null,date:todayISO(),form:"",score:"",result:"pass",pts:undefined,mistakes:[],notes:"",attachments:[]};
+    var eff2=(ed.pts?ed.pts===2:/complaint|vulnerab/.test((ed.form||"").toLowerCase()));
     var dl=(state.config.auditForms||[]).map(function(c){return '<option value="'+esc(c).replace(/&amp;/g,"&")+'">';}).join("");
     openModal('<div class="modal-h"><h3>'+(e?"Edit audit":"New audit")+'</h3><button class="x" id="mX">✕</button></div>'+
       '<div class="modal-b"><div class="row2"><label class="fld"><span class="lab">Evaluation date</span><input class="in" type="date" id="fDate" value="'+esc(ed.date)+'"></label>'+
       '<label class="fld"><span class="lab">Evaluation form (chat type)</span><input class="in" id="fForm" list="aufDL" value="'+esc(ed.form)+'" placeholder="e.g. MTA"></label></div><datalist id="aufDL">'+dl+'</datalist>'+
       '<div class="row2"><label class="fld"><span class="lab">Score (%)</span><input class="in" type="number" min="0" max="100" id="fScore" value="'+esc(ed.score)+'" placeholder="0–100"></label>'+
       '<label class="fld"><span class="lab">Result</span><select class="in" id="fResult"><option value="pass"'+(ed.result==="pass"?" selected":"")+'>Pass</option><option value="fail"'+(ed.result==="fail"?" selected":"")+'>Fail</option><option value="review"'+(ed.result==="review"?" selected":"")+'>Review requested</option></select></label></div>'+
+      '<label class="chk" style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:12px"><input type="checkbox" id="fTwoPts"'+(eff2?" checked":"")+'> Complaint / vulnerable-customer chat (worth 2 audit points)</label>'+
       '<label class="fld"><span class="lab">Improvements / mistakes (one per tag)</span><div class="tagbox" id="fMistakes"><input placeholder="Type a mistake, press Enter"></div></label>'+
       '<label class="fld"><span class="lab">Notes</span><textarea class="in" id="fNotes" placeholder="Detail, evaluator comments, what went well…"></textarea></label>'+
       '<label class="fld"><span class="lab">Attachments</span><div id="fAtt"></div></label></div>'+
@@ -1543,7 +1549,7 @@
     attachToolbar(document.getElementById("fNotes")); var tw=tagWidget(document.getElementById("fMistakes"),ed.mistakes); attachWidget(document.getElementById("fAtt"),ed.attachments);
     document.getElementById("mX").onclick=closeModal; document.getElementById("mCancel").onclick=closeModal;
     document.getElementById("mDel").onclick=function(){ closeModal(); deleteWithUndo("audits",ed.id,"Audit"); };
-    document.getElementById("mSave").onclick=function(){ tw.flush(); ed.date=document.getElementById("fDate").value||todayISO(); ed.form=document.getElementById("fForm").value.trim(); var sv=document.getElementById("fScore").value.trim(); ed.score=sv===""?"":(isNaN(parseFloat(sv))?"":parseFloat(sv)); ed.result=document.getElementById("fResult").value; ed.notes=document.getElementById("fNotes").value.trim();
+    document.getElementById("mSave").onclick=function(){ tw.flush(); ed.date=document.getElementById("fDate").value||todayISO(); ed.form=document.getElementById("fForm").value.trim(); var sv=document.getElementById("fScore").value.trim(); ed.score=sv===""?"":(isNaN(parseFloat(sv))?"":parseFloat(sv)); ed.result=document.getElementById("fResult").value; ed.pts=document.getElementById("fTwoPts").checked?2:1; ed.notes=document.getElementById("fNotes").value.trim();
       if(ed.score===""){ toast("Add the score (%)."); return; }
       if(ed.id){ for(var i=0;i<state.audits.length;i++){ if(state.audits[i].id===ed.id){ state.audits[i]=ed; break; } } } else { ed.id=uid("au"); state.audits.push(ed); }
       save(); closeModal(); refresh(); toast("Audit saved."); };
